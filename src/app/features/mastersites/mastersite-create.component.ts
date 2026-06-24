@@ -38,18 +38,31 @@ export class MasterSiteCreateComponent implements OnInit {
     this.initForm();
   }
 
- private initForm(): void {
-  // Determine initial status value cleanly
-  const initialStatus = this.data?.site?.isActive ?? true;
+private initForm(): void {
+  const site = this.data?.site;
+  this.isEdit = this.data?.mode === 'edit';
 
   this.form = this.fb.group({
-    masterSiteId: [this.data?.site?.masterSiteId || 0],
-    name: [this.data?.site?.name || '', [Validators.required, Validators.minLength(3)]],
-    phoneNumber: [this.data?.site?.phoneNumber || ''],
-    address: [this.data?.site?.address || '', [Validators.required]],
-    
-    // 🟢 FIXED: Checkbox stays enabled (green) on creation, but turns read-only (disabled) on edit
-    isActive: [{ value: initialStatus, disabled: this.isEdit }] 
+    masterSiteId: [site?.masterSiteId || 0],
+
+    name: [
+      site?.name || '',
+      [Validators.required, Validators.minLength(3)]
+    ],
+
+    phoneNumber: [site?.phoneNumber || ''],
+
+    address: [
+      site?.address || '',
+      [Validators.required]
+    ],
+
+    isActive: [
+      {
+        value: site?.isActive ?? true,   // ADD → true, EDIT → DB value
+        disabled: true                  // ✅ ALWAYS disabled (your requirement)
+      }
+    ]
   });
 }
 

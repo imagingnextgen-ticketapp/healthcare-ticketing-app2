@@ -24,7 +24,7 @@ import { MaterialModules } from '../../shared/material.collection';
   templateUrl: './product-create.component.html',
   styleUrls: ['./product-create.component.scss'],
   providers: [provideNativeDateAdapter()], // Required for Datepicker
-    imports: [CommonModule, MaterialModules],
+  imports: [CommonModule, MaterialModules],
 })
 export class ProductCreateComponent implements OnInit {
   form!: FormGroup;
@@ -37,7 +37,7 @@ export class ProductCreateComponent implements OnInit {
     private snackBar: MatSnackBar,
     private cdr: ChangeDetectorRef,
     @Optional() public dialogRef: MatDialogRef<ProductCreateComponent>,
-    @Optional() @Inject(MAT_DIALOG_DATA) public data: any
+    @Optional() @Inject(MAT_DIALOG_DATA) public data: any,
   ) {
     this.isEdit = this.data?.mode === 'edit';
   }
@@ -45,23 +45,38 @@ export class ProductCreateComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     setTimeout(() => {
-    this.cdr.detectChanges();
-  });
+      this.cdr.detectChanges();
+    });
   }
 
   private initForm(): void {
-  this.form = this.fb.group({
-    name: [this.data?.product?.name || '', [Validators.required]], // Already 'name'
-    isActive: [this.data?.product?.isActive ?? true],
-    createdDate: [
-      { value: this.data?.product?.createdDate || new Date(), disabled: this.isEdit },
-      [Validators.required]
-    ]
-  });
-}
+    const product = this.data?.product;
 
+    const isEdit = !!product;
 
-   onCancel(): void {
+    this.form = this.fb.group({
+      name: [product?.name || '', [Validators.required]],
+
+      isActive: [
+        {
+          value: isEdit
+            ? product?.isActive // EDIT → DB value
+            : true, // ADD → default true
+          disabled: true, // ✅ ALWAYS disabled in both modes
+        },
+      ],
+
+      createdDate: [
+        {
+          value: product?.createdDate || new Date(),
+          disabled: isEdit,
+        },
+        [Validators.required],
+      ],
+    });
+  }
+
+  onCancel(): void {
     if (this.dialogRef) {
       this.dialogRef.close(); // Closes the dialog
     }
@@ -73,22 +88,30 @@ export class ProductCreateComponent implements OnInit {
     this.loading = true;
     // getRawValue() ensures createdDate is sent even if it is disabled
     const payload = this.form.getRawValue();
-    
+
     if (this.isEdit) {
       payload.productId = this.data.product.productId;
     }
 
-    const action$ = this.isEdit ? this.productService.update(payload) : this.productService.create(payload);
+    const action$ = this.isEdit
+      ? this.productService.update(payload)
+      : this.productService.create(payload);
 
-    action$.pipe(finalize(() => {
-      this.loading = false;
-      this.cdr.detectChanges();
-    })).subscribe({
-      next: (res: any) => {
-        this.snackBar.open(this.isEdit ? 'Product updated' : 'Product created', 'OK', { duration: 3000 });
-        this.dialogRef.close(res); 
-      },
-      error: () => this.snackBar.open('Operation failed', 'Close')
-    });
+    action$
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this.cdr.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: (res: any) => {
+          this.snackBar.open(this.isEdit ? 'Product updated' : 'Product created', 'OK', {
+            duration: 3000,
+          });
+          this.dialogRef.close(res);
+        },
+        error: () => this.snackBar.open('Operation failed', 'Close'),
+      });
   }
 }

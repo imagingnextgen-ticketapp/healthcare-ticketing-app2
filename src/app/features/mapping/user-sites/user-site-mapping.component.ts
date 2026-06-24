@@ -70,7 +70,18 @@ export class UserSiteMappingComponent implements OnInit {
     this.userService.getUsers({ pageNumber, pageSize: 50 }).subscribe({
       next: (res: any) => {
         setTimeout(() => {
-          this.availableUsers = [...this.availableUsers, ...(res.data || [])];
+         const filteredUsers = (res.data || []).filter((user: any) =>
+  ![
+    'superadmin',
+    'supportengineer',
+    'manager',
+    'systemuser'
+  ].includes(
+    user.roleName?.replace(/\s/g, '').toLowerCase()
+  )
+);
+
+this.availableUsers = [...this.availableUsers, ...filteredUsers];
           if (res.pageNumber < res.totalPages) {
             this.fetchUserPage(pageNumber + 1);
           } else {
