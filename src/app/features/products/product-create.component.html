@@ -1,0 +1,47 @@
+<div class="fuji-compact-dialog">
+  <!-- Header -->
+  <div mat-dialog-title class="dialog-header">
+    <div class="header-left">
+      <mat-icon>add_circle</mat-icon>
+      <span>{{ isEdit ? 'Update Product' : 'Product Registration' }}</span>
+    </div>
+    <button mat-icon-button mat-dialog-close class="dialog-close-btn" matTooltip="Close">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <mat-dialog-content class="dialog-body">
+      
+      <!-- Change this in your dialog HTML -->
+<mat-form-field appearance="outline" class="compact-field">
+  <mat-label>Product Name</mat-label>
+  <input matInput formControlName="name"> <!-- Changed from productName to name -->
+  <mat-icon matSuffix>inventory_2</mat-icon>
+</mat-form-field>
+
+
+      <mat-form-field appearance="outline" class="compact-field">
+        <mat-label>Created Date</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="createdDate">
+        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+      </mat-form-field>
+
+      <div class="status-row">
+        <mat-checkbox formControlName="isActive" color="primary">
+          Active Status
+        </mat-checkbox>
+      </div>
+
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end" class="dialog-footer">
+      <button mat-button type="button" (click)="onCancel()">CANCEL</button>
+      <button mat-flat-button class="fuji-save-btn" type="submit" [disabled]="loading">
+        <mat-icon>save</mat-icon>
+        <span>{{ isEdit ? 'UPDATE' : 'CREATE' }}</span>
+      </button>
+    </mat-dialog-actions>
+  </form>
+</div>

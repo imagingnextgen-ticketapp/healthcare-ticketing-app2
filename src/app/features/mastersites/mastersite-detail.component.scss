@@ -1,0 +1,157 @@
+/* ==========================================================================
+   MASTERSITE DETAIL DIALOG — PREMIUM
+   ========================================================================== */
+
+@use "sass:color";
+$brand: #008a4c;
+$brand-light: rgba(0, 138, 76, 0.08);
+$border: #e2e8f0;
+
+.fuji-detail-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ---- Header ---- */
+.detail-header {
+  background: linear-gradient(135deg, $brand 0%, color.adjust($brand, $lightness: -12%) 100%);
+  color: white;
+  padding: 22px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+
+  .title-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    .site-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    h1 {
+      margin: 0 0 3px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: white !important;
+    }
+
+    .subtitle {
+      margin: 0;
+      opacity: 0.75;
+      font-size: 0.8rem;
+    }
+  }
+
+  .close-white {
+    color: rgba(255, 255, 255, 0.85) !important;
+    &:hover { color: white !important; background: rgba(255, 255, 255, 0.15) !important; }
+  }
+}
+
+/* ---- Content ---- */
+.detail-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* ---- Tabs ---- */
+::ng-deep .fuji-tabs {
+  .mat-mdc-tab-header { background: white; border-bottom: 1px solid $border; }
+  .mat-mdc-tab .mdc-tab__text-label { color: #64748b !important; font-size: 0.875rem !important; }
+  .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label { color: $brand !important; font-weight: 700 !important; }
+  .mat-mdc-tab-indicator__content { border-color: $brand !important; border-width: 2px !important; }
+
+  .tab-icon { font-size: 18px; width: 18px; height: 18px; margin-right: 6px; }
+}
+
+/* ---- Tab Pane ---- */
+.tab-pane {
+  padding: 20px 24px;
+  min-height: 320px;
+}
+
+/* ---- Tables ---- */
+.fuji-table {
+  width: 100%;
+  border: 1px solid $border;
+  border-radius: 10px;
+  overflow: hidden;
+
+  th {
+    background: #f9fafb !important;
+    font-size: 0.7rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+    color: #64748b !important;
+    border-bottom: 1px solid $border !important;
+    padding: 10px 14px !important;
+  }
+
+  td {
+    padding: 10px 14px !important;
+    font-size: 0.8375rem !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+  }
+}
+
+/* ---- Status Dot ---- */
+.status-dot {
+  height: 8px;
+  width: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  background: #cbd5e1;
+  margin-right: 8px;
+  vertical-align: middle;
+
+  &.active { background: $brand; }
+}
+
+/* ---- Accordion ---- */
+.fuji-accordion {
+  .mat-expansion-panel {
+    border: 1px solid $border !important;
+    box-shadow: none !important;
+    margin-bottom: 8px !important;
+    border-radius: 10px !important;
+
+    &.mat-expanded { box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important; }
+  }
+
+  .nested-view {
+    background: #fafbfc;
+    padding: 14px;
+    border-radius: 0 0 10px 10px;
+  }
+
+  .nested-table {
+    width: 100%;
+    background: transparent;
+
+    th {
+      font-size: 0.7rem !important;
+      text-transform: uppercase !important;
+      color: #94a3b8 !important;
+      font-weight: 700 !important;
+    }
+  }
+}
+
+.empty-msg {
+  text-align: center;
+  padding: 48px;
+  color: #94a3b8;
+  font-style: italic;
+  font-size: 0.875rem;
+}

@@ -1,0 +1,111 @@
+<div class="dashboard-wrapper">
+
+  <!-- Page Header -->
+  <div class="dash-header">
+    <div class="dash-header-text">
+      <h1 class="dash-title">Dashboard</h1>
+      <p class="dash-subtitle">Support operations overview</p>
+    </div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="stats-grid">
+
+    <!-- Total Tickets -->
+    <div class="stat-card stat-card--brand">
+      <div class="stat-top">
+        <div class="stat-icon-wrap">
+          <mat-icon>confirmation_number</mat-icon>
+        </div>
+        <span class="stat-trend neutral">ALL TIME</span>
+      </div>
+      <div class="stat-value">{{ stats.totalTickets }}</div>
+      <div class="stat-label">Total Tickets</div>
+    </div>
+
+    <!-- Open Tickets -->
+    <div class="stat-card stat-card--info">
+      <div class="stat-top">
+        <div class="stat-icon-wrap">
+          <mat-icon>hourglass_empty</mat-icon>
+        </div>
+        <span class="stat-trend active">ACTIVE</span>
+      </div>
+      <div class="stat-value">{{ stats.openedTickets }}</div>
+      <div class="stat-label">Open Tickets</div>
+    </div>
+
+    <!-- Resolved -->
+    <div class="stat-card stat-card--success">
+      <div class="stat-top">
+        <div class="stat-icon-wrap">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+        <span class="stat-trend resolved">RESOLVED</span>
+      </div>
+      <div class="stat-value">{{ stats.closedTickets }}</div>
+      <div class="stat-label">Resolved Tickets</div>
+    </div>
+
+    <!-- Escalated -->
+    <div class="stat-card stat-card--danger">
+      <div class="stat-top">
+        <div class="stat-icon-wrap">
+          <mat-icon>report_problem</mat-icon>
+        </div>
+        <span class="stat-trend escalated">ESCALATED</span>
+      </div>
+      <div class="stat-value">{{ stats.escalatedTickets }}</div>
+      <div class="stat-label">Escalated Cases</div>
+    </div>
+
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-section">
+    <h2 class="section-title">Quick Actions</h2>
+    <div class="quick-actions-grid">
+      <a class="quick-action-card" routerLink="/tickets">
+        <div class="qa-icon qa-icon--blue"><mat-icon>assignment_late</mat-icon></div>
+        <div class="qa-content">
+          <span class="qa-title">Active Worklist</span>
+          <span class="qa-desc">View and manage open tickets</span>
+        </div>
+        <mat-icon class="qa-arrow">chevron_right</mat-icon>
+      </a>
+      <a class="quick-action-card" routerLink="/history">
+        <div class="qa-icon qa-icon--green"><mat-icon>history_toggle_off</mat-icon></div>
+        <div class="qa-content">
+          <span class="qa-title">Audit Trail</span>
+          <span class="qa-desc">Track ticket activity history</span>
+        </div>
+        <mat-icon class="qa-arrow">chevron_right</mat-icon>
+      </a>
+      <a class="quick-action-card" routerLink="/mis-report">
+        <div class="qa-icon qa-icon--purple"><mat-icon>insights</mat-icon></div>
+        <div class="qa-content">
+          <span class="qa-title">MIS Analytics</span>
+          <span class="qa-desc">Reports and performance metrics</span>
+        </div>
+        <mat-icon class="qa-arrow">chevron_right</mat-icon>
+      </a>
+      <a
+  *ngIf="currentUser?.role === ROLES.SUPER_ADMIN"
+  class="quick-action-card"
+  routerLink="/mastersites">
+
+  <div class="qa-icon qa-icon--orange">
+    <mat-icon>location_city</mat-icon>
+  </div>
+
+  <div class="qa-content">
+    <span class="qa-title">Hospital Sites</span>
+    <span class="qa-desc">Manage facility configurations</span>
+  </div>
+
+  <mat-icon class="qa-arrow">chevron_right</mat-icon>
+</a>
+    </div>
+  </div>
+
+</div>

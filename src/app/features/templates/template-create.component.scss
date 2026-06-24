@@ -1,0 +1,154 @@
+@use "sass:color";
+
+/* ==========================================================================
+   TEMPLATE CREATE/EDIT DIALOG — PREMIUM
+   ========================================================================== */
+
+$brand: #008a4c;
+$brand-light: rgba(0, 138, 76, 0.08);
+$border: #e2e8f0;
+
+.fuji-dialog-container {
+  display: flex;
+  flex-direction: column;
+  background: white;
+  overflow: hidden;
+
+  /* Top Accent Bar */
+  .fuji-accent-bar {
+    height: 4px;
+    width: 100%;
+    background: linear-gradient(90deg, $brand, color.adjust($brand, $lightness: 10%));
+    flex-shrink: 0;
+  }
+
+  /* Header */
+  .dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 12px 24px;
+    border-bottom: 1px solid $border;
+    flex-shrink: 0;
+
+    .header-text {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #0f172a;
+
+      mat-icon {
+        color: $brand;
+        font-size: 22px;
+        width: 22px;
+        height: 22px;
+      }
+
+      span {
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+    }
+
+    .dialog-close-btn {
+      color: #94a3b8 !important;
+      flex-shrink: 0;
+      &:hover { color: #475569 !important; background: #f1f5f9 !important; }
+    }
+  }
+
+  /* Content */
+  .dialog-content {
+    padding: 20px 24px !important;
+    max-height: 70vh;
+    overflow-y: auto;
+    flex: 1;
+
+    .template-form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      width: 100%;
+    }
+
+    .form-row {
+      width: 100%;
+      .w-full { width: 100% !important; }
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      width: 100%;
+
+      @media (max-width: 560px) { grid-template-columns: 1fr; }
+    }
+
+    .status-row { padding: 4px 0; }
+
+    .status-text-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #475569;
+    }
+  }
+
+  /* Actions */
+  .dialog-actions {
+    padding: 12px 24px 20px !important;
+    border-top: 1px solid $border;
+    flex-shrink: 0;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    justify-content: flex-end;
+
+    button { font-size: 0.875rem; font-weight: 500; }
+
+    .fuji-save-btn {
+      background: $brand !important;
+      color: white !important;
+      border-radius: 8px !important;
+      height: 40px !important;
+      padding: 0 22px !important;
+      font-weight: 600 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+
+      &[disabled] { background: #e2e8f0 !important; color: #94a3b8 !important; }
+    }
+  }
+}
+
+/* Global overrides */
+::ng-deep {
+  .fuji-dialog-container {
+    .mat-mdc-checkbox.fuji-disabled-checkbox {
+      opacity: 1 !important;
+      .mdc-checkbox__native-control:disabled:checked ~ .mdc-checkbox__background {
+        background-color: $brand !important;
+        border-color: $brand !important;
+      }
+      .mdc-label { color: #475569 !important; font-weight: 500 !important; }
+    }
+
+    .mdc-notched-outline__notch { border-top: none !important; }
+    .mat-mdc-form-field-subscript-wrapper { display: none !important; }
+
+    .mat-mdc-form-field.mat-focused:not(.mat-form-field-invalid) {
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border-color: $brand !important;
+        border-width: 2px !important;
+      }
+      .mat-mdc-floating-label { color: $brand !important; }
+    }
+
+    .mat-mdc-select-arrow svg { fill: $brand !important; }
+    span[matSuffix] { color: #64748b; font-size: 0.8rem; font-weight: 500; padding-right: 4px; }
+  }
+}

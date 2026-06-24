@@ -1,0 +1,597 @@
+/* ==========================================================================
+   MAIN LAYOUT — PREMIUM SIDEBAR + TOOLBAR
+   ========================================================================== */
+
+:host {
+  --sidebar-width: 272px;
+  --toolbar-height: 64px;
+  --brand-green: #008a4c;
+  --brand-green-light: rgba(0, 138, 76, 0.10);
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #e8ecf0;
+  --nav-hover-bg: #f4f6f8;
+  --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========================================================
+   CONTAINER
+   ======================================================== */
+
+.layout-container {
+  height: 100vh;
+  background: #f0f2f5;
+}
+
+/* ========================================================
+   SIDENAV
+   ======================================================== */
+
+.sidenav {
+  width: var(--sidebar-width);
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border) !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* --- Brand Section --- */
+.brand-section {
+  padding: 24px 20px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--sidebar-border);
+  flex-shrink: 0;
+  background: linear-gradient(160deg, #f8fffc 0%, #ffffff 100%);
+
+  .brand-logo-wrapper {
+    width: 38px;
+    height: 38px;
+    background: var(--brand-green-light);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .brand-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+
+    .main-title {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    .brand-tagline {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      color: #64748b;
+      letter-spacing: 0.12em;
+      margin-top: 1px;
+    }
+  }
+}
+
+/* --- Action Section (Log Ticket Button) --- */
+.action-section {
+  padding: 16px 16px 8px;
+  flex-shrink: 0;
+
+  .modern-create-btn {
+    width: 100%;
+    height: 44px !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-size: 0.8rem !important;
+    letter-spacing: 0.04em !important;
+    background: var(--brand-green) !important;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(0, 138, 76, 0.25) !important;
+    transition: var(--transition) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+
+    mat-icon {
+      color: white !important;
+      font-size: 18px !important;
+      width: 18px !important;
+      height: 18px !important;
+    }
+
+    &:hover {
+      background: #007040 !important;
+      box-shadow: 0 4px 14px rgba(0, 138, 76, 0.35) !important;
+      transform: translateY(-1px);
+    }
+  }
+}
+
+/* --- Navigation List --- */
+.medical-nav {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 0 24px;
+
+  /* Scrollbar */
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-thumb { background: #d1d9e0; border-radius: 4px; }
+
+  .nav-label {
+    padding: 16px 20px 6px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #94a3b8;
+    letter-spacing: 0.12em;
+    user-select: none;
+  }
+
+  .mat-mdc-list-item {
+    margin: 2px 10px !important;
+    border-radius: 9px !important;
+    height: 42px !important;
+    transition: var(--transition);
+    position: relative;
+
+    .mat-mdc-list-item-unscoped-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    mat-icon[matListItemIcon] {
+      font-size: 20px !important;
+      width: 20px !important;
+      height: 20px !important;
+      color: #64748b !important;
+      flex-shrink: 0;
+      transition: var(--transition);
+    }
+
+    .mat-mdc-list-item-title,
+    span[matListItemTitle] {
+      font-size: 0.875rem !important;
+      font-weight: 500 !important;
+      color: #475569 !important;
+      transition: var(--transition);
+    }
+
+    &:hover:not(.active-link) {
+      background: var(--nav-hover-bg) !important;
+
+      mat-icon[matListItemIcon] { color: #334155 !important; }
+      .mat-mdc-list-item-title,
+      span[matListItemTitle] { color: #1e293b !important; }
+    }
+
+    &.active-link {
+      background: var(--brand-green-light) !important;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: -10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 22px;
+        background: var(--brand-green);
+        border-radius: 0 3px 3px 0;
+      }
+
+      mat-icon[matListItemIcon] {
+        color: var(--brand-green) !important;
+        font-variation-settings: 'FILL' 1;
+      }
+
+      .mat-mdc-list-item-title,
+      span[matListItemTitle] {
+        color: var(--brand-green) !important;
+        font-weight: 700 !important;
+      }
+    }
+  }
+}
+
+/* ========================================================
+   TOOLBAR
+   ======================================================== */
+
+.main-toolbar {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid #e8ecf0 !important;
+  height: var(--toolbar-height) !important;
+  padding: 0 20px !important;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+
+  .notif-btn {
+    color: #64748b;
+    margin-right: 4px;
+    transition: var(--transition);
+
+    &:hover {
+      color: var(--brand-green);
+      background: var(--brand-green-light) !important;
+    }
+  }
+
+  .page-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #334155;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-left: 4px;
+  }
+
+  .user-info-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f4f6f8 !important;
+    padding: 6px 14px !important;
+    border-radius: 40px !important;
+    border: 1px solid #e2e8f0 !important;
+    height: 38px !important;
+    transition: var(--transition);
+
+    &:hover {
+      background: #e8ecf1 !important;
+      border-color: #cbd5e1 !important;
+    }
+
+    .username-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #334155;
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .expand-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: #94a3b8;
+    }
+  }
+}
+
+/* Toolbar flex spacer */
+.toolbar-spacer {
+  flex: 1 1 auto;
+}
+
+/* ========================================================
+   MAIN CONTENT
+   ======================================================== */
+
+.main-content {
+  padding: 24px;
+  min-height: calc(100vh - var(--toolbar-height));
+  background: #f0f2f5;
+}
+
+/* ========================================================
+   USER MENU
+   ======================================================== */
+
+/* ========================================================
+   USER MENU
+   ======================================================== */
+
+.menu-role-info {
+  /* 🟢 FIX: Increase top padding from 10px to 16px to force "SuperAdmin" downwards */
+  padding: 16px 16px 12px 16px !important; 
+  font-size: 0.8rem !important;
+  line-height: 1.4 !important; /* Prevents text from clipping on micro devices */
+  color: #64748b;
+  display: block !important;
+
+  strong { 
+    color: var(--brand-green); 
+    font-weight: 700 !important;
+  }
+}
+
+
+/* ========================================================
+   NOTIFICATION MENU
+   ======================================================== */
+
+.fuji-notif-menu {
+  width: 380px !important;
+  max-width: min(380px, 95vw) !important;
+  border-radius: 16px !important;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12) !important;
+
+  .notif-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e8ecf0;
+
+    span {
+      font-weight: 700;
+      color: #334155;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    button {
+      font-size: 0.8rem !important;
+      color: var(--brand-green) !important;
+      height: 28px !important;
+    }
+  }
+
+  .notif-scroll-area {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+ .mat-mdc-menu-item {
+  height: auto !important;
+  min-height: 72px !important;
+
+  line-height: normal !important;
+  padding: 12px 14px !important;
+
+  white-space: normal !important;
+}
+
+  .notif-item-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    white-space: normal;
+
+    mat-icon {
+      margin-top: 2px;
+      color: #64748b;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .notif-text {
+  flex: 1 !important;
+  min-width: 0 !important;
+  width: 100% !important;
+
+
+      .notif-title {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #1e293b;
+        margin-bottom: 2px;
+      }
+
+     .notif-message {
+  display: block !important;
+  width: 100% !important;
+
+  font-size: 13px !important;
+  color: #64748b !important;
+
+  line-height: 1.6 !important;
+
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+
+  margin-top: 4px !important;
+}
+
+      .notif-date {
+        display: block;
+        font-size: 0.7rem;
+        color: #94a3b8;
+        margin-top: 4px;
+      }
+    }
+  }
+
+  .empty-notif {
+    padding: 40px 24px;
+    text-align: center;
+    color: #94a3b8;
+
+    mat-icon {
+      font-size: 44px;
+      width: 44px;
+      height: 44px;
+      margin-bottom: 10px;
+      opacity: 0.3;
+    }
+
+    p { margin: 0; font-size: 0.85rem; }
+  }
+}
+
+/* Custom scrollbar */
+.notif-scroll-area::-webkit-scrollbar { width: 5px; }
+.notif-scroll-area::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
+/* ========================================================
+   MOBILE OVERRIDES (≤ 768px)
+   ======================================================== */
+
+@media (max-width: 768px) {
+  .sidenav {
+    width: 268px;
+
+    .brand-section { padding: 18px 16px; }
+    .action-section { padding: 12px 14px 8px; }
+  }
+
+  .main-toolbar {
+    height: 56px !important;
+    padding: 0 10px !important;
+    /* 🟢 FIX: Forces the toolbar container to align all its inner icons perfectly centered */
+    display: flex !important;
+    align-items: center !important; 
+
+    /* Make hamburger clearly visible */
+    button[mat-icon-button] mat-icon {
+      color: #334155 !important;
+    }
+
+    .page-title {
+      font-size: 0.85rem !important;
+      font-weight: 700 !important;
+      color: #0f172a !important;
+      max-width: 130px;
+    }
+
+    .user-info-pill {
+      padding: 4px 10px !important;
+      gap: 5px !important;
+      height: 34px !important;
+      /* 🟢 FIX: Eliminates inherited top constraints and auto-centers the pill button */
+      margin: 0 !important; 
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+
+      .username-label {
+        max-width: 90px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        line-height: normal !important; /* Prevents text from pushing boundaries upwards */
+      }
+
+      .expand-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+
+  .main-content {
+    padding: 12px !important;
+  }
+}
+
+/* ========================================================
+   MOBILE OVERRIDES (≤ 480px)
+   ======================================================== */
+
+@media (max-width: 480px) {
+  .main-toolbar {
+    padding: 0 8px !important;
+    /* 🟢 FIX: Re-enforces centering parameters for small smartphones */
+    display: flex !important;
+    align-items: center !important; 
+
+    .page-title { display: none !important; }
+
+    .user-info-pill {
+      padding: 4px 10px !important; 
+      gap: 6px !important;
+      height: 34px !important;
+      margin: 0 !important;
+
+      .username-label { 
+        display: inline-block !important; 
+        max-width: 80px !important; 
+        font-size: 0.75rem !important;
+        line-height: normal !important;
+      }
+    }
+  }
+
+  .main-content { padding: 10px !important; }
+}
+
+/* ==========================================================================
+   UNIVERSAL RESPONSIVE OVERLAY CORRECTION (ALL PLATFORMS)
+   ========================================================================== */
+
+/* 1. Desktop Mode (Default Behavior) */
+::ng-deep .cdk-overlay-pane:has(.fuji-profile-overlay-panel) {
+  transform-origin: right top !important;
+}
+
+/* ==========================================================================
+   ANGULAR MATERIAL GLOBAL RESPONSIVE DROP-DOWN SYSTEM
+   ========================================================================== */
+
+@media (max-width: 992px) {
+  .cdk-overlay-container .cdk-overlay-pane:has(.fuji-profile-overlay-panel) {
+    position: fixed !important;
+    transform: none !important;
+    left: auto !important;
+    /* 🟢 CHANGE FROM 16px TO 24px: Pulls the menu slightly inward to line up with the card edge */
+    right: 24px !important; 
+    top: var(--toolbar-height, 64px) !important;
+    width: max-content !important; 
+    max-width: 240px !important;
+    height: auto !important;
+    z-index: var(--z-dropdown, 1000) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .cdk-overlay-container .cdk-overlay-pane:has(.fuji-profile-overlay-panel) {
+    top: 56px !important; 
+    /* 🟢 CHANGE FROM 12px TO 18px: Fine-tunes the alignment perfectly on mobile viewports */
+    right: 18px !important; 
+  }
+}
+::ng-deep .fuji-notif-menu .mat-mdc-menu-item {
+  height: auto !important;
+  min-height: 80px !important;
+  white-space: normal !important;
+  line-height: normal !important;
+}
+
+::ng-deep .fuji-notif-menu .mdc-list-item__primary-text {
+  white-space: normal !important;
+  overflow: visible !important;
+}
+
+::ng-deep .fuji-notif-menu .notif-item-content {
+  display: flex !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+}
+
+::ng-deep .fuji-notif-menu .notif-text {
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+::ng-deep .fuji-notif-menu .notif-message {
+  display: block !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.6 !important;
+}

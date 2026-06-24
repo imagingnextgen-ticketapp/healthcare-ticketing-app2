@@ -1,0 +1,123 @@
+@use "sass:color";
+
+/* ==========================================================================
+   PRODUCT CREATE/EDIT DIALOG — PREMIUM
+   ========================================================================== */
+
+$brand: #008a4c;
+$brand-light: rgba(0, 138, 76, 0.08);
+$border: #e2e8f0;
+
+.fuji-compact-dialog {
+  min-width: min(400px, 96vw);
+  overflow: hidden;
+  border-radius: 0;
+
+  /* Header */
+  .dialog-header {
+    background: linear-gradient(135deg, $brand 0%, color.adjust($brand, $lightness: -12%) 100%);
+    color: white;
+    margin: 0 !important;
+    padding: 16px 16px 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    span {
+      font-size: 1rem;
+      font-weight: 700;
+      color: white;
+    }
+
+    mat-icon { font-size: 22px; width: 22px; height: 22px; color: rgba(255,255,255,0.9); }
+
+    .dialog-close-btn {
+      color: rgba(255, 255, 255, 0.8) !important;
+      flex-shrink: 0;
+      &:hover { color: white !important; background: rgba(255,255,255,0.15) !important; }
+    }
+  }
+
+  /* Body */
+  .dialog-body {
+    padding: 24px 24px 10px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Compact field */
+  .compact-field { width: 100%; }
+
+  /* Status row */
+  .status-row {
+    padding: 8px 0;
+    mat-checkbox { font-size: 0.9rem; font-weight: 500; }
+  }
+
+  /* Footer */
+  .dialog-footer {
+    padding: 14px 24px 18px !important;
+    background: #f8fafc;
+    border-top: 1px solid $border;
+
+    .fuji-save-btn {
+      background: $brand !important;
+      color: white !important;
+      height: 42px !important;
+      padding: 0 22px !important;
+      border-radius: 8px !important;
+      font-weight: 600 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+
+      &:disabled { background: #e2e8f0 !important; color: #94a3b8 !important; }
+    }
+  }
+}
+
+/* Nuclear Material fixes */
+::ng-deep {
+  .mdc-notched-outline__notch { border-top: none !important; }
+  .mat-mdc-form-field-invalid .mdc-notched-outline__notch { border-top: none !important; }
+  .mat-mdc-form-field-subscript-wrapper { display: none !important; }
+
+  .mat-mdc-form-field.mat-focused:not(.mat-form-field-invalid) {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: $brand !important;
+      border-width: 2px !important;
+    }
+    .mat-mdc-floating-label { color: $brand !important; }
+  }
+
+  .mat-mdc-checkbox {
+    --mdc-checkbox-selected-icon-color: #{$brand} !important;
+    --mdc-checkbox-selected-focus-icon-color: #{$brand} !important;
+    --mdc-checkbox-selected-hover-icon-color: #{$brand} !important;
+    --mdc-checkbox-selected-checkmark-color: #ffffff !important;
+
+    .mdc-checkbox__native-control:enabled:checked ~ .mdc-checkbox__background {
+      background-color: $brand !important;
+      border-color: $brand !important;
+    }
+  }
+
+  .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+  .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+  .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
+    border-color: $brand !important;
+    border-width: 2px;
+  }
+}

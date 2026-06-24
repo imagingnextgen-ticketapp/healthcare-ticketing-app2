@@ -1,0 +1,100 @@
+<div class="mapping-container">
+  <mat-card class="header-card">
+    <mat-card-header>
+      <mat-card-title>User Hospital Mapping</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Aligned Selection Row -->
+      <div class="controls-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Select Hospital</mat-label>
+          <mat-select [(ngModel)]="selectedSiteId" (selectionChange)="onSiteChange()">
+            <mat-option *ngFor="let site of sites" [value]="site.masterSiteId">
+              {{ site.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Select Users</mat-label>
+          <mat-select [(ngModel)]="selectedUserIds" multiple>
+            <mat-option *ngFor="let u of availableUsers" [value]="u.userId">
+              {{ u.userName }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-raised-button class="fuji-btn" 
+                [disabled]="!selectedSiteId || selectedUserIds.length === 0" 
+                (click)="onAssign()">
+          <mat-icon>person_add</mat-icon> Assign
+        </button>
+      </div>
+
+      <!-- PLACEHOLDER BANNER: Place it here (Outside the table) -->
+      <div class="info-banner" *ngIf="!selectedSiteId">
+        <mat-icon>info</mat-icon>
+        <span>Please select a <strong>Hospital Site</strong> above to view and manage user mappings.</span>
+      </div>
+
+      <!-- Table Section -->
+      <div class="table-container" *ngIf="selectedSiteId">
+        <table mat-table [dataSource]="assignedUsers" class="w-full fuji-table">
+          
+          <ng-container matColumnDef="userName">
+            <th mat-header-cell *matHeaderCellDef> User Name </th>
+            <td mat-cell *matCellDef="let row"> {{ row.userName }} </td>
+          </ng-container>
+
+          <ng-container matColumnDef="hospitalName">
+            <th mat-header-cell *matHeaderCellDef> Hospital </th>
+            <td mat-cell *matCellDef="let row"> {{ row.hospitalName }} </td>
+          </ng-container>
+
+          <ng-container matColumnDef="isActive">
+            <th mat-header-cell *matHeaderCellDef> Status </th>
+            <td mat-cell *matCellDef="let row">
+              <span class="fuji-badge" [ngClass]="row.isActive ? 'active' : 'inactive'">
+                {{ row.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef> Actions </th>
+            <td mat-cell *matCellDef="let row">
+              <div class="icon-actions">
+                <button mat-icon-button *ngIf="!row.isActive" 
+                        class="fuji-activate-btn" 
+                        (click)="updateStatus(row, true)" 
+                        matTooltip="Activate User">
+                  <mat-icon>check_circle</mat-icon>
+                </button>
+
+                <button mat-icon-button *ngIf="row.isActive" 
+                        class="fuji-deactivate-btn" 
+                        (click)="updateStatus(row, false)" 
+                        matTooltip="Deactivate User">
+                  <mat-icon>block</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <!-- ⚡ ADDED: Angular Material Paginator Control Component -->
+        <mat-paginator 
+          [length]="totalRecords"
+          [pageSize]="pageSize"
+          [pageSizeOptions]="[10,25,50,100]"
+          (page)="onPageChange($event)"
+          aria-label="Select page of mapped users">
+        </mat-paginator>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

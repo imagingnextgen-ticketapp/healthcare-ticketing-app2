@@ -1,0 +1,41 @@
+<div class="notif-wrapper">
+  <!-- Bell Icon Trigger -->
+  <div class="bell-trigger" (click)="toggle()">
+    <span class="bell-icon">🔔</span>
+    @if (notifications.length > 0) {
+      <span class="count-badge">{{ notifications.length }}</span>
+    }
+  </div>
+
+  <!-- Dropdown Portal Window Grid Container -->
+  @if (showDropdown) {
+    <div class="fuji-fixed-notif-dropdown">
+      <div class="fuji-notif-header">Notifications</div>
+      
+      <div class="fuji-notif-list-scroll">
+        @for (n of notifications; track n.notificationId) {
+          <div class="fuji-notif-item-card">
+            <div class="fuji-notif-item-body">
+              
+              <!-- 🟢 FIXED: If n.title is missing, dynamically generate a fallback banner -->
+              <span class="fuji-notif-item-title">
+                @if (n.title && n.title.trim() !== '') {
+                  {{ n.title }}
+                } @else if (n.message && n.message.toLowerCase().includes('priority')) {
+                  Escalation Alert
+                } @else {
+                  System Alert
+                }
+              </span>
+              
+              <p class="fuji-notif-item-msg">{{ n.message }}</p>
+            </div>
+            <button class="fuji-notif-item-close" (click)="dismiss(n.notificationId)">✕</button>
+          </div>
+        } @empty {
+          <div class="fuji-notif-empty-box">All caught up!</div>
+        }
+      </div>
+    </div>
+  }
+</div>

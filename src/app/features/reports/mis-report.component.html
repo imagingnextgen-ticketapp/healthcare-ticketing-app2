@@ -1,0 +1,167 @@
+<div class="report-wrapper">
+  <!-- Header Title & Export Row -->
+  <div class="header-section">
+    <div class="title-group">
+      <mat-icon class="fuji-green-icon">analytics</mat-icon>
+      <h1 class="fuji-title">Consolidated MIS Analytics</h1>
+    </div>
+    <button mat-raised-button class="fuji-btn" (click)="handleExport()" [disabled]="isLoading">
+      <mat-icon>file_download</mat-icon> Export to Excel
+    </button>
+  </div>
+
+  <!-- Main Filter Form Area -->
+  <div class="filter-card">
+    <div class="filter-flex-container">
+      
+      <!-- ROW 1: PRIMARY SELECTION DROPDOWNS (SIDE-BY-SIDE) -->
+      <div class="filter-row row-primary">
+        <!-- 1. Hospital Site Selector -->
+        <mat-form-field appearance="outline" class="fuji-custom-field filter-item">
+          <mat-label>Hospital Site</mat-label>
+          <mat-select [(ngModel)]="filter.masterSiteId" (selectionChange)="onSiteChange($event.value)" panelClass="fuji-dropdown-panel">
+            <mat-option [value]="null">-- All Hospitals --</mat-option>
+            <mat-option *ngFor="let s of masterSites" [value]="s.masterSiteId">{{s.name || s.hospitalName}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- 2. Product Selector -->
+        <mat-form-field appearance="outline" class="fuji-custom-field filter-item">
+          <mat-label>Product</mat-label>
+          <mat-select [(ngModel)]="filter.productId" (selectionChange)="onProductChange($event.value)" panelClass="fuji-dropdown-panel">
+            <mat-option [value]="null">-- All Products --</mat-option>
+            <mat-option *ngFor="let p of products" [value]="p.id !== undefined && p.id !== null ? p.id : p.productId">
+              {{ p.name || p.productName }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- 3. Issue Type Selector -->
+        <mat-form-field appearance="outline" class="fuji-custom-field filter-item">
+          <mat-label>Issue Type</mat-label>
+          <mat-select [(ngModel)]="filter.templateId" (selectionChange)="applyFilters()" panelClass="fuji-dropdown-panel">
+            <mat-option [value]="null">-- All Issues --</mat-option>
+            <mat-option *ngFor="let t of templates" [value]="t.templateId">{{t.issueType}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- ROW 2: OPERATIONAL METRICS & DATES (SIDE-BY-SIDE) -->
+      <div class="filter-row row-secondary">
+        <!-- 4. Combined Operator and TAT Input Block -->
+        <div class="tat-filter-group">
+          <mat-form-field appearance="outline" class="operator-field fuji-custom-field">
+            <mat-select [(ngModel)]="filter.tatOperator" (selectionChange)="applyFilters()">
+              <mat-option value="gt"> (>) </mat-option>
+              <mat-option value="lt"> (<) </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="value-field fuji-custom-field">
+            <mat-label>TAT Hours</mat-label>
+            <input matInput type="number" [(ngModel)]="filter.tatHours" (input)="applyFilters()">
+            <span matSuffix class="suffix-text">hrs</span>
+          </mat-form-field>
+        </div>
+
+        <!-- 5. From Date Picker -->
+        <mat-form-field appearance="outline" class="fuji-custom-field filter-item-wide">
+          <mat-label>From Date</mat-label>
+          <input matInput [matDatepicker]="fp" [(ngModel)]="filter.fromDate" (dateChange)="applyFilters()">
+          <mat-datepicker-toggle matSuffix [for]="fp" class="fuji-datepicker-toggle"></mat-datepicker-toggle>
+          <mat-datepicker #fp></mat-datepicker>
+        </mat-form-field>
+
+        <!-- 6. To Date Picker -->
+        <mat-form-field appearance="outline" class="fuji-custom-field filter-item-wide">
+          <mat-label>To Date</mat-label>
+          <input matInput [matDatepicker]="tp" [(ngModel)]="filter.toDate" (dateChange)="applyFilters()">
+          <mat-datepicker-toggle matSuffix [for]="tp" class="fuji-datepicker-toggle"></mat-datepicker-toggle>
+          <mat-datepicker #tp></mat-datepicker>
+        </mat-form-field>
+
+        <!-- Action Area containing Reset Button -->
+        <div class="action-cell">
+          <button mat-stroked-button class="reset-btn" (click)="resetFilters()">
+            <mat-icon>refresh</mat-icon> Reset
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Data Display Table Grid -->
+  <div class="table-container">
+    <div class="loading-overlay" *ngIf="isLoading">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+
+    <table mat-table [dataSource]="dataSource" class="fuji-table w-full">
+      <ng-container matColumnDef="ticketId">
+        <th mat-header-cell *matHeaderCellDef> Ticket # </th>
+        <td mat-cell *matCellDef="let row"> <strong>{{ row.ticketNumber }}</strong> </td>
+      </ng-container>
+
+      <ng-container matColumnDef="hospitalName">
+        <th mat-header-cell *matHeaderCellDef> Hospital </th>
+        <td mat-cell *matCellDef="let row"> {{ row.hospitalName }} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="productName">
+        <th mat-header-cell *matHeaderCellDef> Product </th>
+        <td mat-cell *matCellDef="let row"> <span class="prod-tag">{{ row.productName }}</span> </td>
+      </ng-container>
+
+      <ng-container matColumnDef="issueType">
+        <th mat-header-cell *matHeaderCellDef> Issue Type </th>
+        <td mat-cell *matCellDef="let row"> {{ row.issueType }} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="severity">
+        <th mat-header-cell *matHeaderCellDef> Severity </th>
+        <td mat-cell *matCellDef="let row">
+          <span class="sev-badge" [ngClass]="'sev-' + getSeverityClass(row.severity)">
+            {{ getSeverityLabel(row.severity) }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef> Status </th>
+        <td mat-cell *matCellDef="let row"> {{ getStatusLabel(row.status) }} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="createdDate">
+  <th mat-header-cell *matHeaderCellDef> Logged On </th>
+  <td mat-cell *matCellDef="let row"> 
+    {{ row.createdDate | localDateTime }} 
+  </td>
+</ng-container>
+
+
+      <ng-container matColumnDef="closedDate">
+  <th mat-header-cell *matHeaderCellDef> Resolved On </th>
+  <td mat-cell *matCellDef="let row"> 
+    {{ row.closedDate | localDateTime:'dd-MMM-yy hh:mm a' }}
+  </td>
+</ng-container>
+
+
+      <ng-container matColumnDef="actualTatHours">
+        <th mat-header-cell *matHeaderCellDef> Actual TAT </th>
+        <td mat-cell *matCellDef="let row" [class.breach-text]="row.actualTatHours > row.targetSlaHours">
+          {{ row.actualTatHours | number:'1.1-1' }} hrs
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <mat-paginator [length]="totalRecords" 
+                   [pageSize]="filter.pageSize" 
+                   [pageSizeOptions]="[5, 10, 25, 50]" 
+                   (page)="onPageChange($event)">
+    </mat-paginator>
+  </div>
+</div>

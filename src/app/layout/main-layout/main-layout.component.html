@@ -1,0 +1,203 @@
+<mat-sidenav-container class="layout-container">
+  <mat-sidenav #sidenav [mode]="isMobile ? 'over' : 'side'" [opened]="isSidenavOpen" class="sidenav">
+
+    <!-- Branding Section -->
+    <div class="brand-section">
+      <div class="brand-logo-wrapper">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://w3.org">
+          <path d="M12 2L3.5 7V17L12 22L20.5 17V7L12 2Z" stroke="#008a4c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 8V16M8 12H16" stroke="#008a4c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="main-title">FUJIFILM</span>
+        <span class="brand-tagline">SUPPORT PORTAL</span>
+      </div>
+    </div>
+
+    <!-- Log Ticket Button: HIDDEN for Manager -->
+    @if (user?.role?.toLowerCase() !== 'manager') {
+      <div class="action-section">
+        <button mat-flat-button (click)="openCreateTicketDialog(); closeSidenavOnMobile()" class="modern-create-btn">
+          <mat-icon>add_task</mat-icon>
+          <span>LOG NEW TICKET</span>
+        </button>
+      </div>
+    }
+
+    <mat-nav-list class="medical-nav">
+
+      <!-- MONITORING SECTION -->
+      @if (user?.role?.toLowerCase() === 'superadmin' ||
+           user?.role?.toLowerCase() === 'supportengineer' ||
+           user?.role?.toLowerCase() === 'manager') {
+
+        <div class="nav-label">Monitoring</div>
+
+        <a mat-list-item routerLink="/dashboard" routerLinkActive="active-link" (click)="closeSidenavOnMobile()">
+          <mat-icon matListItemIcon>grid_view</mat-icon>
+          <span matListItemTitle>Dashboard</span>
+        </a>
+
+        <a mat-list-item routerLink="/history" routerLinkActive="active-link" (click)="closeSidenavOnMobile()">
+          <mat-icon matListItemIcon>history_toggle_off</mat-icon>
+          <span matListItemTitle>Audit Trail</span>
+        </a>
+      }
+
+      <!-- SYSTEM AUDIT -->
+      @if (user?.role?.toLowerCase() === 'superadmin') {
+
+        <a mat-list-item routerLink="/system-audit" routerLinkActive="active-link" (click)="closeSidenavOnMobile()">
+          <mat-icon matListItemIcon>security</mat-icon>
+          <span matListItemTitle>System Audit</span>
+        </a>
+      }
+
+      <!-- OPERATIONS SECTION -->
+      <!-- @if (user?.role?.toLowerCase() !== 'manager') { -->
+        <div class="nav-label">Operations</div>
+        <a mat-list-item routerLink="/tickets" routerLinkActive="active-link" (click)="closeSidenavOnMobile()">
+          <mat-icon matListItemIcon>assignment_late</mat-icon>
+          <span matListItemTitle>Active Worklist</span>
+        </a>
+      <!-- } -->
+
+      <!-- REPORTING SECTION -->
+      @if (user?.role?.toLowerCase() === 'superadmin' ||
+           user?.role?.toLowerCase() === 'manager' ||
+           user?.role?.toLowerCase() === 'hospitaladmin') {
+        <div class="nav-label">Reporting</div>
+        <a mat-list-item routerLink="/mis-report" routerLinkActive="active-link" (click)="closeSidenavOnMobile()">
+          <mat-icon matListItemIcon>insights</mat-icon>
+          <span matListItemTitle>MIS Analytics</span>
+        </a>
+      }
+
+      <!-- ADMINISTRATION -->
+      @if (user?.role?.toLowerCase() === 'hospitaladmin' || user?.role?.toLowerCase() === 'superadmin') {
+        <div class="nav-label">Administration</div>
+        <a mat-list-item routerLink="/users" routerLinkActive="active-link" (click)="closeSidenavOnMobile()">
+          <mat-icon matListItemIcon>badge</mat-icon>
+          <span matListItemTitle>{{ user?.role?.toLowerCase() === 'superadmin' ? 'Staff Management' : 'User Management' }}</span>
+        </a>
+      }
+
+      <!-- SYSTEM MAPPING (SuperAdmin only) -->
+      @if (user?.role?.toLowerCase() === 'superadmin') {
+        <div class="nav-label">System Mapping</div>
+        <a mat-list-item routerLink="/templates" routerLinkActive="active-link" (click)="closeSidenavOnMobile()">
+          <mat-icon matListItemIcon>copy_all</mat-icon>
+          <span matListItemTitle>Issue Templates</span>
+        </a>
+        <a mat-list-item routerLink="/mapping/user-sites" routerLinkActive="active-link" (click)="closeSidenavOnMobile()">
+          <mat-icon matListItemIcon>hub</mat-icon>
+          <span matListItemTitle>User-Site Mapping</span>
+        </a>
+        <a mat-list-item routerLink="/products/mapping" routerLinkActive="active-link" (click)="closeSidenavOnMobile()">
+          <mat-icon matListItemIcon>account_tree</mat-icon>
+          <span matListItemTitle>Product Mapping</span>
+        </a>
+        <a mat-list-item routerLink="/mastersites" routerLinkActive="active-link" (click)="closeSidenavOnMobile()">
+          <mat-icon matListItemIcon>location_city</mat-icon>
+          <span matListItemTitle>Hospital Sites</span>
+        </a>
+        <a mat-list-item routerLink="/assets" routerLinkActive="active-link" (click)="closeSidenavOnMobile()">
+          <mat-icon matListItemIcon>inventory_2</mat-icon>
+          <span matListItemTitle>Product Master</span>
+        </a>
+      }
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <!-- Main Content Area -->
+  <mat-sidenav-content>
+    
+    <!-- TOOLBAR CONTROLS -->
+    <mat-toolbar class="main-toolbar">
+
+      <!-- LEFT SIDE: Notifications Button -->
+      <button mat-icon-button [matMenuTriggerFor]="notifMenu" class="notif-btn">
+        <mat-icon [matBadge]="unreadCount" matBadgeColor="warn" [matBadgeHidden]="unreadCount === 0">notifications</mat-icon>
+      </button>
+
+      <!-- LEFT SIDE: Sidebar Toggle Hamburger Button -->
+      <button mat-icon-button (click)="toggleSidenav()">
+        <mat-icon>menu_open</mat-icon>
+      </button>
+
+      <!-- LEFT SIDE: Facility Name Label -->
+      <span class="page-title">{{ user?.masterSiteName }}</span>
+      
+      <!-- HORIZONTAL SPACER PANEL -->
+      <span class="toolbar-spacer"></span>
+
+      <!-- RIGHT SIDE CONTAINER WITH EXPLICIT FLEX ANCHORING FOR MOBILE VIEWPORTS -->
+      <div class="profile-anchor-zone" style="display: flex; justify-content: flex-end; align-items: center; position: relative;">
+        
+        <button mat-button [matMenuTriggerFor]="userMenu" class="user-info-pill">
+          {{ (user?.firstName || '') + ' ' + (user?.lastName || '') }}
+          <mat-icon class="expand-icon">expand_circle_down</mat-icon>
+        </button>
+
+      </div>
+
+    </mat-toolbar>
+
+    <!-- Routed Page Insertion Point -->
+    <div class="main-content">
+      <router-outlet></router-outlet>
+    </div>
+    
+  </mat-sidenav-content>
+</mat-sidenav-container>
+
+
+<!-- ==========================================================================
+     GLOBAL OVERLAYS — DECOUPLED FROM SCROLL PARENTS FOR EXACT BOX RESOLUTION
+     ========================================================================== -->
+
+<!-- 🔔 1. Notification Dropdown Panel Menu -->
+<mat-menu
+  #notifMenu="matMenu"
+  xPosition="after"
+  yPosition="below"
+  panelClass="fuji-notif-menu">
+  <div class="notif-header">
+    <span>Notifications</span>
+    <button mat-button color="primary" (click)="markAllRead()" *ngIf="unreadCount > 0">Mark all read</button>
+  </div>
+  <mat-divider></mat-divider>
+  <div class="notif-scroll-area">
+    <button mat-menu-item *ngFor="let n of notifications" (click)="markAsRead(n)" [class.unread]="!n.isRead">
+      <div class="notif-item-content">
+        <mat-icon [color]="!n.isRead ? 'primary' : ''">{{ !n.isRead ? 'mark_email_unread' : 'mark_email_read' }}</mat-icon>
+        <div class="notif-text">
+          <div class="notif-title">
+  {{ n.title || 'System Alert' }}
+</div>
+          <div class="notif-message">{{ n.message }}</div>
+          <div class="notif-date">{{ n.createdDate | date:'shortTime' }}</div>
+        </div>
+      </div>
+    </button>
+    <div *ngIf="notifications.length === 0" class="empty-notif">
+      <mat-icon>notifications_off</mat-icon>
+      <p>No notifications yet</p>
+    </div>
+  </div>
+</mat-menu>
+
+
+<!-- 👤 2. Right-Aligned User Profile Operations Dropdown Menu -->
+<!-- 🛑 Force strict positioning override properties via panelClass 🛑 -->
+<mat-menu #userMenu="matMenu" xPosition="before" yPosition="below" panelClass="fuji-profile-overlay-panel">
+  <div class="menu-role-info" style="padding: 12px 16px; font-size: 0.8rem; color: #64748b; white-space: nowrap;">
+    Role: <strong style="color: #008a4c;">{{ user?.role }}</strong>
+  </div>
+  <mat-divider></mat-divider>
+  <button mat-menu-item (click)="logout()">
+    <mat-icon color="warn">logout</mat-icon>
+    <span>Logout</span>
+  </button>
+</mat-menu>

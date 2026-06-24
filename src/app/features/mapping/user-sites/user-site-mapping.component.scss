@@ -1,0 +1,248 @@
+@use "sass:color";
+
+/* ==========================================================================
+   USER-SITE MAPPING — PREMIUM
+   ========================================================================== */
+
+$brand: #008a4c;
+$brand-light: rgba(0, 138, 76, 0.08);
+$border: #e2e8f0;
+
+/* --- Global fixes --- */
+::ng-deep {
+  .mat-mdc-select-arrow svg { fill: $brand !important; }
+  .mat-datepicker-toggle { color: $brand !important; }
+  .mdc-notched-outline__notch { border-top: none !important; }
+
+  /* 🟢 Fix 1: Force all focused input highlights and multi-select outlines into Fuji Green */
+  .mat-mdc-form-field.mat-focused:not(.mat-form-field-invalid),
+  .mat-mdc-form-field.mat-focused {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: $brand !important;
+      border-width: 2px !important;
+    }
+    .mat-mdc-floating-label { color: $brand !important; }
+    .mat-mdc-select-trigger { caret-color: $brand !important; }
+  }
+
+  /* 🟢 Fix 2: Override the select options checkbox background to Fuji Green */
+  .mat-mdc-option {
+    // Targets the native checking background
+    .mdc-checkbox__native-control:checked ~ .mdc-checkbox__background,
+    .mdc-checkbox__native-control:indeterminate ~ .mdc-checkbox__background {
+      background-color: $brand !important;
+      border-color: $brand !important;
+    }
+    
+    // Custom variables patch for Angular Material theme overrides
+    --mdc-checkbox-selected-focus-icon-color: #{$brand};
+    --mdc-checkbox-selected-hover-icon-color: #{$brand};
+    --mdc-checkbox-selected-icon-color: #{$brand};
+    --mdc-checkbox-selected-focus-state-layer-color: #{rgba($brand, 0.12)};
+    --mdc-checkbox-selected-hover-state-layer-color: #{rgba($brand, 0.04)};
+    --mdc-checkbox-selected-pressed-state-layer-color: #{rgba($brand, 0.16)};
+  }
+
+  /* 🟢 Fix 3: Mobile Tapping Flash Polish */
+  @media (max-width: 768px) {
+    .mat-mdc-select-trigger,
+    .mat-mdc-option {
+      -webkit-tap-highlight-color: transparent !important;
+    }
+  }
+}
+
+/* ---- Container ---- */
+.mapping-container {
+  padding: 0;
+  background: transparent;
+}
+
+.header-card {
+  border-radius: 14px !important;
+  border: 1px solid $border !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  overflow: hidden;
+  padding: 20px 24px !important;
+
+  ::ng-deep .mat-mdc-card-header { padding: 0 0 16px !important; }
+  ::ng-deep .mat-mdc-card-title {
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+  }
+  ::ng-deep .mat-mdc-card-content { padding: 0 !important; }
+}
+
+/* ---- Controls Row ---- */
+.controls-row {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 16px;
+
+  mat-form-field {
+    flex: 1;
+    ::ng-deep .mat-mdc-form-field-subscript-wrapper { display: none !important; }
+  }
+
+  .fuji-btn {
+    background: $brand !important;
+    color: white !important;
+    height: 56px !important;
+    padding: 0 22px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 0.875rem !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+
+    &:disabled { background: #e2e8f0 !important; color: #94a3b8 !important; }
+    &:hover:not(:disabled) { background: color.adjust($brand, $lightness: -6%) !important; }
+  }
+}
+
+/* ---- Info Banner ---- */
+.info-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: $brand-light;
+  border-left: 4px solid $brand;
+  border-radius: 0 10px 10px 0;
+  color: #064e3b;
+  margin-bottom: 16px;
+  font-size: 0.875rem;
+
+  mat-icon { color: $brand; flex-shrink: 0; }
+  strong { color: color.adjust($brand, $lightness: -8%); }
+}
+
+/* ---- Table Container ---- */
+.table-container {
+  background: white;
+  border: 1px solid $border;
+  border-radius: 12px;
+  overflow: hidden;
+
+  table {
+    width: 100%;
+
+    th.mat-mdc-header-cell {
+      background: #f9fafb !important;
+      color: #64748b !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+      font-size: 0.7rem !important;
+      letter-spacing: 0.06em !important;
+      padding: 12px 16px !important;
+      border-bottom: 1px solid $border !important;
+    }
+
+    td.mat-mdc-cell {
+      padding: 10px 16px !important;
+      font-size: 0.8375rem !important;
+      color: #334155 !important;
+      border-bottom: 1px solid #f1f5f9 !important;
+    }
+
+    tr.mat-mdc-row:hover td { background: #f8fafc; }
+  }
+}
+
+/* ---- Icon Actions ---- */
+.icon-actions {
+  display: flex;
+  gap: 4px;
+
+  button[mat-icon-button] {
+    width: 32px !important;
+    height: 32px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    mat-icon { font-size: 18px !important; width: 18px !important; height: 18px !important; }
+  }
+
+  .fuji-activate-btn   { color: $brand !important;  &:hover { background: $brand-light !important; } }
+  .fuji-deactivate-btn { color: #ef4444 !important; &:hover { background: #fef2f2 !important; } }
+}
+
+/* ---- Status Badge ---- */
+.fuji-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  &.active   { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+  &.inactive { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+}
+
+/* ---- Paginator ---- */
+.mat-mdc-paginator {
+  background: white;
+  border-top: 1px solid $border;
+  margin-top: 0;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .controls-row {
+    flex-direction: column;
+    align-items: stretch;
+
+    mat-form-field { width: 100%; }
+    .fuji-btn { width: 100% !important; justify-content: center; }
+  }
+
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    table { min-width: 480px; }
+  }
+}
+/* ==========================================================================
+   GLOBAL ANGULAR MATERIAL DROPDOWN CHECKBOX OVERRIDES
+   ========================================================================== */
+
+// This class targets the global overlay panel created by Angular Material
+.mat-mdc-select-panel, .cdk-overlay-pane {
+  
+  // Force checkbox to use FUJIFILM green instead of theme blue
+  .mat-mdc-option {
+    --mdc-checkbox-selected-focus-icon-color: #008a4c !important;
+    --mdc-checkbox-selected-hover-icon-color: #008a4c !important;
+    --mdc-checkbox-selected-icon-color: #008a4c !important;
+    --mdc-checkbox-selected-focus-state-layer-color: rgba(0, 138, 76, 0.12) !important;
+    --mdc-checkbox-selected-hover-state-layer-color: rgba(0, 138, 76, 0.04) !important;
+    --mdc-checkbox-selected-pressed-state-layer-color: rgba(0, 138, 76, 0.16) !important;
+
+    // Forces the inner background box to turn green when checked
+    .mdc-checkbox__native-control:checked ~ .mdc-checkbox__background,
+    .mdc-checkbox__native-control:indeterminate ~ .mdc-checkbox__background {
+      background-color: #008a4c !important;
+      border-color: #008a4c !important;
+    }
+  }
+}
+
+/* Target the exact class from your browser console inspection */
+.mat-pseudo-checkbox-full.mat-pseudo-checkbox-checked {
+  background-color: #008a4c !important;
+  border-color: #008a4c !important;
+}
+
+/* Optional: Handles the intermediate/partially-selected state if needed */
+.mat-pseudo-checkbox-full.mat-pseudo-checkbox-indeterminate {
+  background-color: #008a4c !important;
+  border-color: #008a4c !important;
+}

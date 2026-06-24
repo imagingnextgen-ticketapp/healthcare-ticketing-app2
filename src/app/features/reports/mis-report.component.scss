@@ -1,0 +1,332 @@
+@use 'sass:color';
+
+/* ==========================================================================
+   MIS REPORT — PREMIUM ANALYTICS PAGE
+   ========================================================================== */
+
+$brand: #008a4c;
+$brand-light: rgba(0, 138, 76, 0.08);
+$border: #e2e8f0;
+
+/* --- Global Overrides --- */
+::ng-deep {
+  .fuji-dropdown-panel {
+    .mdc-checkbox {
+      .mdc-checkbox__background { border-color: #94a3b8 !important; }
+      &.mdc-checkbox--selected .mdc-checkbox__background,
+      input:checked ~ .mdc-checkbox__background {
+        background-color: $brand !important;
+        border-color: $brand !important;
+      }
+    }
+  }
+
+  .mat-mdc-progress-spinner circle,
+  .mat-progress-spinner circle,
+  .mat-spinner circle { stroke: $brand !important; }
+
+  .mat-mdc-select-panel.fuji-dropdown-panel {
+    background: white !important;
+    border: 1px solid $border !important;
+    border-radius: 10px !important;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
+    padding: 4px 0 !important;
+    max-height: 260px !important;
+
+    .mat-mdc-option {
+      min-height: 36px !important;
+      padding: 0 14px !important;
+      font-size: 0.8375rem !important;
+
+      &.mdc-list-item--selected:not(.mat-mdc-option-disabled) {
+        background: $brand-light !important;
+        .mdc-list-item__primary-text { color: $brand !important; font-weight: 600 !important; }
+      }
+       .mat-mdc-option-pseudo-checkbox {
+          --mdc-checkbox-selected-icon-color: #{$brand} !important;
+          color: $brand !important;
+        }
+    }
+  }
+
+  .fuji-custom-field {
+    width: 100%;
+
+    .mat-mdc-select-arrow { color: #067541 !important; }
+
+    &.mat-form-field-focused .mat-mdc-select-arrow { color: $brand !important; }
+
+    .mat-mdc-form-field-subscript-wrapper { display: none !important; }
+    .mdc-notched-outline__notch { border-top: none !important; }
+
+    .mat-mdc-text-field-wrapper {
+      padding: 0 12px !important;
+      background: white !important;
+      height: 40px !important;
+    }
+
+    .mat-mdc-form-field-infix {
+      padding-top: 8px !important;
+      padding-bottom: 8px !important;
+      min-height: 40px !important;
+    }
+
+    .mat-mdc-floating-label {
+      top: 20px !important;
+      font-size: 0.8rem !important;
+      &.mdc-floating-label--float-above { transform: translateY(-22px) scale(0.85) !important; }
+    }
+
+    .mat-mdc-input-element,
+    .mat-mdc-select-value { font-size: 0.8rem !important; color: #035b16 !important; }
+  }
+
+  .fuji-datepicker-toggle {
+    button.mat-mdc-icon-button {
+      width: 28px !important;
+      height: 28px !important;
+      padding: 0 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      color: $brand !important;
+
+      svg { width: 16px !important; height: 16px !important; fill: currentColor !important; }
+      &:hover { background: $brand-light !important; }
+    }
+  }
+
+  /* Focus states */
+  .mat-mdc-form-field.mat-focused:not(.mat-form-field-invalid) {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: $brand !important;
+      border-width: 2px !important;
+    }
+    .mat-mdc-floating-label { color: $brand !important; }
+  }
+}
+
+/* ---- Page Wrapper ---- */
+.report-wrapper {
+  background: transparent;
+  padding: 0;
+}
+
+/* ---- Header ---- */
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  .title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .fuji-green-icon { color: $brand; font-size: 26px; width: 26px; height: 26px; }
+
+    .fuji-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+  }
+}
+
+/* ---- Export Button ---- */
+.fuji-btn {
+  background: $brand !important;
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 0.8375rem !important;
+  padding: 0 18px !important;
+  height: 40px !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 138, 76, 0.2);
+
+  mat-icon { font-size: 18px !important; width: 18px !important; height: 18px !important; }
+  &:disabled { background: #e2e8f0 !important; color: #94a3b8 !important; box-shadow: none !important; }
+}
+
+/* ---- Filter Card ---- */
+.filter-card {
+  background: white;
+  border: 1px solid $border;
+  border-radius: 14px;
+  padding: 16px !important;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+  .filter-flex-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+
+    .filter-row {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .row-primary .filter-item { flex: 1 1 33%; max-width: 280px; }
+
+    .row-secondary {
+      .filter-item-wide { flex: 0 1 170px; }
+
+      .tat-filter-group {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+        flex: 0 1 190px;
+        .operator-field { width: 52px !important; flex: none; }
+        .value-field { flex: 1; }
+        .suffix-text { font-size: 0.75rem; color: #64748b; font-weight: 500; }
+      }
+
+      .action-cell {
+        //margin-left: auto;
+
+        .reset-btn {
+          height: 40px !important;
+          padding: 0 14px !important;
+          font-size: 0.8rem !important;
+          font-weight: 600;
+          border: 1px solid $border;
+          color: #475569;
+          background: white;
+          border-radius: 8px;
+          white-space: nowrap;
+          transition: all 0.15s ease;
+
+          &:hover {
+            background: #fef2f2;
+            border-color: #fca5a5;
+            color: #dc2626;
+          }
+
+          mat-icon { margin-right: 2px; font-size: 14px; width: 14px; height: 14px; }
+        }
+      }
+    }
+  }
+}
+
+/* ---- Table Container ---- */
+.table-container {
+  background: white;
+  border: 1px solid $border;
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+  .fuji-table {
+    width: 100%;
+
+    th.mat-mdc-header-cell {
+      background: #f9fafb !important;
+      color: #64748b !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+      font-size: 0.7rem !important;
+      letter-spacing: 0.06em !important;
+      padding: 12px 14px !important;
+      border-bottom: 1px solid $border !important;
+      white-space: nowrap;
+    }
+
+    td.mat-mdc-cell {
+      padding: 10px 14px !important;
+      font-size: 0.8125rem;
+      color: #334155;
+      border-bottom: 1px solid #f1f5f9 !important;
+    }
+
+    tr:hover td { background: #f8fafc; }
+  }
+}
+
+/* ---- Badges ---- */
+.sev-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  &.sev-low      { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+  &.sev-medium   { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  &.sev-high     { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+  &.sev-critical { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+}
+
+.prod-tag {
+  background: $brand-light;
+  color: $brand;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.breach-text { color: #dc2626; font-weight: 700; }
+
+.loading-overlay {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255, 255, 255, 0.8); z-index: 10;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .header-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .fuji-btn { width: 100% !important; justify-content: center; }
+
+  .filter-card {
+    padding: 12px !important;
+
+    .filter-flex-container {
+      .filter-row { flex-direction: column !important; }
+      .filter-item, .filter-item-wide { max-width: 100% !important; flex: 1 1 100% !important; }
+      .row-secondary .tat-filter-group { flex: 1 1 100%; }
+      .action-cell {
+  width: 100%;
+  margin-left: 0 !important;
+  align-self: flex-start;
+}
+
+.action-cell .reset-btn {
+  width: 100%;
+}
+    }
+  }
+
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    table { min-width: 700px; }
+  }
+}

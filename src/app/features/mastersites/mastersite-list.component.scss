@@ -1,0 +1,263 @@
+/* ==========================================================================
+   MASTER SITES — PREMIUM LIST PAGE
+   ========================================================================== */
+
+$brand: #008a4c;
+$brand-light: rgba(0, 138, 76, 0.08);
+$border: #e2e8f0;
+
+.page-container {
+  padding: 0;
+  background: transparent;
+  min-height: auto;
+}
+
+/* ---- Page Header ---- */
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 20px;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  .title-group {
+    .page-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 0 4px;
+      letter-spacing: -0.02em;
+    }
+    .page-subtitle { color: #64748b; font-size: 0.875rem; margin: 0; }
+  }
+}
+
+.action-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+
+  .search-field {
+    width: 260px;
+
+    ::ng-deep {
+      .mat-mdc-form-field-subscript-wrapper { display: none !important; }
+      .mdc-notched-outline__notch { border-top: none !important; }
+      .mat-mdc-text-field-wrapper { height: 42px !important; background: white !important; }
+      .mat-mdc-form-field-flex { height: 42px !important; align-items: center !important; }
+      .mat-mdc-form-field-infix { padding-top: 9px !important; padding-bottom: 9px !important; }
+    }
+  }
+
+  .btn-fuji-add {
+    background: $brand !important;
+    color: white !important;
+    height: 42px !important;
+    padding: 0 20px !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    font-size: 0.875rem !important;
+  }
+}
+
+/* Focus fix */
+::ng-deep .fuji-search.mat-focused {
+  .mdc-notched-outline__leading,
+  .mdc-notched-outline__notch,
+  .mdc-notched-outline__trailing {
+    border-color: $brand !important;
+    border-width: 2px !important;
+  }
+}
+
+/* ---- Table Card ---- */
+.table-card {
+  position: relative;
+  border-radius: 14px !important;
+  border: 1px solid $border !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+  overflow: hidden;
+  padding: 0 !important;
+
+  .loading-shade {
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: rgba(255, 255, 255, 0.75);
+    z-index: 10;
+    display: flex; align-items: center; justify-content: center;
+  }
+}
+
+/* ---- Table Styles ---- */
+.mat-mdc-table {
+  width: 100%;
+
+  .mat-mdc-header-cell {
+    font-size: 0.7rem !important;
+    color: #64748b !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+    background: #f9fafb !important;
+    border-bottom: 1px solid $border !important;
+  }
+
+  .mat-mdc-cell { font-size: 0.8375rem; color: #334155; }
+
+  .bold-text { font-weight: 600; color: #1e293b; }
+
+  .truncate-cell {
+    max-width: 240px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mat-mdc-cell .mat-icon {
+    &.mat-primary { color: $brand !important; }
+  }
+
+  .edit-btn {
+    color: $brand !important;
+    &:hover { background: $brand-light !important; }
+  }
+}
+
+/* ---- Badges ---- */
+.badge-active {
+  display: inline-flex; align-items: center; padding: 3px 10px;
+  border-radius: 20px; font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;
+}
+
+.badge-inactive {
+  display: inline-flex; align-items: center; padding: 3px 10px;
+  border-radius: 20px; font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;
+}
+
+/* ---- Paginator ---- */
+.fuji-paginator {
+  border-top: 1px solid $border;
+  ::ng-deep .mat-mdc-icon-button { color: $brand !important; }
+}
+
+/* ---- Actions ---- */
+.center-text { text-align: center; }
+.action-cell { display: flex; justify-content: center; gap: 4px; align-items: center; }
+
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: #94a3b8;
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+/* ---- Accent icon button ---- */
+::ng-deep {
+  .mat-mdc-icon-button.mat-accent {
+    --mdc-icon-button-icon-color: #{$brand} !important;
+    color: $brand !important;
+    &:hover { background: $brand-light !important; }
+  }
+}
+
+/* ========================================================
+   DIALOG STYLES (mastersite-create uses mastersite-list styles)
+   ======================================================== */
+
+.dialog-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0 0 0;
+  h2 { margin: 0; font-size: 1rem; font-weight: 700; color: #0f172a; }
+}
+
+.dialog-close-btn {
+  color: #94a3b8;
+  flex-shrink: 0;
+  &:hover { color: #475569; }
+}
+
+/* Content & Form Fields */
+.dialog-scroll-content {
+  padding: 20px 24px !important;
+
+  .enterprise-form { display: flex; flex-direction: column; gap: 8px; }
+
+  mat-icon[matPrefix] { color: #94a3b8; margin-right: 8px; }
+}
+
+/* Status box */
+.status-selection-box {
+  margin-top: 10px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid $border;
+  display: flex;
+  align-items: center;
+
+  .enterprise-checkbox {
+    ::ng-deep .mdc-checkbox__native-control:enabled:checked ~ .mdc-checkbox__background {
+      background-color: $brand !important;
+      border-color: $brand !important;
+    }
+  }
+
+  .checkbox-text-group {
+    display: flex;
+    flex-direction: column;
+    margin-left: 12px;
+    line-height: 1.4;
+
+    .main-label { font-size: 0.875rem; font-weight: 600; color: #1e293b; }
+    .helper-hint { font-size: 0.75rem; color: #64748b; }
+  }
+}
+
+/* Footer */
+.dialog-footer-actions {
+  padding: 14px 24px !important;
+  border-top: 1px solid $border;
+
+  .btn-cancel { color: #64748b; font-weight: 500; }
+
+  button.mat-mdc-raised-button.mat-primary,
+  button[mat-raised-button] {
+    background-color: $brand !important;
+    color: white !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    &:hover:not([disabled]) { background-color: #006b38 !important; }
+    &:disabled, &[disabled] { background: #e2e8f0 !important; color: #94a3b8 !important; }
+  }
+}
+
+.form-row { width: 100%; margin-bottom: 0; display: block; }
+.full-width { width: 100%; }
+
+/* ========================================================
+   MOBILE
+   ======================================================== */
+
+@media (max-width: 768px) {
+  .header-section { flex-direction: column; align-items: flex-start; gap: 12px; }
+
+  .action-row {
+    flex-wrap: wrap;
+    .search-field { width: 100%; }
+    .btn-fuji-add { width: 100% !important; justify-content: center; }
+  }
+
+  .table-card {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    .mat-mdc-table { min-width: 580px; }
+  }
+}

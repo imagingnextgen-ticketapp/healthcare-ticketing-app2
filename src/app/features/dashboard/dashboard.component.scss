@@ -1,0 +1,306 @@
+/* ==========================================================================
+   DASHBOARD — PREMIUM STAT CARDS
+   ========================================================================== */
+
+$brand: #008a4c;
+$brand-dark: #006b38;
+
+.dashboard-wrapper {
+  padding: 0;
+}
+
+/* --- Page Header --- */
+.dash-header {
+  margin-bottom: 24px;
+
+  .dash-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 4px;
+    letter-spacing: -0.02em;
+  }
+
+  .dash-subtitle {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin: 0;
+  }
+}
+
+/* --- Stats Grid --- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+/* --- Base Stat Card --- */
+.stat-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--card-accent, transparent);
+  }
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+  }
+
+  .stat-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .stat-icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--icon-bg, #f1f5f9);
+
+    mat-icon {
+      color: var(--icon-color, #64748b);
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+    }
+  }
+
+  .stat-trend {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 20px;
+
+    &.neutral { background: #f1f5f9; color: #64748b; }
+    &.active { background: #dbeafe; color: #1d4ed8; }
+    &.resolved { background: #dcfce7; color: #15803d; }
+    &.escalated { background: #fee2e2; color: #b91c1c; }
+  }
+
+  .stat-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--value-color, #0f172a);
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--label-color, #94a3b8);
+  }
+}
+
+/* --- Brand Card (Total) --- */
+.stat-card--brand {
+  background: linear-gradient(140deg, #008a4c 0%, #005a32 100%);
+  border-color: transparent;
+  box-shadow: 0 4px 16px rgba(0, 138, 76, 0.25);
+  --card-accent: transparent;
+  --icon-bg: rgba(255, 255, 255, 0.15);
+  --icon-color: white;
+  --value-color: white;
+  --label-color: rgba(255, 255, 255, 0.75);
+
+  .stat-trend { background: rgba(255, 255, 255, 0.15); color: white; }
+
+  &:hover {
+    box-shadow: 0 12px 28px rgba(0, 138, 76, 0.35);
+  }
+}
+
+/* --- Info Card (Open) --- */
+.stat-card--info {
+  --card-accent: #3b82f6;
+  --icon-bg: #eff6ff;
+  --icon-color: #3b82f6;
+  --value-color: #1e40af;
+  --label-color: #93c5fd;
+}
+
+/* --- Success Card (Resolved) --- */
+.stat-card--success {
+  --card-accent: #10b981;
+  --icon-bg: #ecfdf5;
+  --icon-color: #059669;
+  --value-color: #065f46;
+  --label-color: #6ee7b7;
+}
+
+/* --- Danger Card (Escalated) --- */
+.stat-card--danger {
+  --card-accent: #ef4444;
+  --icon-bg: #fef2f2;
+  --icon-color: #ef4444;
+  --value-color: #b91c1c;
+  --label-color: #fca5a5;
+}
+
+/* ==========================================================================
+   QUICK ACTIONS SECTION
+   ========================================================================== */
+
+.quick-section {
+  margin-top: 32px;
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  margin: 0 0 16px;
+}
+
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.quick-action-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: white;
+  border: 1px solid #e8ecf0;
+  border-radius: 14px;
+  padding: 16px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    border-color: #008a4c;
+    box-shadow: 0 4px 16px rgba(0, 138, 76, 0.12);
+    transform: translateY(-2px);
+
+    .qa-arrow { color: #008a4c; transform: translateX(3px); }
+  }
+}
+
+.qa-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  mat-icon { font-size: 22px; width: 22px; height: 22px; }
+
+  &.qa-icon--blue   { background: #eff6ff; mat-icon { color: #3b82f6; } }
+  &.qa-icon--green  { background: #ecfdf5; mat-icon { color: #008a4c; } }
+  &.qa-icon--purple { background: #f5f3ff; mat-icon { color: #7c3aed; } }
+  &.qa-icon--orange { background: #fff7ed; mat-icon { color: #ea580c; } }
+}
+
+.qa-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.qa-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qa-desc {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qa-arrow {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: #cbd5e1;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
+@media (max-width: 1280px) {
+  .quick-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .quick-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .stat-card {
+    padding: 18px;
+    .stat-value { font-size: 2rem; }
+  }
+
+  .quick-actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-action-card {
+    padding: 14px;
+  }
+
+  .qa-desc { display: none; }
+}
+
+@media (max-width: 400px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}

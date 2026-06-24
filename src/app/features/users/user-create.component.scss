@@ -1,0 +1,182 @@
+@use "sass:color";
+
+/* ==========================================================================
+   USER CREATE/EDIT DIALOG — PREMIUM
+   ========================================================================== */
+
+$brand: #008a4c;
+$brand-light: rgba(0, 138, 76, 0.08);
+$border: #e2e8f0;
+
+/* ---- Dialog Title Row ---- */
+.dialog-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px 14px !important;
+  border-bottom: 1px solid $border;
+  margin: 0;
+
+  h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+  }
+}
+
+[mat-dialog-title] {
+  margin: 0;
+  padding: 0 !important;
+  font-family: inherit !important;
+}
+
+.dialog-close-btn {
+  color: #94a3b8 !important;
+  flex-shrink: 0;
+  &:hover { color: #475569 !important; background: #f1f5f9 !important; }
+}
+
+/* ---- Form Grid ---- */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 20px 24px !important;
+  align-items: end;
+
+  @media (max-width: 580px) {
+    grid-template-columns: 1fr;
+    padding: 16px !important;
+  }
+
+  mat-form-field { width: 100%; }
+}
+
+/* ---- Checkbox Container ---- */
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  padding-bottom: 6px;
+}
+
+/* ---- Dialog Actions ---- */
+mat-dialog-actions {
+  padding: 12px 24px 18px !important;
+  border-top: 1px solid $border;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  justify-content: flex-end;
+
+  .save-btn {
+    background: $brand !important;
+    color: white !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    height: 40px !important;
+    padding: 0 22px !important;
+
+    &:disabled { background: #e2e8f0 !important; color: #94a3b8 !important; }
+    &:hover:not(:disabled) { background: color.adjust($brand, $lightness: -6%) !important; }
+  }
+}
+
+/* ---- Material overrides ---- */
+::ng-deep {
+  .mdc-notched-outline__notch {
+    border-top: none !important;
+  }
+
+  .mat-mdc-checkbox.mat-primary {
+    --mdc-checkbox-selected-icon-color: #{$brand} !important;
+    --mdc-checkbox-selected-focus-icon-color: #{$brand} !important;
+    --mdc-checkbox-selected-hover-icon-color: #{$brand} !important;
+    --mdc-checkbox-selected-checkmark-color: #ffffff !important;
+    --mat-checkbox-selected-focus-state-layer-color: #{$brand-light} !important;
+    --mat-checkbox-selected-hover-state-layer-color: #{$brand-light} !important;
+  }
+
+  .mat-mdc-form-field.mat-focused:not(.mat-form-field-invalid) {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: $brand !important;
+      border-width: 2px !important;
+    }
+
+    .mat-mdc-floating-label {
+      color: $brand !important;
+    }
+  }
+
+  .mat-mdc-select-arrow svg {
+    fill: $brand !important;
+  }
+
+  /* SHOW ERROR TEXT */
+  .mat-mdc-form-field-subscript-wrapper {
+    display: block !important;
+    margin-top: 2px !important;
+  }
+
+  mat-error,
+  .mat-mdc-form-field-error {
+    font-size: 0.75rem !important;
+    color: #ef4444 !important;
+    display: block !important;
+    font-weight: 500 !important;
+    line-height: 1.2 !important;
+  }
+
+  .mat-mdc-option.mdc-list-item--selected {
+    .mat-mdc-option-state-icon {
+      color: $brand !important;
+    }
+
+    .mdc-list-item__primary-text {
+      color: $brand !important;
+    }
+  }
+}
+/* ==========================================
+   ERROR MESSAGE FIX
+   ========================================== */
+
+::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  min-height: 22px !important;
+  margin-top: 2px !important;
+}
+
+::ng-deep .mat-mdc-form-field-error,
+::ng-deep mat-error {
+  display: block !important;
+  font-size: 11px !important;
+  line-height: 14px !important;
+  font-weight: 500 !important;
+  color: #ef4444 !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+
+/* ==========================================
+   FORM GRID
+   ========================================== */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start; /* IMPORTANT */
+}
+
+.form-grid mat-form-field {
+  width: 100%;
+}
+
+@media (max-width: 580px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

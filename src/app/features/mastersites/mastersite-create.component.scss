@@ -1,0 +1,128 @@
+/* ==========================================================================
+   MASTERSITE CREATE/EDIT DIALOG — PREMIUM
+   ========================================================================== */
+
+$brand: #008a4c;
+$brand-light: rgba(0, 138, 76, 0.08);
+$border: #e2e8f0;
+
+/* ---- Dialog Title ---- */
+.dialog-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px 14px !important;
+  border-bottom: 1px solid $border;
+  margin: 0;
+
+  h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+  }
+}
+
+.dialog-subtitle {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 8px 24px 0 !important;
+}
+
+.dialog-close-btn {
+  color: #94a3b8 !important;
+  flex-shrink: 0;
+  &:hover { color: #475569 !important; background: #f1f5f9 !important; }
+}
+
+/* ---- Content / Form ---- */
+.mat-mdc-dialog-content, mat-dialog-content {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.form-row {
+  width: 100%;
+  margin-bottom: 0;
+  padding: 10px 24px 0;
+  display: block;
+
+  &:first-of-type { padding-top: 20px; }
+}
+
+.full-width { width: 100%; }
+
+/* ---- Status Checkbox Box ---- */
+.status-selection-box {
+  margin: 14px 24px 10px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid $border;
+  display: flex;
+  align-items: center;
+
+  .enterprise-checkbox {
+    ::ng-deep .mdc-checkbox__native-control:enabled:checked ~ .mdc-checkbox__background {
+      background-color: $brand !important;
+      border-color: $brand !important;
+    }
+  }
+
+  .checkbox-text-group {
+    display: flex;
+    flex-direction: column;
+    margin-left: 10px;
+    line-height: 1.4;
+
+    .main-label   { font-size: 0.875rem; font-weight: 600; color: #1e293b; }
+    .helper-hint  { font-size: 0.75rem;  color: #64748b; }
+  }
+}
+
+/* ---- Dialog Actions ---- */
+mat-dialog-actions {
+  padding: 14px 24px 18px !important;
+  border-top: 1px solid $border;
+
+  button[mat-raised-button].mat-primary,
+  button[mat-raised-button] {
+    background: $brand !important;
+    color: white !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    height: 40px !important;
+    padding: 0 22px !important;
+
+    &:hover:not([disabled]) { background: #006b38 !important; }
+    &:disabled, &[disabled] { background: #e2e8f0 !important; color: #94a3b8 !important; }
+  }
+}
+
+/* ---- Material overrides ---- */
+::ng-deep {
+  .mdc-notched-outline__notch { border-top: none !important; }
+
+  .mat-mdc-form-field.mat-focused:not(.mat-form-field-invalid) {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: $brand !important;
+      border-width: 2px !important;
+    }
+    .mat-mdc-floating-label { color: $brand !important; }
+  }
+
+  .mat-mdc-select-arrow svg, .mat-mdc-select-trigger .mat-mdc-select-arrow svg {
+    fill: $brand !important;
+    color: $brand !important;
+  }
+
+  .mat-mdc-form-field-subscript-wrapper { display: none !important; }
+
+  .mat-mdc-icon-button.mat-accent {
+    color: $brand !important;
+    &:hover { background: $brand-light !important; }
+  }
+}

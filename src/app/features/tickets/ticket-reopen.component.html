@@ -1,0 +1,62 @@
+<!-- REMOVED margin: -24px; added overflow: hidden -->
+<div class="fuji-reopen-wrapper" style="background: white; overflow: hidden;">
+  
+  <!-- HEADER -->
+  <div style="background: #f8fafc; padding: 16px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #eee;">
+    <mat-icon style="color: #008744; font-size: 28px; width: 28px; height: 28px; flex-shrink:0;">history</mat-icon>
+    <div style="flex: 1; min-width: 0;">
+      <h2 style="margin: 0; font-size: 18px; font-weight: 600; color: #333;">Reopen Ticket #{{data.ticketId}}</h2>
+      <p style="margin: 0; font-size: 13px; color: #666;">Return this ticket to active status</p>
+    </div>
+    <button mat-icon-button mat-dialog-close style="color: #94a3b8; flex-shrink:0;" matTooltip="Close">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div style="padding: 24px;"> <!-- This padding will now work perfectly -->
+    <form [formGroup]="reopenForm" (ngSubmit)="onSubmit()">
+      
+      <p style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #10b981; margin-bottom: 12px; letter-spacing: 0.5px;">
+        Ticket Reference Details
+      </p>
+      
+      <!-- Side-by-Side Grid -->
+      <div style="display: flex; gap: 16px; width: 100%; margin-bottom: 10px;">
+        <mat-form-field appearance="outline" style="flex: 1;">
+          <mat-label>Site Name</mat-label>
+          <input matInput formControlName="masterSiteName" readonly>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" style="flex: 1;">
+          <mat-label>Product Name</mat-label>
+          <input matInput formControlName="productName" readonly>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" style="width: 100%;">
+        <mat-label>Original Description</mat-label>
+        <textarea matInput formControlName="description" rows="2" readonly></textarea>
+      </mat-form-field>
+
+      <mat-divider style="margin: 20px 0;"></mat-divider>
+
+      <p style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #10b981; margin-bottom: 12px;">
+        Justification
+      </p>
+      <mat-form-field appearance="outline" style="width: 100%;">
+        <mat-label>Reason for Reopening</mat-label>
+        <textarea matInput formControlName="comment" rows="4" placeholder="Enter reason..."></textarea>
+      </mat-form-field>
+
+      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+        <button mat-button type="button" mat-dialog-close>Cancel</button>
+        <button mat-flat-button 
+                type="submit"
+                style="background-color: #10b981 !important; color: white !important; height: 44px; padding: 0 24px; font-weight: 600;"
+                [disabled]="reopenForm.invalid || loading">
+          Confirm Reopen
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

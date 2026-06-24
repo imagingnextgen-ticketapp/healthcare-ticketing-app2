@@ -1,0 +1,98 @@
+<div mat-dialog-title class="dialog-title-row">
+  <h2>{{ isEdit ? 'Edit User' : 'Create User' }}</h2>
+  <button mat-icon-button mat-dialog-close class="dialog-close-btn" matTooltip="Close">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content [formGroup]="form">
+  <div class="form-grid">
+    <mat-form-field appearance="outline">
+  <mat-label>First Name</mat-label>
+  <input matInput formControlName="firstName">
+</mat-form-field>
+
+<mat-form-field appearance="outline">
+  <mat-label>Last Name</mat-label>
+  <input matInput formControlName="lastName">
+</mat-form-field>
+    <mat-form-field appearance="outline">
+  <mat-label>User Name</mat-label>
+
+  <input matInput formControlName="userName">
+
+  <mat-error *ngIf="form.get('userName')?.hasError('required')">
+    Username is required
+  </mat-error>
+ <mat-error *ngIf="form.get('userName')?.hasError('pattern')">
+    Username must contain only letters and numbers without spaces
+  </mat-error>
+
+  <mat-error *ngIf="form.get('userName')?.hasError('duplicate')">
+    Username already exists
+  </mat-error>
+</mat-form-field>
+
+
+ <mat-form-field appearance="outline">
+  <mat-label>Email Address</mat-label>
+
+  <input matInput formControlName="email" type="email">
+
+  <mat-error *ngIf="form.get('email')?.hasError('required')">
+    Email address is required
+  </mat-error>
+
+  <mat-error *ngIf="form.get('email')?.hasError('email')">
+    Enter a valid email address
+  </mat-error>
+
+  <mat-error *ngIf="form.get('email')?.hasError('duplicate')">
+    Email already exists
+  </mat-error>
+</mat-form-field>
+
+
+   <mat-form-field appearance="outline">
+  <mat-label>Phone Number</mat-label>
+
+  <input
+    matInput
+    formControlName="phoneNumber"
+    type="text"
+    (keypress)="onlyNumbers($event)"
+    maxlength="15">
+
+  <mat-error *ngIf="form.get('phoneNumber')?.hasError('pattern')">
+    Phone number must contain 7-15 digits
+  </mat-error>
+</mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Role</mat-label>
+      <mat-select formControlName="roleId">
+        <mat-option *ngFor="let r of roles" [value]="r.roleId">
+          {{ r.roleName }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" *ngIf="!isEdit">
+      <mat-label>Password</mat-label>
+      <input matInput type="password" formControlName="password">
+    </mat-form-field>
+
+    <div class="checkbox-container">
+      <mat-checkbox formControlName="isActive" color="primary">
+        Active Status
+      </mat-checkbox>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-raised-button class="save-btn" (click)="onSubmit()" [disabled]="form.invalid">
+    Save
+  </button>
+</mat-dialog-actions>

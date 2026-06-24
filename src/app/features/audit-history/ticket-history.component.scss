@@ -1,0 +1,212 @@
+@use "sass:color";
+
+/* ==========================================================================
+   TICKET HISTORY — PREMIUM AUDIT TRAIL
+   ========================================================================== */
+
+$brand: #008a4c;
+$brand-light: rgba(0, 138, 76, 0.08);
+$border: #e2e8f0;
+
+.history-container {
+  padding: 0;
+
+  /* ---- Filter Card ---- */
+  .filter-card {
+    padding: 16px 20px !important;
+    margin-bottom: 20px;
+    background: white;
+    border-radius: 14px;
+    border: 1px solid $border;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+
+  .filter-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+
+    mat-form-field {
+      flex: 1;
+      min-width: 170px;
+
+      ::ng-deep {
+        .mat-mdc-form-field-subscript-wrapper { display: none !important; }
+        .mdc-notched-outline__notch { border-top: none !important; }
+      }
+    }
+  }
+
+  /* Buttons */
+  .btn-fuji {
+    height: 48px !important;
+    padding: 0 20px !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    font-size: 0.875rem !important;
+    transition: all 0.2s ease;
+    background: $brand !important;
+    color: white !important;
+    border: none;
+    white-space: nowrap;
+
+    mat-icon { font-size: 18px !important; width: 18px !important; height: 18px !important; }
+    &:hover { background: color.adjust($brand, $lightness: -6%) !important; box-shadow: 0 4px 10px $brand-light; }
+  }
+
+  .reset-btn {
+    height: 48px !important;
+    padding: 0 18px !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    font-size: 0.875rem !important;
+    background: white !important;
+    color: #ef4444 !important;
+    border: 1px solid $border !important;
+    transition: all 0.15s;
+    white-space: nowrap;
+
+    mat-icon { font-size: 18px !important; width: 18px !important; height: 18px !important; }
+    &:hover { background: #fef2f2 !important; border-color: #fca5a5 !important; }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+
+  /* ---- Table Wrapper ---- */
+  .table-wrapper {
+    background: white;
+    border-radius: 14px;
+    border: 1px solid $border;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+
+    table {
+      width: 100%;
+
+      th.mat-mdc-header-cell {
+        background: #f9fafb !important;
+        color: #64748b !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        font-size: 0.7rem !important;
+        letter-spacing: 0.06em !important;
+        padding: 12px 16px !important;
+        border-bottom: 1px solid $border !important;
+        white-space: nowrap;
+      }
+
+      td.mat-mdc-cell {
+        padding: 10px 16px !important;
+        color: #334155 !important;
+        font-size: 0.8375rem !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+      }
+
+      tr.mat-mdc-row:hover td { background: #f8fafc; }
+    }
+  }
+
+  /* Highlight user / ticket columns */
+  .user-text {
+    font-weight: 600;
+    color: $brand;
+  }
+
+  mat-paginator {
+    background: white;
+    border-top: 1px solid $border;
+  }
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .history-container {
+    .filter-card { padding: 14px !important; }
+
+    .filter-row {
+      flex-direction: column;
+      align-items: stretch;
+
+      mat-form-field { min-width: unset; width: 100%; }
+      .btn-fuji, .reset-btn { width: 100% !important; }
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      table { min-width: 600px; }
+    }
+  }
+}
+/* ==========================================================
+   FUJI GREEN MATERIAL OVERRIDES
+   ========================================================== */
+/* ==========================================================
+   FUJI GREEN MATERIAL OVERRIDES
+   ========================================================== */
+
+/* 1. Global Form Field Layout Level Custom Properties Override */
+::ng-deep .mat-mdc-form-field {
+  /* Fixes Outlined Form Fields Appearance */
+  --mdc-outlined-text-field-focus-outline-color: #008a4c !important;
+  --mdc-outlined-text-field-focus-label-text-color: #008a4c !important;
+
+  /* Fixes Standard & Filled Form Fields Appearance */
+  --mdc-filled-text-field-focus-active-indicator-color: #008a4c !important;
+  --mdc-filled-text-field-focus-label-text-color: #008a4c !important;
+
+  /* Global Core MDC Input State Variable Variables */
+  --mdc-theme-primary: #008a4c !important;
+  --mat-form-field-focus-color: #008a4c !important;
+}
+
+/* 2. Overriding the actual dynamic DOM Outline wrappers */
+::ng-deep .mat-mdc-form-field.mat-focused {
+  /* Forces Outlined Borders */
+  .mdc-notched-outline__leading,
+  .mdc-notched-outline__notch,
+  .mdc-notched-outline__trailing {
+    border-color: #008a4c !important;
+    border-width: 2px !important;
+  }
+
+  /* Forces Filled Layout Bottom Border Ripple Lines */
+  .mdc-line-ripple::after {
+    border-bottom-color: #008a4c !important;
+    border-bottom-width: 2px !important;
+  }
+}
+
+/* 3. Forces HTML Native Input Controls caret & native browser ring colors */
+::ng-deep .mat-mdc-input-element:focus,
+::ng-deep input.mat-mdc-input-element:focus,
+::ng-deep .fuji-custom-field input:focus {
+  outline: none !important;
+  outline-color: transparent !important;
+  caret-color: #008a4c !important;
+}
+
+/* 4. Dropdown Panel Selection Indicators (Fiji-Panel) */
+::ng-deep {
+  .mat-mdc-option.mdc-list-item--selected:not(.mat-mdc-option-disabled) {
+    .mat-mdc-option-pseudo-checkbox {
+      --mdc-checkbox-selected-icon-color: #008a4c !important;
+      color: #008a4c !important;
+    }
+  }
+  .mat-mdc-select-arrow {
+    color: #008a4c !important;
+  }
+  .mat-mdc-form-field.mat-focused .mdc-floating-label {
+    color: #008a4c !important;
+  }
+}
+

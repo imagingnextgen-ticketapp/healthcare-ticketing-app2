@@ -1,0 +1,267 @@
+@use "sass:color";
+
+/* ==========================================================================
+   TICKET REOPEN DIALOG — HOOKED COMPONENT STYLES
+   ========================================================================== */
+
+$brand: #008a4c;
+$brand-hover: #006b38;
+$brand-light: rgba(0, 138, 76, 0.08);
+$border: #cbd5e1;
+$border-focus: #008a4c;
+$text-main: #0f172a;
+$text-muted: #64748b;
+$bg-readonly: #f8fafc;
+
+.fuji-reopen-wrapper {
+  background: white;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+
+  /* ---- Header ---- */
+  .reopen-header {
+    background: #f8fafc;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+
+    .reopen-header-icon {
+      width: 40px;
+      height: 40px;
+      background: $brand-light;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      mat-icon { color: $brand; font-size: 22px; width: 22px; height: 22px; }
+    }
+
+    .reopen-header-text {
+      flex: 1;
+      min-width: 0;
+
+      h2 { margin: 0 0 2px; font-size: 1.05rem; font-weight: 700; color: $text-main; letter-spacing: -0.01em; }
+      p  { margin: 0; font-size: 0.8rem; color: $text-muted; }
+    }
+
+    .reopen-close-btn {
+      color: #94a3b8 !important;
+      flex-shrink: 0;
+      &:hover { color: #475569 !important; background: #f1f5f9 !important; }
+    }
+  }
+
+  /* ---- Body ---- */
+  .reopen-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    max-height: calc(85vh - 80px);
+  }
+
+  .section-label {
+    font-size: 0.725rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: $brand;
+    margin: 0 0 14px;
+    letter-spacing: 0.06em;
+  }
+
+  /* ---- Layout Grid ---- */
+  .reopen-grid {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    width: 100%;
+    margin-bottom: 16px;
+
+    .fuji-input-field {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  .full-width-field { 
+    width: 100%; 
+    margin-bottom: 16px;
+  }
+
+  .reopen-divider { 
+    margin: 12px 0 20px !important; 
+    border-top-color: #e2e8f0;
+  }
+
+  /* ---- Custom Form Fields ---- */
+  .fuji-input-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    label {
+      font-size: 0.785rem;
+      font-weight: 600;
+      color: #475569;
+      
+      .required-star {
+        color: #ef4444;
+        margin-left: 2px;
+      }
+    }
+
+    input, textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 14px;
+      font-size: 0.875rem;
+      color: $text-main;
+      background: white;
+      border: 1px solid $border;
+      border-radius: 8px;
+      font-family: inherit;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+      &::placeholder {
+        color: #94a3b8;
+      }
+
+      &:focus {
+        outline: none !important;
+        border-color: $border-focus !important;
+        box-shadow: 0 0 0 3px rgba(0, 138, 76, 0.12) !important;
+      }
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 42px;
+    }
+
+    /* Readonly Variant Fields */
+    &.readonly-field {
+      input, textarea {
+        background: $bg-readonly;
+        border-color: #e2e8f0;
+        color: #475569;
+        cursor: not-allowed;
+
+        &:focus {
+          border-color: #e2e8f0 !important;
+          box-shadow: none !important;
+        }
+      }
+    }
+  }
+
+  /* ---- Form Buttons ---- */
+  .reopen-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .cancel-btn {
+    color: #475569 !important;
+    font-weight: 600 !important;
+    font-size: 0.875rem !important;
+    height: 42px !important;
+    padding: 0 18px !important;
+    border-radius: 8px !important;
+  }
+
+  .confirm-btn {
+    background: $brand !important;
+    color: white !important;
+    height: 42px !important;
+    padding: 0 24px !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    font-size: 0.875rem !important;
+    display: inline-flex !important;
+    align-items: center;
+    box-shadow: 0 2px 6px rgba(0, 138, 76, 0.15) !important;
+    transition: all 0.2s ease !important;
+
+    &:hover:not(:disabled) {
+      background: $brand-hover !important;
+      box-shadow: 0 4px 12px rgba(0, 138, 76, 0.25) !important;
+    }
+
+    &:disabled { 
+      background: #e2e8f0 !important; 
+      color: #94a3b8 !important; 
+      box-shadow: none !important; 
+      cursor: not-allowed;
+    }
+  }
+}
+
+/* ==========================================================
+   🟢 COMPONENT-BOUND GLOBAL DIALOG SURFACE OVERRIDES
+   ========================================================== */
+::ng-deep {
+  /* Escapes component boundaries to layout the overlay frame cleanly */
+  .reopen-dialog-panel {
+    max-width: 650px !important; /* Forces layout to honor your open configuration */
+    width: 100% !important;
+
+    .mat-mdc-dialog-container, 
+    .mdc-dialog__surface {
+      padding: 0 !important;
+      overflow: hidden !important;
+      border-radius: 14px !important;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    }
+    
+    .mat-mdc-dialog-content {
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+  }
+
+  /* 📱 MOBILE SCREEN OPTIMIZATIONS (<= 768px viewports) */
+  @media (max-width: 768px) {
+    .fuji-reopen-wrapper {
+      /* Stack layout properties */
+      .reopen-grid {
+        flex-direction: column !important;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      .reopen-body {
+        padding: 16px 18px !important;
+      }
+
+      /* Stack action control panels */
+      .reopen-actions {
+        flex-direction: column-reverse !important;
+        gap: 10px;
+        margin-top: 20px;
+
+        button {
+          width: 100% !important;
+          justify-content: center !important;
+        }
+      }
+    }
+
+    /* Force responsive framework constraints on root dialog pane */
+    .reopen-dialog-panel {
+      max-width: 92vw !important; /* Keeps fluid gutters visible on small viewports */
+      margin: 0 auto !important;
+
+      .mdc-dialog__surface {
+        border-radius: 12px !important;
+      }
+    }
+  }
+}

@@ -1,0 +1,113 @@
+<style>.cdk-overlay-container .mat-pseudo-checkbox-full.mat-pseudo-checkbox-checked { background-color: #008a4c !important; border-color: #008a4c !important; }</style>
+
+<div class="mapping-container">
+  <mat-card class="header-card">
+    <div class="fuji-line"></div>
+    <mat-card-header>
+      <mat-card-title>Site Product Mapping</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Selection Row: Aligned Controls -->
+      <div class="controls-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Select Hospital</mat-label>
+          <mat-select [ngModel]="masterSiteId" (selectionChange)="onSiteChange($event.value)">
+            <mat-option *ngFor="let site of availableSites" [value]="site.masterSiteId">
+              {{ site.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Select Products</mat-label>
+          <!-- 🟢 Added panelClass here to hook our custom green theme styles directly into this dropdown -->
+          <mat-select [(ngModel)]="selectedProductIds" multiple panelClass="fuji-select-dropdown-panel">
+            <mat-option *ngFor="let p of availableProducts" [value]="p.productId">
+              {{ p.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-raised-button class="fuji-btn" 
+                [disabled]="!masterSiteId || selectedProductIds.length === 0 || isLoading" 
+                (click)="onAssignBulk()">
+          <mat-progress-spinner *ngIf="isLoading" mode="indeterminate" diameter="20"></mat-progress-spinner>
+          <mat-icon *ngIf="!isLoading">add_shopping_cart</mat-icon>
+          <span>{{ isLoading ? 'Mapping...' : 'Map Products' }}</span>
+        </button>
+      </div>
+
+      <!-- Info Banner: Shown when no site is selected -->
+      <div class="info-banner" *ngIf="!masterSiteId">
+        <mat-icon>info</mat-icon>
+        <span>Please select a <strong>Hospital Site</strong> to view and manage product mappings.</span>
+      </div>
+
+      <!-- Table Section: Shown when site is selected -->
+      <div class="table-container" *ngIf="masterSiteId">
+        <!-- 🔷 UPDATED: Changed dataSource target from raw array assignedProducts to reactive dataSource wrapper -->
+        <table mat-table [dataSource]="dataSource" class="w-full fuji-table">
+          
+          <ng-container matColumnDef="hospitalName">
+            <th mat-header-cell *matHeaderCellDef> Hospital </th>
+            <td mat-cell *matCellDef="let row"> {{ row.hospitalName }} </td>
+          </ng-container>
+
+          <ng-container matColumnDef="productName">
+            <th mat-header-cell *matHeaderCellDef> Product Name </th>
+            <td mat-cell *matCellDef="let row"> {{ row.name }} </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef> Status </th>
+            <td mat-cell *matCellDef="let row">
+              <span class="fuji-badge" [ngClass]="row.isActive ? 'active' : 'inactive'">
+                {{ row.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef> Actions </th>
+            <td mat-cell *matCellDef="let row">
+              <div class="icon-actions">
+                <!-- ACTIVATE: Only show if currently Inactive -->
+                <button mat-icon-button *ngIf="!row.isActive" 
+                        class="fuji-activate-btn" (click)="updateProductStatus(row, true)"
+                        matTooltip="Activate Product">
+                  <mat-icon>check_circle</mat-icon>
+                </button>
+
+                <!-- DEACTIVATE: Only show if currently Active -->
+                <button mat-icon-button *ngIf="row.isActive" 
+                        class="fuji-deactivate-btn" (click)="updateProductStatus(row, false)"
+                        matTooltip="Deactivate Product">
+                  <mat-icon>block</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <!-- 🔷 UPDATED: Checked dataSource data length instead of the old array object length -->
+        <div *ngIf="dataSource.data.length === 0" class="no-data-msg">
+          No products currently mapped to this hospital.
+        </div>
+
+        <!-- 🔷 ADDED: Pagination Footer Controller Integration Element -->
+        <mat-paginator 
+          [length]="totalRecords"
+          [pageSize]="pageSize"
+          [pageSizeOptions]="pageSizeOptions"
+          (page)="onPageChange($event)"
+          aria-label="Select page of mappings">
+        </mat-paginator>
+
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

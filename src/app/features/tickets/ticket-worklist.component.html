@@ -1,0 +1,434 @@
+<div class="worklist-container">
+  <mat-card class="fuji-main-card">
+    <!-- HEADER -->
+    <div class="fuji-header">
+      <div class="header-content">
+        <mat-icon> confirmation_number </mat-icon>
+
+        <div class="text-group">
+          <h1>Service Desk Operations</h1>
+
+          <p>
+            FUJIFILM |
+            {{ currentUser?.masterSiteName || 'Operations Center' }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+        <!-- TABS BAR CONTROL (Only renders the tabs headers, no internal template destruction) -->
+    <ng-container
+      *ngIf="
+        currentUser?.role === ROLES.SUPER_ADMIN || currentUser?.role === ROLES.SUPPORT_ENGINEER;
+        else hospitalView
+      "
+    >
+      <mat-tab-group
+        [selectedIndex]="currentTabIndex"
+        (selectedTabChange)="onTabChange($event.index)"
+        class="fuji-tabs"
+        mat-stretch-tabs="false"
+      >
+        <mat-tab label="All Active Worklist"></mat-tab>
+        <mat-tab label="My Assigned Tickets"></mat-tab>
+      </mat-tab-group>
+    </ng-container>
+
+    <!-- HOSPITAL VIEW FALLBACK PLACEMARKER (Empty placeholder because table renders below) -->
+    <ng-template #hospitalView></ng-template>
+
+    <!-- 🟢 THE PERMANENT STRUCTURAL FIX: Render the table template exactly ONCE down here.
+         This stops Angular from destroying and rebuilding your input elements.
+         Now, your filter tracking will remain active 100% of the time across both tabs! -->
+    <div class="p-3">
+      <ng-container *ngTemplateOutlet="tableTemplate"></ng-container>
+    </div>
+
+  </mat-card>
+</div>
+
+<!-- ===================================================== -->
+<!-- TABLE TEMPLATE -->
+<!-- ===================================================== -->
+
+<ng-template #tableTemplate>
+  <!-- FILTERS -->
+  <div class="filter-section">
+    <form [formGroup]="filterForm" class="filter-grid">
+      <mat-form-field appearance="outline">
+        <mat-label> Ticket ID </mat-label>
+
+        <input matInput formControlName="ticketId" placeholder="e.g. 101" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label> Status </mat-label>
+
+        <mat-select formControlName="status">
+          <mat-option [value]="null"> All Statuses </mat-option>
+
+          <mat-option *ngFor="let s of statusOptions" [value]="s.value">
+            {{ s.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+<!-- 1. Created Date Field -->
+
+<mat-form-field appearance="outline" style="width: 100%;">
+  <mat-label>Created Date</mat-label>
+  <input matInput [matDatepicker]="c" formControlName="createdDate" [max]="maxDate" />
+  <mat-datepicker-toggle matSuffix [for]="c"></mat-datepicker-toggle>
+  <mat-datepicker #c></mat-datepicker>
+</mat-form-field>
+
+<!-- 2. Resolve Date Field -->
+<mat-form-field appearance="outline" style="width: 100%;">
+  <mat-label>Resolve Date</mat-label>
+  <input matInput [matDatepicker]="r" formControlName="resolveDate" [max]="maxDate" />
+  <mat-datepicker-toggle matSuffix [for]="r"></mat-datepicker-toggle>
+  <mat-datepicker #r></mat-datepicker>
+</mat-form-field>
+
+
+
+
+      <button mat-button class="reset-btn" type="button" (click)="resetFilters()">
+        <mat-icon> restart_alt </mat-icon>
+
+        <span> Reset </span>
+      </button>
+
+      <button 
+  mat-flat-button 
+  type="button" 
+  style="height: 40px; min-width: 115px; margin-left: 8px; background-color: #008542 !important; color: #ffffff !important;"
+  [disabled]="loading" 
+  (click)="refresh(true)">
+  <mat-icon [class.spinning]="loading"> refresh </mat-icon>
+  <span> {{ loading ? 'Reloading...' : 'Refresh' }} </span>
+</button>
+
+
+
+    </form>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-container">
+    <table mat-table [dataSource]="dataSource" class="fuji-table">
+      <!-- ID -->
+      <ng-container matColumnDef="ticketId">
+        <th mat-header-cell *matHeaderCellDef>ID</th>
+
+        <td mat-cell *matCellDef="let e" class="id-text">#{{ e.ticketId }}</td>
+      </ng-container>
+
+      <!-- TYPE -->
+      <ng-container matColumnDef="issueType">
+        <th mat-header-cell *matHeaderCellDef>Type</th>
+
+        <td mat-cell *matCellDef="let e">
+          {{ e.issueType }}
+        </td>
+      </ng-container>
+
+      <!-- DESCRIPTION -->
+      <ng-container matColumnDef="description">
+        <th mat-header-cell *matHeaderCellDef>Description</th>
+
+        <td mat-cell *matCellDef="let e" class="truncate" [matTooltip]="e.description">
+          {{ e.description }}
+        </td>
+      </ng-container>
+
+      <!-- PRODUCT -->
+      <ng-container matColumnDef="productName">
+        <th mat-header-cell *matHeaderCellDef>Product</th>
+
+        <td mat-cell *matCellDef="let e">
+          {{ e.productName }}
+        </td>
+      </ng-container>
+
+      <!-- SITE -->
+      <ng-container matColumnDef="siteName">
+        <th mat-header-cell *matHeaderCellDef>Site</th>
+
+        <td mat-cell *matCellDef="let e">
+          {{ e.siteName }}
+        </td>
+      </ng-container>
+
+      <!-- REOPENS -->
+      <ng-container matColumnDef="reOpenCount">
+        <th mat-header-cell *matHeaderCellDef>Reopens</th>
+
+        <td mat-cell *matCellDef="let e" class="txt-ctr">
+          <span [class.text-danger]="e.reopenCount > 0" [class.fw-bold]="e.reOpenCount > 0">
+            {{ e.reopenCount }}
+          </span>
+        </td>
+      </ng-container>
+
+      <!-- REQUESTER -->
+      <ng-container matColumnDef="createdBy">
+        <th mat-header-cell *matHeaderCellDef>Requester</th>
+
+        <td mat-cell *matCellDef="let e">
+          {{ e.createdBy }}
+        </td>
+      </ng-container>
+
+      <!-- ENGINEER -->
+      <ng-container matColumnDef="assignedTo">
+        <th mat-header-cell *matHeaderCellDef>Engineer</th>
+
+        <td mat-cell *matCellDef="let e">
+          <span [class.text-muted]="!e.assignedTo">
+            {{ e.assignedTo || 'Unassigned' }}
+          </span>
+        </td>
+      </ng-container>
+
+      <!-- STATUS -->
+          <!-- STATUS COLUMN DEF -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef style="min-width: 110px;">Status</th>
+
+        <td mat-cell *matCellDef="let e">
+          <!-- 🟢 FIX: Added white-space: nowrap !important inline to force a single line -->
+          <span 
+            class="status-badge" 
+            [attr.data-status]="getStatusLabel(e.status)"
+            style="white-space: nowrap !important; display: inline-block;">
+            {{ getStatusLabel(e.status) }}
+          </span>
+        </td>
+      </ng-container>
+
+
+      <!-- CREATED -->
+      <ng-container matColumnDef="createdDate">
+        <th mat-header-cell *matHeaderCellDef>Created</th>
+
+        <td mat-cell *matCellDef="let e">
+          {{ e.createdDate | date: 'dd-MMM-yy' }}
+        </td>
+      </ng-container>
+
+      <!-- CLOSED -->
+      <ng-container matColumnDef="closedDate">
+        <th mat-header-cell *matHeaderCellDef>Closed</th>
+
+        <td mat-cell *matCellDef="let e">
+          {{ (e.closedDate | date: 'dd-MMM-yy') || '-' }}
+        </td>
+      </ng-container>
+
+      <!-- TAT -->
+      <ng-container matColumnDef="tatHours">
+        <th mat-header-cell *matHeaderCellDef>Est. TAT</th>
+
+        <td mat-cell *matCellDef="let e">{{ e.tatHours }}h</td>
+      </ng-container>
+
+      <!-- SEVERITY -->
+      <ng-container matColumnDef="severity">
+        <th mat-header-cell *matHeaderCellDef>Severity</th>
+
+        <td mat-cell *matCellDef="let e">
+          {{ e.severity }}
+        </td>
+      </ng-container>
+
+      <!-- ACTUAL -->
+      <ng-container matColumnDef="actualTatHours">
+        <th mat-header-cell *matHeaderCellDef>Actual</th>
+
+        <td mat-cell *matCellDef="let e">
+          {{ e.actualTatHours ? e.actualTatHours + 'h' : '-' }}
+        </td>
+      </ng-container>
+
+           <!-- ===================================================== -->
+           <!-- ===================================================== -->
+      <!-- ACTIONS COLUMN DEF (DECLUTTERED DESKTOP VIEW)         -->
+      <!-- ===================================================== -->
+ 
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef style="width: 60px; text-align: center;">Actions</th>
+
+        <td mat-cell *matCellDef="let e" style="text-align: center;">
+          <!-- 🟢 Only the single 3-dot trigger button exists here now -->
+          <button
+            mat-icon-button
+            [matMenuTriggerFor]="rowActionMenu"
+            [matMenuTriggerData]="{ ticket: e }"
+            matTooltip="More Options"
+          >
+            <mat-icon style="color: #4b5563">more_vert</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+
+      <!-- ROW MAT-TABLE DEF LAYOUTS -->
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table> <!-- 🟢 Only one table closing tag remains here -->
+  </div>
+
+  <!-- NO DATA MESSAGES -->
+  <div class="no-data-msg p-4 text-center" *ngIf="dataSource.data.length === 0">
+    <mat-icon color="disabled" style="font-size: 48px; width: 48px; height: 48px">search_off</mat-icon>
+    <p class="text-muted mt-2">No tickets found matching your criteria.</p>
+  </div>
+
+  <!-- PAGINATOR ELEMENT -->
+  <mat-paginator
+    [length]="totalRecords"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="pageSizeOptions"
+    (page)="onPageChange($event)"
+  >
+  </mat-paginator>
+</ng-template>
+
+<!-- ===================================================== -->
+<!-- UNIVERSAL ROW ACTIONS DROPDOWN OVERLAY                -->
+<!-- ===================================================== -->
+<mat-menu #rowActionMenu="matMenu" xPosition="before">
+  <ng-template matMenuContent let-ticket="ticket">
+    
+    <!-- 1. EDIT INTERACTION LAYER -->
+   <button mat-menu-item
+            [disabled]="!canEditTicket(ticket)"
+            (click)="openEditTicketDialog(ticket)">
+      <mat-icon [style.color]="canEditTicket(ticket) ? '#008542' : '#b0bec5'">edit</mat-icon>
+      <span>Edit / Manage Files</span>
+    </button>
+
+    <mat-divider style="margin: 4px 0;"></mat-divider>
+
+    <!-- 2. ASSIGN OPTIONS LAYER -->
+    <ng-container *ngIf="canAssign(ticket)">
+      <button mat-menu-item 
+              *ngIf="ticket.assignedToUserId != currentUser?.userId"
+              (click)="assignTicket(ticket.ticketId, currentUser)">
+        <mat-icon style="color: #008542">person</mat-icon>
+        <span>Assign to Me</span>
+      </button>
+
+      <button mat-menu-item 
+              *ngIf="currentUser?.role === ROLES.SUPER_ADMIN"
+              (click)="openAssignPopup(ticket)">
+        <mat-icon style="color: #008542">person_add</mat-icon>
+        <span>Assign to Engineer</span>
+      </button>
+    </ng-container>
+
+    <!-- 3. CORE ACTION CONTROLS -->
+    <button mat-menu-item *ngIf="canStartWork(ticket)" (click)="handleAction(ticket, 'start')">
+      <mat-icon style="color: #008542">play_arrow</mat-icon>
+      <span>Start Work</span>
+    </button>
+
+    <button mat-menu-item *ngIf="canClose(ticket)" (click)="openCloseTicketDialog(ticket)">
+      <mat-icon style="color: #e53935">check_circle</mat-icon>
+      <span>Close Ticket Case</span>
+    </button>
+
+    <button mat-menu-item *ngIf="canReopen(ticket)" (click)="openReopenDialog(ticket)">
+      <mat-icon style="color: #ed6c02">refresh</mat-icon>
+      <span>Reopen Ticket</span>
+    </button>
+
+    <mat-divider style="margin: 4px 0;"></mat-divider>
+
+    <!-- 4. SLIDE-NESTED SUB ATTACHMENTS RETRIEVAL HUB LINK -->
+    <button mat-menu-item 
+            [matMenuTriggerFor]="attachmentListMenu"
+            [matMenuTriggerData]="{ ticket: ticket }"
+            (click)="loadTicketAttachments(ticket.ticketId)">
+      <mat-icon style="color: #4b5563">attach_file</mat-icon>
+      <span>View Attachments</span>
+    </button>
+
+    <!-- 5. VIEW RESOLUTION NOTES -->
+    <button mat-menu-item 
+            *ngIf="ticket.status === 4 || ticket.status === 'Closed'" 
+            (click)="viewResolutionNotes(ticket)">
+      <mat-icon style="color: #00838f">assignment_turned_in</mat-icon>
+      <span>View Resolution Notes</span>
+    </button>
+
+  </ng-template>
+</mat-menu>
+
+
+
+<!-- ===================================================== -->
+<!-- ATTACHMENT FETCH DISPLAY ELEMENT PANEL MENU           -->
+<!-- ===================================================== -->
+<mat-menu #attachmentListMenu="matMenu">
+  <ng-template matMenuContent let-ticket="ticket">
+    <div style="padding: 10px 16px; font-weight: 600; border-bottom: 1px solid #e5e7eb; font-size: 0.85rem; color:#374151;">
+      Attachments (#{{ ticket.ticketId }})
+    </div>
+
+    <!-- LOADING FILES SPINNER -->
+    <div *ngIf="isMenuLoadingMap[ticket.ticketId]" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 16px 20px;">
+      <mat-spinner diameter="18"></mat-spinner>
+      <span style="font-size: 0.85rem; color:#6b7280;">Loading files...</span>
+    </div>
+
+    <!-- RENDERED LIST STREAM -->
+    <ng-container *ngIf="!isMenuLoadingMap[ticket.ticketId]">
+      <!-- Compiler fix: Safely binds array map to local template variable 'files' -->
+      <ng-container *ngIf="menuTicketFilesMap[ticket.ticketId] as files; else noFilesTemplate">
+        <ng-container *ngIf="files.length > 0; else noFilesTemplate">
+          
+          <div *ngFor="let file of files" class="attachment-menu-row" style="display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 6px 14px; min-width: 280px; border-bottom: 1px solid #f3f4f6;">
+            <span class="truncate" [matTooltip]="file.blobFileName" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8rem; color:#4b5563;">
+              {{ file.blobFileName }}
+            </span>
+            <div style="display: flex; align-items: center; gap: 2px;">
+              
+              <!-- 🟢 UPDATED: Color changed to Fujifilm Corporate Green (#006341) -->
+              <div style="display: flex; align-items: center; gap: 6px;">
+  
+  <!-- 🟢 FIXED: Changed to mat-mini-fab with transparent box-shadow for perfect 32px centering -->
+  <button mat-mini-fab 
+          style="background-color: transparent; color: #006341; box-shadow: none; width: 32px; height: 32px;" 
+          (click)="viewFileBinary(file.attachmentId)" 
+          matTooltip="View File">
+    <mat-icon style="font-size: 18px; width: 18px; height: 18px; line-height: 18px;">visibility</mat-icon>
+  </button>
+  
+  <!-- 🟢 FIXED: Changed to mat-mini-fab to match formatting identically -->
+  <button mat-mini-fab 
+          style="background-color: transparent; color: #2e7d32; box-shadow: none; width: 32px; height: 32px;" 
+          (click)="downloadFileBinary(file.attachmentId, file.blobFileName)" 
+          matTooltip="Download File">
+    <mat-icon style="font-size: 18px; width: 18px; height: 18px; line-height: 18px;">cloud_download</mat-icon>
+  </button>
+
+</div>
+
+            </div>
+          </div>
+
+        </ng-container>
+      </ng-container>
+      <ng-template #noFilesTemplate>
+        <div style="padding: 16px; text-align: center; color: #9ca3af; font-size: 0.8rem; font-style: italic; min-width: 200px;">
+          No attachments present.
+        </div>
+      </ng-template>
+    </ng-container>
+  </ng-template>
+</mat-menu>
+
+

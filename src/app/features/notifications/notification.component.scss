@@ -1,0 +1,204 @@
+
+@use "sass:color";
+
+.notif-wrapper {
+  position: relative;
+  display: inline-block;
+
+  .bell-trigger {
+    font-size: 22px;
+    padding: 5px;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    .count-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      background: #e74c3c;
+      color: #fff;
+      font-size: 10px;
+      padding: 2px 5px;
+      border-radius: 10px;
+      font-weight: bold;
+      line-height: 1;
+    }
+  }
+
+  .fuji-fixed-notif-dropdown {
+    position: absolute;
+    top: 45px;
+    right: 0;
+    width: 420px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    z-index: 99999;
+    overflow: hidden;
+  }
+
+  .fuji-notif-header {
+    padding: 14px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+    border-bottom: 1px solid #e2e8f0;
+    background: #fafbfc;
+  }
+
+  .fuji-notif-list-scroll {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 12px;
+    background: #f8fafc;
+
+    &::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+  }
+
+  .fuji-notif-item-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    gap: 10px;
+    padding: 12px;
+    margin-bottom: 8px;
+
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+
+    transition: all 0.2s ease;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    &:hover {
+      background: #f8fafc;
+    }
+  }
+
+  .fuji-notif-item-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .fuji-notif-item-title {
+    display: block;
+    margin-bottom: 6px;
+
+    font-size: 12px;
+    font-weight: 700;
+    color: #008a4c;
+
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    line-height: 1.4;
+
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .fuji-notif-item-msg {
+    margin: 0;
+
+    font-size: 13px;
+    color: #334155;
+    line-height: 1.5;
+
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .fuji-notif-item-close {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+
+    flex-shrink: 0;
+
+    padding: 2px 6px;
+    border-radius: 4px;
+
+    &:hover {
+      color: #e74c3c;
+      background: #fee2e2;
+    }
+  }
+
+  .fuji-notif-empty-box {
+    padding: 40px 20px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 13px;
+    font-style: italic;
+  }
+}
+
+@media (max-width: 480px) {
+  .notif-wrapper {
+    .fuji-fixed-notif-dropdown {
+      position: fixed;
+      top: 60px;
+      left: 16px;
+      right: 16px;
+      width: auto;
+      max-width: calc(100vw - 32px);
+    }
+  }
+}
+.notif-item-content {
+  display: flex !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+}
+
+.notif-text {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.notif-title {
+  display: block !important;
+  margin-bottom: 6px !important;
+
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #008a4c !important;
+
+  line-height: 1.4 !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+
+.notif-message {
+  display: block !important;
+
+  font-size: 14px !important;
+  color: #334155 !important;
+
+  line-height: 1.6 !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+
+  margin-bottom: 6px !important;
+}
+
+.notif-date {
+  font-size: 11px !important;
+  color: #94a3b8 !important;
+}

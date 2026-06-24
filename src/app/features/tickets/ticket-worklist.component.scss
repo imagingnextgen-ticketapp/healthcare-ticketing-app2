@@ -1,0 +1,368 @@
+@use "sass:color";
+
+/* ==========================================================================
+   TICKET WORKLIST — PREMIUM TABLE DESIGN
+   ========================================================================== */
+
+$brand: #008a4c;
+$brand-light: rgba(0, 138, 76, 0.08);
+$border: #e2e8f0;
+
+/* ========================================================
+   PAGE WRAPPER
+   ======================================================== */
+
+.worklist-container {
+  padding: 0;
+  background: transparent;
+}
+
+/* ========================================================
+   MAIN CARD
+   ======================================================== */
+
+.fuji-main-card {
+  background: white;
+  border-radius: 16px !important;
+  border: 1px solid $border !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+  overflow: hidden;
+  padding: 0 !important;
+}
+
+/* ========================================================
+   HEADER
+   ======================================================== */
+
+.fuji-header {
+  background: linear-gradient(135deg, $brand 0%, color.adjust($brand, $lightness: -12%) 100%);
+  padding: 20px 24px;
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    mat-icon {
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: white;
+      margin: 0 0 3px;
+      letter-spacing: -0.01em;
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.65);
+      font-weight: 400;
+    }
+  }
+}
+
+/* ========================================================
+   TABS
+   ======================================================== */
+
+::ng-deep {
+  .fuji-tabs {
+    .mat-mdc-tab-header {
+      background: white;
+      border-bottom: 1px solid $border;
+    }
+
+    .mat-mdc-tab .mdc-tab__text-label {
+      color: #64748b !important;
+      font-weight: 500 !important;
+      font-size: 0.875rem !important;
+    }
+
+    .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+      color: $brand !important;
+      font-weight: 700 !important;
+    }
+
+    .mat-mdc-tab-indicator__content {
+      border-color: $brand !important;
+      border-width: 2px !important;
+    }
+  }
+
+  /* Kill blue arrows */
+  .mat-mdc-select-arrow svg { fill: $brand !important; }
+  .mat-datepicker-toggle, .mat-datepicker-toggle svg { color: $brand !important; fill: $brand !important; }
+
+  /* Kill notch */
+  .mdc-notched-outline__notch { border-top: none !important; }
+
+  /* Remove subscript space */
+  .mat-mdc-form-field-subscript-wrapper { display: none !important; }
+}
+
+/* ========================================================
+   FILTER SECTION
+   ======================================================== */
+
+.filter-section {
+  padding: 16px 20px;
+  background: #fafbfc;
+  border-bottom: 1px solid $border;
+
+  .filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+    align-items: center;
+  }
+
+  .reset-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: $brand !important;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: all 0.15s ease;
+    border: 1px solid rgba(0, 138, 76, 0.2);
+    background: rgba(0, 138, 76, 0.04);
+
+    mat-icon { font-size: 16px; width: 16px; height: 16px; color: inherit; }
+
+    &:hover {
+      background: rgba(0, 138, 76, 0.10);
+      border-color: $brand;
+    }
+  }
+}
+
+/* ========================================================
+   TABLE
+   ======================================================== */
+
+.table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+
+  .fuji-table {
+    width: 100%;
+    min-width: 900px;
+
+    th {
+      background: #f9fafb;
+      font-size: 0.7rem !important;
+      color: #64748b !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.06em !important;
+      padding: 12px 14px !important;
+      white-space: nowrap;
+      border-bottom: 1px solid $border !important;
+    }
+
+    td {
+      padding: 10px 14px !important;
+      font-size: 0.8375rem;
+      border-bottom: 1px solid #f1f5f9 !important;
+      color: #334155;
+    }
+
+    tr:hover td { background: #f8fafc; }
+
+    .id-text {
+      font-weight: 700;
+      color: $brand;
+      font-size: 0.875rem;
+    }
+
+    .truncate {
+      max-width: 180px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      //touch-action: pan-y !important;
+      touch-action: auto !important;
+    }
+
+    .mat-column-actions {
+      white-space: nowrap !important;
+      width: 1px;
+      padding-right: 16px !important;
+    }
+
+    .text-muted { color: #94a3b8; font-style: italic; }
+    .text-danger { color: #ef4444; }
+    .fw-bold { font-weight: 700; }
+    .txt-ctr { text-align: center; }
+  }
+}
+
+/* ========================================================
+   STATUS BADGES
+   ======================================================== */
+
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+
+  &[data-status="Open"] { background-color: #e3f2fd; color: #0d47a1; }
+  &[data-status="Assigned"] { background-color: #fff3e0; color: #e65100; }
+  
+  /* 🟢 FIX: Added matching support for both spaceless and spaced text formats */
+  &[data-status="InProgress"],
+  &[data-status="In Progress"] { 
+    background-color: #e8f5e9; 
+    color: #1b5e20; 
+  }
+  
+  &[data-status="Closed"] { background-color: #eceff1; color: #37474f; }
+  &[data-status="Reopened"] { background-color: #f3e5f5; color: #4a148c; }
+}
+
+
+
+::ng-deep .row-closed { background-color: #e8f5e9 !important; }
+::ng-deep .row-reopened { background-color: #fff3e0 !important; }
+
+/* ========================================================
+   ACTION BUTTONS
+   ======================================================== */
+
+.action-btn-group {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  justify-content: flex-start;
+  white-space: nowrap;
+}
+
+/* ========================================================
+   NO DATA
+   ======================================================== */
+
+.no-data-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: #94a3b8;
+
+  mat-icon {
+    font-size: 56px !important;
+    width: 56px !important;
+    height: 56px !important;
+    margin-bottom: 12px;
+    opacity: 0.3;
+  }
+
+  p { margin: 0; font-size: 0.875rem; color: #64748b; }
+}
+
+/* ========================================================
+   ROW HIGHLIGHT
+   ======================================================== */
+
+::ng-deep .row-closed { background-color: #f0fdf4 !important; }
+::ng-deep .row-reopened { background-color: #fff7ed !important; }
+
+/* ========================================================
+   ATTACHMENT MENU
+   ======================================================== */
+
+::ng-deep {
+  .reopen-dialog-panel .mat-mdc-dialog-container .mdc-dialog__surface {
+    padding: 0 !important;
+    overflow: hidden !important;
+    border-radius: 16px !important;
+  }
+
+  .mat-mdc-menu-panel {
+    min-width: 200px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12) !important;
+    border: 1px solid #e2e8f0 !important;
+
+    .mat-mdc-menu-item {
+      display: flex !important;
+      align-items: center !important;
+      font-size: 0.8375rem !important;
+      height: 40px !important;
+
+      .mat-icon {
+        margin-right: 10px !important;
+        font-size: 18px !important;
+        width: 18px !important;
+        height: 18px !important;
+      }
+    }
+  }
+}
+
+.btn-fuji-assign { color: $brand !important; font-weight: 600; }
+
+/* ========================================================
+   MOBILE RESPONSIVE
+   ======================================================== */
+
+@media (max-width: 768px) {
+  .worklist-container { padding: 0; }
+
+  .fuji-header {
+    padding: 14px 16px;
+    .header-content {
+      h1 { font-size: 1rem; }
+      p { font-size: 0.7rem; }
+    }
+  }
+
+  .filter-section {
+    padding: 12px 14px;
+    .filter-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+
+      .reset-btn { grid-column: 1 / -1; width: 100%; }
+    }
+  }
+
+  /* Ensure table scrolls on tablet too */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
+    .fuji-table { min-width: 900px; }
+    .truncate {
+        touch-action: auto !important;
+        pointer-events: none !important;
+      }
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-section .filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .table-container .fuji-table {
+    min-width: 800px;
+    .truncate {
+      touch-action: auto !important;
+      pointer-events: none !important;
+    }
+  }
+}

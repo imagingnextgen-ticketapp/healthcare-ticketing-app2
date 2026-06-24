@@ -1,0 +1,101 @@
+<div class="audit-container" style="color-scheme: light;">
+  <div class="header-section">
+    <h1><mat-icon>security</mat-icon> System Audit Logs</h1>
+    <p>Monitoring administrative changes across system modules</p>
+  </div>
+
+  <div class="filter-card">
+    <div class="filter-grid">
+      <!-- 🏢 Hospital Selection (Super Admin Only) -->
+      <div class="filter-item" *ngIf="isSuperAdmin">
+        <label>Hospital</label>
+        <select [(ngModel)]="filter.masterSiteId" class="fuji-input" (change)="search()">
+          <option [ngValue]="null">All Hospitals</option>
+          <option *ngFor="let hospital of hospitals" [ngValue]="hospital.masterSiteId || hospital.id">
+            {{ hospital.name || hospital.siteName }}
+          </option>
+        </select>
+      </div>
+
+      <!-- 🏢 Locked Field (Hospital Admin Only) -->
+      <div class="filter-item" *ngIf="isHospitalAdmin">
+        <label>Hospital</label>
+        <input type="text" class="fuji-input" value="Your Administered Hospital" disabled />
+      </div>
+
+      <!-- 👤 Performed By Selector -->
+      <div class="filter-item" *ngIf="!isHospitalAdmin">
+        <label>Performed By</label>
+        <select [(ngModel)]="filter.actionByUserId" class="fuji-input" (change)="search()">
+          <option [ngValue]="null">All Administrators</option>
+          <option *ngFor="let u of users" [value]="u.userId">{{ u.userName }}</option>
+        </select>
+      </div>
+
+      <!-- 📦 System Modules Selector -->
+      <div class="filter-item">
+        <label>Module</label>
+        <select [(ngModel)]="filter.moduleName" class="fuji-input" [disabled]="isHospitalAdmin" (change)="search()">
+          <option [ngValue]="null">All Modules</option>
+          <option *ngFor="let m of modules" [value]="m.id">{{ m.label }}</option>
+        </select>
+      </div>
+
+      <!-- 📅 From Date Picker (Restored Native Browser Engine) -->
+      <div class="filter-item">
+        <label>From Date</label>
+        <input type="date" [(ngModel)]="filter.fromDate" class="fuji-input" (change)="search()">
+      </div>
+
+      <!-- 📅 To Date Picker (Restored Native Browser Engine) -->
+      <div class="filter-item">
+        <label>To Date</label>
+        <input type="date" [(ngModel)]="filter.toDate" class="fuji-input" (change)="search()">
+      </div>
+    </div>
+
+    <div class="btn-group">
+     <button class="btn-reset" (click)="reset()">RESET FILTERS</button>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="fuji-table">
+      <thead>
+        <tr>
+          <th>TIMESTAMP</th>
+          <th>HOSPITAL</th>
+          <th>MODULE</th>
+          <th>ACTION</th>
+          <th>PERFORMED BY</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let log of logs">
+          <td>{{ log.actionDate | localDateTime }}</td>
+
+          <td>{{ getHospitalName(log) }}</td>
+          <td>
+            <div class="mod-cell" [ngClass]="'mod-' + ((log.moduleName || log['moduleName'] || '').toLowerCase().trim())">
+              <mat-icon>{{ getModuleIcon(log.moduleName || log['moduleName']) }}</mat-icon> 
+              <span>{{ log.moduleName || log['moduleName'] }}</span>
+            </div>
+          </td>
+          <td><span class="badge" [attr.data-action]="log.actionType">{{ log.actionType }}</span></td>
+          <td><strong>{{ log.actionByUserName }}</strong></td>
+        </tr>
+        <tr *ngIf="logs.length === 0">
+          <td colspan="5" class="no-data">No audit logs found.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <mat-paginator 
+    [length]="totalRecords"
+    [pageSize]="filter.pageSize"
+    [pageIndex]="filter.pageNumber - 1"
+    [pageSizeOptions]="pageSizeOptions"
+    (page)="onPageChange($event)">
+  </mat-paginator>
+</div>

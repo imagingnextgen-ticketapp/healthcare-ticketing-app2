@@ -1,0 +1,257 @@
+/* ==========================================================================
+   SITE PRODUCT MAPPING COMPONENT SYSTEM — PRODUCTION STANDARD READY
+   ========================================================================== */
+
+$brand: #008a4c;
+$brand-light: rgba(0, 138, 76, 0.08);
+$brand-hover: #006b38;
+$border: #e2e8f0;
+
+/* ==========================================================================
+   GLOBAL OVERRIDES BREAKOUT ENGINE
+   ========================================================================== */
+::ng-deep {
+  .mat-mdc-select-arrow svg { fill: $brand !important; }
+  .mat-datepicker-toggle, .mat-datepicker-toggle button { color: $brand !important; }
+  .mdc-notched-outline__notch { border-top: none !important; }
+
+  /* 🟢 Fix 1: Force TextBox & Active Select Outlines from Black to Fuji Green */
+  .mat-mdc-form-field.mat-focused,
+  .mdc-text-field--focused:not(.mdc-text-field--invalid) {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: $brand !important;
+      border-width: 2px !important;
+    }
+    .mat-mdc-floating-label,
+    .mdc-floating-label--float-above { 
+      color: $brand !important; 
+    }
+    input, .mat-mdc-select-trigger { 
+      caret-color: $brand !important; 
+    }
+  }
+
+  /* 🟢 Fix 2: Force Dropdown Checkbox Icon Controls from Blue to Fuji Green */
+  .mat-mdc-option.mdc-list-item--selected .mdc-checkbox__background,
+  .mat-mdc-option .mdc-checkbox__native-control:enabled:checked ~ .mdc-checkbox__background,
+  .mat-mdc-option .mdc-checkbox__native-control:enabled:indeterminate ~ .mdc-checkbox__background {
+    background-color: $brand !important;
+    border-color: $brand !important;
+  }
+
+  /* Target focused boundary checkboxes ring layers explicitly */
+  .mat-mdc-option .mdc-checkbox__native-control:focus ~ .mdc-checkbox__background {
+    border-color: $brand !important;
+  }
+
+  /* Target pseudo checkbox vector minimal graphics safely inside overlay templates */
+  .mat-mdc-option {
+    .mat-pseudo-checkbox-checked,
+    .mat-pseudo-checkbox-checked::after,
+    .mat-pseudo-checkbox.mat-pseudo-checkbox-checked {
+      background-color: $brand !important;
+      border-color: $brand !important;
+    }
+
+    .mat-pseudo-checkbox.mat-pseudo-checkbox-checked.mat-pseudo-checkbox-minimal::after {
+      color: $brand !important;
+    }
+  }
+  
+  /* Ensure the check icon vector marks color white cleanly */
+  .cdk-overlay-container .mdc-checkbox__foreground-neutral-theme-control {
+    --mdc-checkbox-selected-icon-color: #ffffff !important;
+  }
+
+  /* 🟢 Fix 3: Mobile Display / Performance Layer Polish */
+  @media (max-width: 768px) {
+    .mat-mdc-select-trigger {
+      -webkit-tap-highlight-color: transparent !important;
+    }
+  }
+}
+
+/* ==========================================================================
+   LAYOUT CONTAINERS & CARDS
+   ========================================================================== */
+.mapping-container {
+  padding: 0;
+  background: transparent;
+}
+
+.header-card {
+  border-radius: 14px !important;
+  border: 1px solid $border !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  overflow: hidden;
+  padding: 20px 24px !important;
+  position: relative;
+
+  .fuji-line {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #008a4c, #1fa366);
+  }
+
+  ::ng-deep .mat-mdc-card-header { padding: 0 0 16px !important; }
+  ::ng-deep .mat-mdc-card-title {
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+  }
+  ::ng-deep .mat-mdc-card-content { padding: 0 !important; }
+}
+
+/* ==========================================================================
+   CONTROLS & ACTION ROWS
+   ========================================================================== */
+.controls-row {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin: 0 0 16px;
+
+  mat-form-field {
+    flex: 1;
+    ::ng-deep .mat-mdc-form-field-subscript-wrapper { display: none !important; }
+  }
+
+  .fuji-btn {
+    background: $brand !important;
+    color: white !important;
+    height: 56px !important;
+    padding: 0 22px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 0.875rem !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+
+    &:disabled { background: #e2e8f0 !important; color: #94a3b8 !important; }
+    &:hover:not(:disabled) { background: $brand-hover !important; }
+
+    mat-progress-spinner { display: inline-block; }
+  }
+}
+
+/* ==========================================================================
+   INFO MESSAGES & ALERTS
+   ========================================================================== */
+.info-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: $brand-light;
+  border-left: 4px solid $brand;
+  border-radius: 0 10px 10px 0;
+  color: #064e3b;
+  margin-bottom: 16px;
+  font-size: 0.875rem;
+
+  mat-icon { color: $brand; flex-shrink: 0; }
+  strong { font-weight: 700; color: #005c32; }
+}
+
+.no-data-msg {
+  padding: 48px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+/* ==========================================================================
+   DATA ENTITY TABLES
+   ========================================================================== */
+.fuji-table {
+  width: 100%;
+
+  .mat-header-cell {
+    color: #64748b !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    font-size: 0.7rem !important;
+    letter-spacing: 0.06em !important;
+    background: #f9fafb !important;
+  }
+}
+
+.icon-actions {
+  display: flex;
+  gap: 4px;
+
+  button[mat-icon-button] {
+    width: 32px !important;
+    height: 32px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    mat-icon { font-size: 20px !important; width: 20px !important; height: 20px !important; }
+  }
+
+  .fuji-activate-btn   { color: $brand !important;  &:hover { background: $brand-light !important; } }
+  .fuji-deactivate-btn { color: #d32f2f !important; &:hover { background: #fef2f2 !important; } }
+}
+
+/* ==========================================================================
+   COMPACT SYSTEM UTILITIES & BADGES
+   ========================================================================== */
+.fuji-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+
+  &.active   { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+  &.inactive { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+}
+
+.w-full { width: 100%; }
+
+/* ==========================================================================
+   RESPONSIVE HARDWARE ADAPTATION LAYER
+   ========================================================================== */
+@media (max-width: 768px) {
+  .controls-row {
+    flex-direction: column;
+    align-items: stretch;
+
+    mat-form-field { width: 100%; }
+    .fuji-btn { width: 100% !important; justify-content: center; }
+  }
+
+  .mat-mdc-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    min-width: 480px;
+  }
+}
+/* ==========================================================================
+   TARGETED PREBUILT THEME OVERRIDE — FORCING FUJI GREEN PSEUDO-CHECKBOXES
+   ========================================================================== */
+
+/* Target the exact class from your browser console inspection */
+.mat-pseudo-checkbox-full.mat-pseudo-checkbox-checked {
+  background-color: #008a4c !important;
+  border-color: #008a4c !important;
+}
+
+/* Optional: Handles the intermediate/partially-selected state if needed */
+.mat-pseudo-checkbox-full.mat-pseudo-checkbox-indeterminate {
+  background-color: #008a4c !important;
+  border-color: #008a4c !important;
+}

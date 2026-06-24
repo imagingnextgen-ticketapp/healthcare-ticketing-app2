@@ -1,0 +1,58 @@
+<div mat-dialog-title class="dialog-title-row">
+  <h2>{{ isEdit ? 'Modify Master Site Configuration' : 'Add Master Site' }}</h2>
+  <button mat-icon-button mat-dialog-close class="dialog-close-btn" matTooltip="Close">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+<p class="dialog-subtitle" *ngIf="!isEdit">Please provide the facility details below.</p>
+
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+  <mat-dialog-content class="mat-typography">
+    
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Site Name</mat-label>
+        <mat-icon matPrefix>business</mat-icon>
+        <input matInput formControlName="name" placeholder="Ex. Operations Center East">
+        <mat-error *ngIf="form.get('name')?.hasError('required')">Name field cannot be left blank</mat-error>
+        <mat-error *ngIf="form.get('name')?.hasError('minlength')">Name must be at least 3 characters long</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Phone Number</mat-label>
+        <mat-icon matPrefix>phone</mat-icon>
+        <input matInput formControlName="phoneNumber" placeholder="Ex. +1 555-0199">
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Address</mat-label>
+        <mat-icon matPrefix>place</mat-icon>
+        <textarea matInput formControlName="address" rows="3" placeholder="Ex. 102 Medical Drive, Suite A"></textarea>
+        <mat-error *ngIf="form.get('address')?.hasError('required')">Address field cannot be left blank</mat-error>
+      </mat-form-field>
+    </div>
+
+    <!-- 🟢 Status Selection Row Context Area Mapping Wrapper -->
+    <div class="status-selection-box">
+  <mat-checkbox formControlName="isActive" color="primary" class="enterprise-checkbox">
+    <div class="checkbox-text-group">
+      <span class="main-label">Active Site</span>
+      <span class="helper-hint">Enable or disable this facility in the system.</span>
+    </div>
+  </mat-checkbox>
+</div>
+
+
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="dialogRef.close(false)" [disabled]="loading">CANCEL</button>
+    <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || loading">
+      {{ loading ? 'SAVING...' : (isEdit ? 'APPLY UPDATES' : 'CREATE SITE') }}
+    </button>
+  </mat-dialog-actions>
+</form>

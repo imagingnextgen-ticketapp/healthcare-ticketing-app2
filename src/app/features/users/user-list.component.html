@@ -1,0 +1,140 @@
+<div class="list-container">
+  <!-- 🟢 HEADER SECTION -->
+  <div class="header">
+    <h2>User Management</h2>
+    
+    <div class="actions-group">
+      <!-- Search Input -->
+      <mat-form-field appearance="outline" class="search-box">
+        <mat-label>Search users...</mat-label>
+        <input matInput (keyup)="onSearch($event)" placeholder="Search by name or email">
+        <mat-icon matPrefix>search</mat-icon>
+      </mat-form-field>
+
+      <!-- Add User Button (Branded Fuji Green) -->
+      <button mat-flat-button class="add-btn" (click)="openUserDialog()">
+        <mat-icon>add</mat-icon> Add User
+      </button>
+    </div>
+  </div>
+
+  <!-- 🟢 DATA TABLE -->
+  <table mat-table [dataSource]="dataSource" class="mat-elevation-z1">
+    <ng-container matColumnDef="fullName">
+  <th mat-header-cell *matHeaderCellDef> Full Name </th>
+  <td mat-cell *matCellDef="let user">
+    {{ user.firstName }} {{ user.lastName }}
+  </td>
+</ng-container>
+    
+    <!-- User Name Column -->
+    <ng-container matColumnDef="userName">
+      <th mat-header-cell *matHeaderCellDef> User Name </th>
+      <td mat-cell *matCellDef="let user"> {{user.userName}} </td>
+    </ng-container>
+
+    <!-- Phone Number Column -->
+    <ng-container matColumnDef="phoneNumber">
+      <th mat-header-cell *matHeaderCellDef> Phone Number </th>
+      <td mat-cell *matCellDef="let user"> {{user.phoneNumber || 'N/A'}} </td>
+    </ng-container>
+
+    <!-- Email Column -->
+    <ng-container matColumnDef="email">
+      <th mat-header-cell *matHeaderCellDef> Email </th>
+      <td mat-cell *matCellDef="let user"> {{user.email}} </td>
+    </ng-container>
+
+    <!-- Role Column -->
+    <ng-container matColumnDef="roleName">
+      <th mat-header-cell *matHeaderCellDef> Role </th>
+      <td mat-cell *matCellDef="let user"> {{user.roleName || 'User'}} </td>
+    </ng-container>
+
+    <!-- Hospital/Site Column -->
+    <ng-container matColumnDef="masterSiteName">
+      <th mat-header-cell *matHeaderCellDef> Hospital </th>
+      <td mat-cell *matCellDef="let user"> {{user.masterSiteName || 'N/A'}} </td>
+    </ng-container>
+
+    <!-- Status Column (Active/Inactive Badge) -->
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef> Status </th>
+      <td mat-cell *matCellDef="let user">
+        <span class="badge" [ngClass]="user.isActive ? 'active' : 'inactive'">
+          {{user.isActive ? 'Active' : 'Inactive'}}
+        </span>
+      </td>
+    </ng-container>
+
+    <!-- Created Date Column -->
+    <ng-container matColumnDef="createdDate">
+      <th mat-header-cell *matHeaderCellDef> Created Date </th>
+      <td mat-cell *matCellDef="let user">
+        <div class="date-container">
+          <mat-icon class="calendar-icon">calendar_month</mat-icon>
+          <span class="date-text">
+            {{ user.createdDate | date:'dd-MMM-yyyy' }}
+          </span>
+        </div>
+      </td>
+    </ng-container>
+
+    <!-- 🟢 ACTIONS COLUMN -->
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef> Actions </th>
+      <td mat-cell *matCellDef="let user">
+        
+        <!-- 1. View Assigned Sites Button (Fuji Green) -->
+        <!-- This triggers the MatDialog with site-specific status -->
+        <button mat-icon-button 
+                class="btn-fuji-green" 
+                (click)="viewUserSites(user)" 
+                matTooltip="View Assigned Sites & Status">
+          <mat-icon>location_city</mat-icon>
+        </button>
+
+        <!-- 2. Toggle User Account Status -->
+        <!-- Activate (Fuji Green) -->
+        <button mat-icon-button 
+                *ngIf="!user.isActive"
+                class="btn-fuji-green"
+                (click)="toggleUserStatus(user)"
+                matTooltip="Activate User">
+          <mat-icon>person_add</mat-icon>
+        </button>
+
+        <!-- Deactivate (Warn Red) -->
+        <button mat-icon-button 
+                *ngIf="user.isActive"
+                color="warn" 
+                (click)="toggleUserStatus(user)"
+                matTooltip="Deactivate User">
+          <mat-icon>person_off</mat-icon>
+        </button>
+
+        <!-- 3. Existing Actions -->
+        <button mat-icon-button (click)="openUserDialog(user)" matTooltip="Edit User">
+          <mat-icon>edit</mat-icon>
+        </button>
+
+        <button mat-icon-button (click)="openResetPasswordDialog(user)" matTooltip="Reset Password">
+          <mat-icon>lock_reset</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+
+  <!-- 🟢 PAGINATION -->
+  <mat-paginator 
+    [length]="totalRecords" 
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[10, 25, 50, 100]" 
+    (page)="onPageChange($event)"
+    showFirstLastButtons>
+  </mat-paginator>
+
+</div>

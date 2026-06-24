@@ -1,0 +1,105 @@
+<div class="history-container">
+  <mat-card class="filter-card">
+    <div class="filter-row">
+      <!-- 1. Ticket ID -->
+      <mat-form-field appearance="outline">
+        <mat-label>Ticket ID</mat-label>
+        <input matInput type="number" [(ngModel)]="filter.ticketId" placeholder="Any ID">
+      </mat-form-field>
+
+      <!-- 2. From Date -->
+      <mat-form-field appearance="outline">
+        <mat-label>From Date</mat-label>
+        <input matInput [matDatepicker]="fp" [(ngModel)]="filter.fromDate">
+        <mat-datepicker-toggle matSuffix [for]="fp"></mat-datepicker-toggle>
+        <mat-datepicker #fp></mat-datepicker>
+      </mat-form-field>
+
+      <!-- 3. To Date -->
+      <mat-form-field appearance="outline">
+        <mat-label>To Date</mat-label>
+        <input matInput [matDatepicker]="tp" [(ngModel)]="filter.toDate">
+        <mat-datepicker-toggle matSuffix [for]="tp"></mat-datepicker-toggle>
+        <mat-datepicker #tp></mat-datepicker>
+      </mat-form-field>
+
+      <!-- 4. Action By User -->
+      <mat-form-field appearance="outline">
+        <mat-label>Action By</mat-label>
+        <mat-select [(ngModel)]="filter.actionByUserId">
+          <mat-option [value]="undefined">-- All Users --</mat-option>
+          <mat-option *ngFor="let u of users" [value]="u.userId">
+            {{u.userName}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- 🟢 Buttons moved directly into filter-row for perfect flex alignment -->
+      <button mat-flat-button class="btn-fuji" (click)="applyFilters()">
+        <mat-icon>search</mat-icon> Search Audit
+      </button>
+
+      <button mat-stroked-button class="reset-btn" (click)="resetFilters()" [disabled]="isLoading">
+        <mat-icon>restart_alt</mat-icon> Reset
+      </button>
+    </div>
+  </mat-card>
+
+  <!-- Audit Table -->
+  <div class="table-wrapper" *ngIf="!isLoading">
+    <table mat-table [dataSource]="historyLogs" class="mat-elevation-z1">
+      
+    <ng-container matColumnDef="date">
+  <th mat-header-cell *matHeaderCellDef>Date</th>
+  <td mat-cell *matCellDef="let r">
+    {{ r.createdDate | localDateTime }}
+  </td>
+</ng-container>
+
+
+      
+      <ng-container matColumnDef="id">
+        <th mat-header-cell *matHeaderCellDef>Ticket ID</th>
+        <td mat-cell *matCellDef="let r" class="user-text">#{{r.ticketId}}</td>
+      </ng-container>
+      
+      <ng-container matColumnDef="action">
+        <th mat-header-cell *matHeaderCellDef>Action</th>
+        <td mat-cell *matCellDef="let r">{{r.actionType}}</td>
+      </ng-container>
+      
+      <ng-container matColumnDef="user">
+        <th mat-header-cell *matHeaderCellDef>User</th>
+        <td mat-cell *matCellDef="let r" class="user-text">{{r.actionByUsername}}</td>
+      </ng-container>
+      
+      <ng-container matColumnDef="old">
+        <th mat-header-cell *matHeaderCellDef>Old Value</th>
+        <td mat-cell *matCellDef="let r">{{r.oldValue || '---'}}</td>
+      </ng-container>
+      
+      <ng-container matColumnDef="new">
+        <th mat-header-cell *matHeaderCellDef>New Value</th>
+        <td mat-cell *matCellDef="let r">{{r.newValue}}</td>
+      </ng-container>
+      
+      <ng-container matColumnDef="comment">
+        <th mat-header-cell *matHeaderCellDef>Comment</th>
+        <td mat-cell *matCellDef="let r">{{r.comment || 'N/A'}}</td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="['date', 'id', 'action', 'user', 'old', 'new', 'comment']"></tr>
+      <tr mat-row *matRowDef="let row; columns: ['date', 'id', 'action', 'user', 'old', 'new', 'comment'];"></tr>
+    </table>
+
+    <mat-paginator 
+      [length]="totalRecords" 
+      [pageSize]="filter.pageSize" 
+      [pageSizeOptions]="[10, 25, 50, 100]" 
+      (page)="onPageChange($event)">
+    </mat-paginator>
+  </div>
+
+  <!-- Loading State -->
+  
+</div>

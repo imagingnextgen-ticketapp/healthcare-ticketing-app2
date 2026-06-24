@@ -1,0 +1,310 @@
+<div class="fuji-dialog-container">
+  <div class="fuji-accent-bar"></div>
+
+  <!-- HEADER -->
+  <div mat-dialog-title class="dialog-header">
+    <div class="header-text">
+      <mat-icon>
+        {{ isEditMode ? 'edit' : 'add_circle_outline' }}
+      </mat-icon>
+
+      <span>
+        {{ isEditMode ? 'Edit Support Ticket #' + editingTicketId : 'Raise New Support Ticket' }}
+      </span>
+    </div>
+    <button mat-icon-button mat-dialog-close class="dialog-close-btn" matTooltip="Close">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content class="dialog-content">
+    <form [formGroup]="form" class="template-form">
+      <!-- ROW 1 -->
+      <div class="fuji-grid fuji-two-cols">
+        <mat-form-field appearance="outline">
+          <mat-label>Master Site</mat-label>
+
+          <mat-select formControlName="masterSiteId" (selectionChange)="onSiteChange($event.value)">
+            <mat-option *ngFor="let site of masterSites" [value]="site.masterSiteId">
+              {{ site.name || site.siteName }}
+            </mat-option>
+          </mat-select>
+
+          <mat-error *ngIf="form.get('masterSiteId')?.hasError('required')">
+            Master Site is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- 🟢 ENFORCED CATALOG BINDING IN HTML -->
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>Product</mat-label>
+          <mat-select formControlName="productId" (selectionChange)="onProductChange($event.value)">
+            <!-- 🚨 CHANGE [value] EXPLICITLY TO prod.productId TO SEND 26 INSTEAD OF 39 -->
+            <mat-option *ngFor="let prod of products" [value]="prod.productId || prod.ProductId">
+              {{ prod.productName || prod.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- ROW 2 -->
+           <!-- 🟢 JOINED FIELD GRID LAYER -->
+      <div class="fuji-form-grid">
+        
+        <!-- ISSUE TEMPLATE (Spans 2 columns on desktop) -->
+        <mat-form-field appearance="outline" class="w-100 col-span-2-desktop">
+          <mat-label>Issue Template</mat-label>
+          <mat-select formControlName="templateId" (selectionChange)="onTemplateChange($event.value)">
+            <mat-option *ngFor="let temp of templates" [value]="temp.templateId">
+              {{ temp.issueType }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('templateId')?.hasError('required')">
+            Template is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- SEVERITY (Takes 1 column on desktop) -->
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>Severity</mat-label>
+          <mat-select formControlName="severity">
+            <mat-option value="Low">Low</mat-option>
+            <mat-option value="Medium">Medium</mat-option>
+            <mat-option value="High">High</mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('severity')?.hasError('required')">
+            Severity is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- PRIORITY (Takes 1 column on desktop) -->
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>Priority</mat-label>
+          <input matInput formControlName="priority" readonly style="color: #666;" />
+        </mat-form-field>
+
+        <!-- TAT HOURS (Takes 1 column on desktop - Now sits perfectly adjacent to Priority!) -->
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>TAT Hours</mat-label>
+          <input matInput type="number" formControlName="tatHours" readonly style="color: #666;" />
+          <span matSuffix>hrs</span>
+        </mat-form-field>
+
+        <!-- Spacer filler to balance the row layout grid gracefully -->
+        <div class="desktop-only-spacer" style="grid-column: span 3;"></div>
+
+      </div> <!-- Closes form grid -->
+
+      <!-- DESCRIPTION -->
+      <div class="fuji-row-full">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Detailed Description</mat-label>
+
+          <textarea matInput formControlName="description" rows="3"> </textarea>
+
+          <mat-error *ngIf="form.get('description')?.hasError('required')">
+            Detailed description is required
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- FILE ERROR -->
+          <!-- VALIDATION ERROR ALERT -->
+      <div *ngIf="fileErrorMessage"
+           class="alert alert-warning mt-2 mb-2 p-2 small rounded"
+           style="background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; display: flex; align-items: center; gap: 6px;">
+        ⚠️ {{ fileErrorMessage }}
+      </div>
+
+      <!-- ========================================================================= -->
+      <!-- MOBILE-RESPONSIVE ATTACHMENTS SYSTEM                                      -->
+      <!-- ========================================================================= -->
+            <!-- ATTACHMENTS HANDLING CONTAINER -->
+      <div class="attachment-container" style="margin-top: 15px; width: 100%;">
+        
+        <!-- CASE A: EDIT MODE ACTIVE -->
+        <div *ngIf="isEditMode" class="w-full">
+          <div style="font-weight: 600; font-size: 0.9rem; color: #1f5f46; margin-bottom: 8px">
+            Existing Attachments
+          </div>
+
+          <!-- Empty State Box Display -->
+          <div *ngIf="!existingAttachments || existingAttachments.length === 0"
+               class="text-muted small italic p-2 border rounded text-center"
+               style="border-style: dashed !important; margin-bottom: 12px; background: #fafafa;">
+            No files currently attached to this ticket.
+          </div>
+
+          <!-- Existing Active Items Loop -->
+          <div *ngIf="existingAttachments && existingAttachments.length > 0">
+            <div *ngFor="let attachment of existingAttachments"
+                 class="file-item-card"
+                 style="display: flex; flex-direction: column; align-items: stretch; height: auto; padding: 10px; margin-bottom: 8px; background: #fdfdfd; border: 1px solid #d8e5dd; border-radius: 10px; box-sizing: border-box;">
+              
+              <!-- Default View Row -->
+              <div *ngIf="replacingAttachmentId !== attachment.attachmentId"
+                   style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px;">
+                <span class="file-info text-truncate" style="display: flex; align-items: center; gap: 6px; max-width: 75%;">
+                  <mat-icon style="color: #2d8a63;">insert_drive_file</mat-icon>
+                  <span class="text-truncate file-name-mobile" style="font-weight: 500; color: #355645;">
+                    {{ attachment.blobFileName || 'Attached Document' }}
+                  </span>
+                  <span class="text-muted small" style="font-size: 0.78rem; color: #7b8f84;">
+                    ({{ ((attachment.fileSize || 0) / 1024).toFixed(1) }} KB)
+                  </span>
+                </span>
+                <button type="button"
+                        mat-stroked-button
+                        color="accent"
+                        [disabled]="isReadOnly"
+                        style="font-size: 0.75rem; height: 32px; line-height: 32px; padding: 0 12px"
+                        (click)="startReplacement(attachment.attachmentId)">
+                  Replace
+                </button>
+              </div>
+
+              <!-- Active File Replacement UI Input Channel -->
+              <div *ngIf="replacingAttachmentId === attachment.attachmentId" style="width: 100%">
+                <div class="small text-danger mb-1 fw-bold" style="font-size: 0.8rem; color: #c62828;">
+                  Select replacement file for: {{ attachment.blobFileName }}
+                </div>
+                <input type="file"
+                       (change)="onReplacementFileSelected($event)"
+                       accept=".jpg,.jpeg,.png,.pdf,.docx,.xlsx"
+                       style="font-size: 0.8rem; margin-bottom: 8px; width: 100%"
+                       class="form-control" />
+                <div style="display: flex; gap: 8px; justify-content: flex-end">
+                  <button type="button"
+                          mat-flat-button
+                          color="primary"
+                          style="font-size: 0.75rem; height: 28px; line-height: 28px"
+                          [disabled]="!stagedReplacementFile || loading"
+                          (click)="confirmFileReplacement()">
+                    Confirm Change
+                  </button>
+                  <button type="button"
+                          mat-button
+                          style="font-size: 0.75rem; height: 28px; line-height: 28px"
+                          (click)="cancelReplacement()">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- COMPACT STAGED ATTRAY QUEUE INSIDE EDIT WINDOW -->
+          <div class="mt-4 pt-3" style="border-top: 1px dashed #cbd5e1">
+            <div style="font-weight: 600; font-size: 0.85rem; color: #64748b; margin-bottom: 6px">
+              Add New Attachments
+            </div>
+
+            <div class="fuji-dropzone"
+                 *ngIf="!isReadOnly"
+                 (click)="editFileInput.click()"
+                 style="padding: 12px; min-height: auto; border: 2px dashed #cbd5e1; background-color: #f8fafc; border-radius: 6px; text-align: center; cursor: pointer;">
+              <input #editFileInput
+                     type="file"
+                     (change)="onFileSelected($event)"
+                     multiple
+                     accept=".jpg,.jpeg,.png,.pdf,.docx,.xlsx"
+                     style="display: none" />
+              <div style="display: flex; align-items: center; justify-content: center; gap: 8px">
+                <mat-icon style="color: #517062; font-size: 20px; width: 20px; height: 20px">add_photo_alternate</mat-icon>
+                <span style="font-size: 0.85rem; color: #334155; font-weight: 500">
+                  Click to upload more screenshots or documentation...
+                </span>
+              </div>
+            </div>
+
+            <!-- Staged Additions View Loop Queue List Rows -->
+            <div *ngIf="selectedFiles.length > 0"
+                 class="queue-container"
+                 style="margin-top: 8px; background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 6px; border-radius: 6px;">
+              <div style="font-size: 0.75rem; font-weight: 700; color: #166534; margin-bottom: 4px; padding-left: 4px;">
+                Staged files to add upon saving:
+              </div>
+              <div *ngFor="let file of selectedFiles; let i = index"
+                   class="fuji-queue-row"
+                   style="margin-bottom: 4px; background: #ffffff; padding: 6px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #dcfce7; border-radius: 4px;">
+                <span class="file-info text-truncate" style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; max-width: 85%;">
+                  <mat-icon style="color: #166534; font-size: 16px; width: 16px; height: 16px;">check_circle</mat-icon>
+                  <span class="text-truncate">{{ file.name }}</span>
+                </span>
+                <button type="button"
+                        mat-icon-button
+                        color="warn"
+                        style="width: 24px; height: 24px; line-height: 24px; display: flex; align-items: center; justify-content: center;"
+                        (click)="removeFileFromQueue(i); $event.stopPropagation()">
+                  <mat-icon style="font-size: 16px; width: 16px; height: 16px">close</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div> <!-- 🟢 FIXED CLOSURE: This closes the Case A div tag BEFORE Case B evaluation begins -->
+
+        <!-- CASE B: CREATE MODE ACTIVE -->
+        <div *ngIf="!isEditMode" class="w-full">
+          <div class="fuji-dropzone-main" (click)="mobileFileInput.click()">
+            <input #mobileFileInput
+                   type="file"
+                   (change)="onFileSelected($event)"
+                   multiple
+                   accept=".jpg,.jpeg,.png,.pdf,.docx,.xlsx"
+                   style="display: none" />
+            <mat-icon class="upload-icon">cloud_upload</mat-icon>
+            <div class="dropzone-main-text">
+              Drag and drop screenshots here, or <span class="text-green-bold">tap to upload</span>
+            </div>
+            <div class="dropzone-sub-text">
+              Supports PDF, PNG, JPG, JPEG, DOCX, XLSX (Max 10MB per file)
+            </div>
+          </div>
+
+          <!-- Staged Files Loop for Creation Mode -->
+          <div *ngIf="selectedFiles.length > 0" class="queue-container">
+            <div *ngFor="let file of selectedFiles; let i = index" class="file-item-card">
+              <span class="file-info text-truncate" style="max-width: 85%;">
+                <mat-icon>insert_drive_file</mat-icon>
+                <span class="text-truncate">{{ file.name }}</span>
+              </span>
+              <button type="button"
+                      mat-icon-button
+                      color="warn"
+                      class="btn-item-remove"
+                      (click)="removeFileFromQueue(i); $event.stopPropagation()">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div> <!-- Closes .attachment-container -->
+    </form>
+  </mat-dialog-content>
+
+  <!-- ACTIONS FOOTER -->
+  <mat-dialog-actions align="end" class="dialog-actions-responsive">
+    <button mat-button
+            type="button"
+            class="btn-discard"
+            [disabled]="loading"
+            (click)="dialogRef.close(false)">
+      Discard
+    </button>
+
+    <button mat-raised-button
+            color="primary"
+            type="submit"
+            class="fuji-save-btn"
+            (click)="onSubmit()"
+            [disabled]="form.invalid || form.pending || loading || (isEditMode && isReadOnly)">
+      
+      <mat-spinner *ngIf="loading" diameter="16" class="fuji-spinner-loader"></mat-spinner>
+      
+      <span class="fuji-btn-text">
+        {{ isEditMode ? 'Update Ticket Specifications' : 'Log Support Ticket' }}
+      </span>
+    </button>
+  </mat-dialog-actions>
+</div>
