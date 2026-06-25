@@ -164,7 +164,8 @@ export class MisReportComponent implements OnInit {
     this.cdr.detectChanges();
     this.masterSiteService.getSites({ pageNumber: 1, pageSize: 500 }).subscribe({
       next: (res) => {
-        this.masterSites = res.data || [];
+        this.masterSites = (res.data || []).filter((site: any) => site.isActive);
+
         this.loadReportData();
       },
       error: () => {
