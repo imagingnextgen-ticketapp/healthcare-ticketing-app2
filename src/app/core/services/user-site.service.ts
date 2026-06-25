@@ -28,9 +28,9 @@ export class UserSiteService {
 
   // Assign, Activate, and Deactivate methods remain the same 
   // as they already use generic 'any' or string responses
-  assignUsers(dto: any): Observable<string> {
-    return this.http.post(`${this.apiUrl}/assign`, dto, { responseType: 'text' });
-  }
+  assignUsers(dto: any): Observable<any> {
+  return this.http.post<any>(`${this.apiUrl}/assign`, dto);
+}
 
   activate(dto: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/activate`, dto);

@@ -47,18 +47,19 @@ export class UserSiteMappingComponent implements OnInit {
     });
   }
 
-  loadSites(): void {
-    this.masterSiteService.getSites({ pageNumber: 1, pageSize: 100 }).subscribe({
-      next: (res) => {
-        // 🟢 Fix 2: Wrap state updates in setTimeout for stability
-        setTimeout(() => {
-          this.sites = res.data || [];
-          this.cdr.detectChanges(); 
-        });
-      },
-      error: () => this.showSnackBar('Failed to load sites')
-    });
-  }
+ loadSites(): void {
+  this.masterSiteService.getSites({ pageNumber: 1, pageSize: 100 }).subscribe({
+    next: (res) => {
+      setTimeout(() => {
+        // Show only active sites in the dropdown
+        this.sites = (res.data || []).filter((site: any) => site.isActive);
+
+        this.cdr.detectChanges();
+      });
+    },
+    error: () => this.showSnackBar('Failed to load sites')
+  });
+}
 
   loadAllAvailableUsers(): void {
     this.isLoading = true;
@@ -136,27 +137,47 @@ this.availableUsers = [...this.availableUsers, ...filteredUsers];
   }
 
   onAssign(): void {
-    if (!this.selectedSiteId || this.selectedUserIds.length === 0) return;
+  if (!this.selectedSiteId || this.selectedUserIds.length === 0) return;
 
-    const dto = { 
-      MasterSiteId: this.selectedSiteId, 
-      UserIds: this.selectedUserIds 
-    };
-    
-    this.userSiteService.assignUsers(dto).subscribe({
-      next: (response) => {
-        this.showSnackBar(response || 'Users assigned successfully');
-        // 🟢 Reset selection
-        this.selectedUserIds = [];
-        
-        // ⚡ DATA SYNC FIX: Reload mapping data rows AND flush/re-cache available dropdown users list.
-        // This ensures the dropdown options map directly to clean state rules immediately!
-        this.loadMappings(); 
-        this.loadAllAvailableUsers();
-      },
-      error: () => this.showSnackBar('Failed to assign users')
-    });
+  const dto = {
+    masterSiteId: this.selectedSiteId,
+    userIds: this.selectedUserIds
+  };
+
+  this.userSiteService.assignUsers(dto).subscribe({
+    next: (response: any) => {
+
+      const message =
+        typeof response === 'string'
+          ? response
+          : response?.message || 'Users processed successfully';
+
+      this.showSnackBar(message);
+
+      this.selectedUserIds = [];
+
+      this.loadMappings();
+      this.loadAllAvailableUsers();
+    },
+error: (err: any) => {
+
+  let message = 'Failed to process users';
+
+  try {
+    if (typeof err.error === 'string') {
+      const parsed = JSON.parse(err.error);
+      message = parsed.message;
+    } else if (err.error?.message) {
+      message = err.error.message;
+    }
+  } catch {
+    message = err.error || message;
   }
+
+  this.showSnackBar(message);
+}
+  });
+}
 
   updateStatus(user: any, shouldActivate: boolean): void {
     const siteId = Number(this.selectedSiteId);

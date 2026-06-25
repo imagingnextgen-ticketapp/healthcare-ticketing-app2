@@ -29,8 +29,7 @@ export class SiteProductService {
 
 
   // POST: assign
-  assignProducts(dto: any): Observable<string> {
-    // responseType: 'text' because your C# returns a plain string "Products assigned successfully"
-    return this.http.post(`${this.apiUrl}/assign`, dto, { responseType: 'text' });
-  }
+  assignProducts(dto: any): Observable<{ message: string }> {
+  return this.http.post<{ message: string }>(`${this.apiUrl}/assign`, dto);
+}
 }

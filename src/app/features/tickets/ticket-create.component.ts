@@ -486,7 +486,7 @@ if (this.isReadOnly) {
     const role = this.currentUser?.role;
     if (role === 'SuperAdmin' || role === 'SupportEngineer') {
       this.masterSiteService.getSites({ pageNumber: 1, pageSize: 1000 }).subscribe(res => {
-        this.masterSites = res.data || res.items || res; 
+        this.masterSites = (res.data || []).filter((site: any) => site.isActive); 
         this.cdr.detectChanges();
       });
     } else if (this.currentUser?.masterSiteId) {

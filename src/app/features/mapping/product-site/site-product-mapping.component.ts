@@ -124,44 +124,57 @@ export class SiteProductMappingComponent implements OnInit {
   /**
    * Maps multiple products to the selected site
    */
-  onAssignBulk(): void {
-    if (this.isLoading || !this.masterSiteId || this.selectedProductIds.length === 0) return;
-
-    this.isLoading = true;
-    this.cdr.detectChanges();
-
-    const dto = { 
-      masterSiteId: this.masterSiteId, 
-      productIds: this.selectedProductIds 
-    };
-
-    this.siteProductService.assignProducts(dto).subscribe({
-      next: () => {
-        this.showSnackBar('Products mapped successfully');
-        this.selectedProductIds = [];
-        this.isLoading = false;
-        this.loadMappings();
-      },
-      error: (err) => {
-        this.isLoading = false;
-        
-        // Extracting custom "ALREADY_ASSIGNED" message from C# Exception
-        const errorMsg = err.error?.message || err.message || '';
-        
-        if (errorMsg.includes('ALREADY_ASSIGNED')) {
-          const productNames = errorMsg.split(':')[1];
-          this.snackBar.open(`Conflict: [${productNames}] are already mapped.`, 'Dismiss', {
-            duration: 6000,
-            panelClass: ['warning-snackbar']
-          });
-        } else {
-          this.showSnackBar('Error occurred during mapping.');
-        }
-        this.cdr.detectChanges();
-      }
-    });
+ onAssignBulk(): void {
+  if (this.isLoading || !this.masterSiteId || this.selectedProductIds.length === 0) {
+    return;
   }
 
+  this.isLoading = true;
+  this.cdr.detectChanges();
+
+  const dto = {
+    masterSiteId: this.masterSiteId,
+    productIds: this.selectedProductIds
+  };
+
+  this.siteProductService.assignProducts(dto).subscribe({
+    next: (response: any) => {
+
+      const message =
+        typeof response === 'string'
+          ? response
+          : response?.message || 'Products processed successfully.';
+
+      this.showSnackBar(message);
+
+      this.selectedProductIds = [];
+      this.isLoading = false;
+
+      this.loadMappings();
+    },
+
+    error: (err: any) => {
+
+      this.isLoading = false;
+
+      let message = 'Failed to process products';
+
+      try {
+        if (typeof err.error === 'string') {
+          const parsed = JSON.parse(err.error);
+          message = parsed.message;
+        } else if (err.error?.message) {
+          message = err.error.message;
+        }
+      } catch {
+        message = err.error || message;
+      }
+
+      this.showSnackBar(message);
+      this.cdr.detectChanges();
+    }
+  });
+}
   /**
    * 🔷 Added to track client pagination interactions
    */
