@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule, FormControl } from '@angular/forms';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MasterSiteService } from '../../core/services/mastersite.service';
 
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -90,9 +91,10 @@ export class TicketWorklistComponent implements OnInit, AfterViewInit, OnDestroy
    // 2. ADD COMPONENT PROPERTIES FOR THE RESPONSIVE DATEPICKER
   maxDate = new Date();
   //isMobile$: Observable<boolean>;
-  totalRecords = 0; pageSize = 10; pageNumber = 1; currentTabIndex = 0; allEngineers: any[] = [];
+  totalRecords = 0; pageSize = 10; pageNumber = 1; currentTabIndex = 0; sites: any[] = [];allEngineers: any[] = [];
+  
 
-  readonly ROLES = { SUPER_ADMIN: 'SuperAdmin', SUPPORT_ENGINEER: 'SupportEngineer', HOSPITAL_ADMIN: 'HospitalAdmin', HOSPITAL_USER: 'HospitalUser' };
+  readonly ROLES = { SUPER_ADMIN: 'SuperAdmin', SUPPORT_ENGINEER: 'SupportEngineer', HOSPITAL_ADMIN: 'HospitalAdmin', HOSPITAL_USER: 'HospitalUser', MANAGER:'Manager' };
   statusOptions = [{label: 'Open', value: 1}, {label: 'Assigned', value: 2}, {label: 'InProgress', value: 3}, {label: 'Closed', value: 4}, {label: 'Reopened', value: 5}];
 
   constructor(
@@ -100,6 +102,7 @@ export class TicketWorklistComponent implements OnInit, AfterViewInit, OnDestroy
     private ticketService: TicketService, 
     private userService: UserService,
     private attachmentService: TicketAttachmentService, 
+    private masterSiteService: MasterSiteService,
     private auth: AuthService, 
     private dialog: MatDialog, 
     private cdr: ChangeDetectorRef, 
@@ -120,19 +123,31 @@ export class TicketWorklistComponent implements OnInit, AfterViewInit, OnDestroy
     this.initFilterForm();
     this.setupAutoSearch();
     this.loadEngineers();
-   this.refresh();
+  setTimeout(() => {
+  this.loadSites();
+  this.refresh();
+});
   }
 
   ngAfterViewInit() { this.dataSource.paginator = this.paginator; }
   ngOnDestroy() { this.filterSubscription?.unsubscribe(); }
 
-  initFilterForm() { this.filterForm = this.fb.group({ ticketId: [null], status: [null], createdDate: [null], resolveDate: [null] }); }
+  initFilterForm() { this.filterForm = this.fb.group({ ticketId: [null], status: [null], createdDate: [null], resolveDate: [null] , masterSiteId: [null], }); }
 
   setupAutoSearch() { 
     this.filterSubscription = this.filterForm.valueChanges.pipe(debounceTime(500), distinctUntilChanged()).subscribe(() => { this.pageNumber = 1; this.refresh(); }); 
   }
 
-  loadEngineers() { this.userService.getEngineers().subscribe(users => this.allEngineers = users || []); }
+  loadEngineers(): void {
+  this.userService.getEngineers().subscribe({
+    next: (users: any) => {
+      Promise.resolve().then(() => {
+        this.allEngineers = users || [];
+      });
+    }
+  });
+}
+
 
   refresh(isManual: boolean = false) {
   // 🟢 1. AUTO-LOAD TOGGLE: Turn on the spinner and disable the button instantly
@@ -154,8 +169,19 @@ export class TicketWorklistComponent implements OnInit, AfterViewInit, OnDestroy
     const d = new Date(formValues.resolveDate);
     formValues.resolveDate = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
   }
+  
 
-  const params = { pageNumber: this.pageNumber, pageSize: this.pageSize, ...formValues };
+  const params: any = {
+  pageNumber: this.pageNumber,
+  pageSize: this.pageSize,
+  ...formValues
+};
+
+// HospitalUser & HospitalAdmin
+if (this.currentUser.role === 'HospitalUser' || this.currentUser.role === 'HospitalAdmin'
+) {
+  params.masterSiteId = this.currentUser.masterSiteId;
+}
 
   this.ticketService.getWorklist(params).subscribe({
     next: (res: any) => {
@@ -185,6 +211,23 @@ export class TicketWorklistComponent implements OnInit, AfterViewInit, OnDestroy
       this.cdr.detectChanges();
     }
   });
+}
+loadSites(): void {
+  this.masterSiteService
+    .getSites({ pageNumber: 1, pageSize: 500 })
+    .subscribe({
+      next: (res: any) => {
+
+        this.sites = (res.data || []).filter(
+          (x: any) => x.isActive
+        );
+
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Failed to load hospitals', err);
+      }
+    });
 }
 
 
@@ -504,7 +547,12 @@ viewResolutionNotes(ticket: TicketResponseDto): void {
   ) {
     return true;
   }
-
+ if (
+    userRole === 'manager'
+   
+  ) {
+    return true;
+  }
   // HospitalAdmin
   if (
     userRole === 'hospitaladmin' ||
@@ -585,6 +633,7 @@ private getNormalizedStatus(ticket: any): number {
 
   const isSuperAdmin =
     this.currentUser.role === this.ROLES.SUPER_ADMIN;
+    const isManager=this.currentUser.role===this.ROLES.MANAGER;
 
   const isSupportEng =
     this.currentUser.role === this.ROLES.SUPPORT_ENGINEER;
@@ -592,7 +641,7 @@ private getNormalizedStatus(ticket: any): number {
   const isAssignedToMe =
     Number(ticket.assignedToUserId) === Number(this.currentUser.userId);
 
-  if (isSuperAdmin) {
+  if (isSuperAdmin || isManager) {
     return true;
   }
 
@@ -637,6 +686,7 @@ canStartWork(ticket: any): boolean {
 
   const isSuperAdmin = this.currentUser.role === this.ROLES.SUPER_ADMIN;
   const isSupportEng = this.currentUser.role === this.ROLES.SUPPORT_ENGINEER;
+  const isManager=this.currentUser.role===this.ROLES.MANAGER;
 
   const currentUserId = this.currentUser.userId || this.currentUser.UserId;
   const assignedUserId = ticket.assignedToUserId || ticket.AssignedToUserId;
@@ -645,7 +695,7 @@ canStartWork(ticket: any): boolean {
     Number(currentUserId) === Number(assignedUserId);
 
   // 🟢 Super Admin: Open, Assigned, Reopened
-  if (isSuperAdmin) {
+  if (isSuperAdmin || isManager) {
     return status === 1 || status === 2 || status === 5;
   }
 
@@ -670,6 +720,7 @@ canClose(ticket: any): boolean {
   const isHospitalUser  = this.currentUser.role === this.ROLES.HOSPITAL_USER;
   const isSuperAdmin    = this.currentUser.role === this.ROLES.SUPER_ADMIN;
   const isSupportEng    = this.currentUser.role === this.ROLES.SUPPORT_ENGINEER;
+  const isManager=this.currentUser.role===this.ROLES.MANAGER;
   // 3. Status checks mapped directly to your TicketStatus Enum parameters
   const isClosed = ticket.status === 4 || ticket.status === 'Closed';
   const isInProgress = ticket.status === 3 || 
@@ -684,7 +735,7 @@ canClose(ticket: any): boolean {
 
   // 5. Role Rule for SuperAdmin & Support Engineer:
   // They can ONLY close the ticket if the status is strictly InProgress (Status 3)
-  if (isSuperAdmin || isSupportEng) {
+  if (isSuperAdmin || isSupportEng ||isManager) {
     return isInProgress;
   }
 

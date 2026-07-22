@@ -16,14 +16,14 @@
     </div>
 
     <!-- Log Ticket Button: HIDDEN for Manager -->
-    @if (user?.role?.toLowerCase() !== 'manager') {
+    
       <div class="action-section">
         <button mat-flat-button (click)="openCreateTicketDialog(); closeSidenavOnMobile()" class="modern-create-btn">
           <mat-icon>add_task</mat-icon>
           <span>LOG NEW TICKET</span>
         </button>
       </div>
-    }
+   
 
     <mat-nav-list class="medical-nav">
 
@@ -64,15 +64,17 @@
       <!-- } -->
 
       <!-- REPORTING SECTION -->
-      @if (user?.role?.toLowerCase() === 'superadmin' ||
-           user?.role?.toLowerCase() === 'manager' ||
-           user?.role?.toLowerCase() === 'hospitaladmin') {
-        <div class="nav-label">Reporting</div>
-        <a mat-list-item routerLink="/mis-report" routerLinkActive="active-link" (click)="closeSidenavOnMobile()">
-          <mat-icon matListItemIcon>insights</mat-icon>
-          <span matListItemTitle>MIS Analytics</span>
-        </a>
-      }
+     @if (user?.role?.toLowerCase() === 'superadmin' ||
+     user?.role?.toLowerCase() === 'manager' ||
+     user?.role?.toLowerCase() === 'hospitaladmin' || 
+     user?.role?.toLowerCase() === 'supportengineer') {
+  <div class="nav-label">Reporting</div>
+  <a mat-list-item routerLink="/mis-report" routerLinkActive="active-link" (click)="closeSidenavOnMobile()">
+    <mat-icon matListItemIcon>insights</mat-icon>
+    <span matListItemTitle>MIS Analytics</span>
+  </a>
+}
+
 
       <!-- ADMINISTRATION -->
       @if (user?.role?.toLowerCase() === 'hospitaladmin' || user?.role?.toLowerCase() === 'superadmin') {

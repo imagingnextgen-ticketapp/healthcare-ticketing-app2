@@ -63,6 +63,9 @@ export class TicketService {
     if (filter.ticketId) params = params.set('ticketId', filter.ticketId.toString());
     if (filter.status != null) params = params.set('status', filter.status.toString());
     if (filter.assignedToUserId) params = params.set('assignedToUserId', filter.assignedToUserId.toString());
+    if (filter.masterSiteId != null) {params = params.set('masterSiteId', filter.masterSiteId.toString());
+
+}
     
     // 1. Format Created Date
     if (filter.createdDate) {

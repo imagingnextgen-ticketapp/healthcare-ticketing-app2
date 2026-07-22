@@ -16,11 +16,20 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
 
     // 2. Check the role. C# usually returns 'roleName' or 'role'
     // Ensure this matches the property name in your user object
-    const userRole = user.roleName || user.role;
+    const rawRole = user?.role || 
+                    user?.roleName || 
+                    user?.['http://microsoft.com'] || 
+                    '';
 
-    if (allowedRoles.includes(userRole)) {
+    const userRoleNormalized = String(rawRole).trim().toLowerCase();
+
+    // 3. Convert all expected allowed roles array elements to lowercase for a guaranteed match
+    const lowerAllowedRoles = allowedRoles.map(r => r.trim().toLowerCase());
+
+    if (lowerAllowedRoles.includes(userRoleNormalized)) {
       return true;
     }
+
 
     // 3. Unauthorized role: redirect to login
     return router.createUrlTree(['/login']);

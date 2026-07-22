@@ -196,7 +196,7 @@ let hasPermission = false;
 
 if (isEditableStatus) {
 
-  if (role === 'superadmin' || role === 'super admin') {
+  if (role === 'superadmin' || role === 'super admin' || role === 'manager') {
     hasPermission = true;
   }
   else if (role === 'hospitaladmin' || role === 'hospital admin') {
@@ -223,12 +223,23 @@ if (this.isReadOnly) {
   );
 }
 // =========================================================================
-        const elevatedRoles = ['Superadmin', 'Manager', 'Support Engineer', 'SuperAdmin'];
-        const userRoleOriginal = this.currentUser?.role || this.currentUser?.['http://xmlsoap.org'];
+       // =========================================================================
+        // 🟢 FIXED: LOWERCASE NORMALIZATION & ACCURATE MICROSOFT JWT CLAIM KEYS
+        // =========================================================================
+        const elevatedRoles = ['superadmin', 'manager', 'supportengineer', 'support engineer'];
+        
+        const rawRole = this.currentUser?.role || 
+                        this.currentUser?.roleName ||
+                        this.currentUser?.['http://microsoft.com'] || 
+                        '';
+                        
+        const userRoleOriginal = String(rawRole).trim().toLowerCase();
+
         const assignedSiteId = this.currentUser?.masterSiteId || this.currentUser?.MasterSiteId 
           ? Number(this.currentUser?.masterSiteId || this.currentUser?.MasterSiteId) 
           : null;
 
+        // Correctly determines if the user is bound to a single local facility
         const isRestrictedUser = !elevatedRoles.includes(userRoleOriginal);
 
         if (isRestrictedUser && assignedSiteId && siteId !== assignedSiteId) {
@@ -240,7 +251,8 @@ if (this.isReadOnly) {
         // =========================================================================
         // 🟢 FIX: ASYNC TIMEOUT BOUNDARIES TO ELIMINATE NG0100 RUNTIME ERRORS
         // =========================================================================
-        if (isRestrictedUser && assignedSiteId) {
+if (isRestrictedUser && assignedSiteId) {
+          // Local/Hospital Admins & Users see only their home site location row
           setTimeout(() => {
             this.masterSites = [{
               id: assignedSiteId,
@@ -252,12 +264,14 @@ if (this.isReadOnly) {
           }, 0);
           
         } else {
+          // SuperAdmins and Managers correctly query the complete global master database registry
           this.masterSiteService.getSites({ pageNumber: 1, pageSize: 1000 }).subscribe({
             next: (sitesRes: any) => {
               const fetchedSites = sitesRes?.data || sitesRes?.items || sitesRes || [];
-              
+              console.log('Fetched Master Sites for Edit Mode:', fetchedSites);
               setTimeout(() => {
-                this.masterSites = fetchedSites;
+                // Filter down to only active medical facilities matching your layout rule
+                this.masterSites = fetchedSites.filter((site: any) => site.isActive);
                 this.loadProductsAndTemplates(siteId, prodId, templateId, ticket, this.isReadOnly);
                 this.cdr.detectChanges();
               }, 0);
@@ -276,6 +290,7 @@ if (this.isReadOnly) {
       }
     });
   }
+
 
   // 3. LOAD DEPENDENCIES - Chains dropdown fields and safely binds values to the UI form controls
   
@@ -484,12 +499,13 @@ if (this.isReadOnly) {
 
   loadInitialSiteList(): void {
     const role = this.currentUser?.role;
-    if (role === 'SuperAdmin' || role === 'SupportEngineer') {
-      this.masterSiteService.getSites({ pageNumber: 1, pageSize: 1000 }).subscribe(res => {
-        this.masterSites = (res.data || []).filter((site: any) => site.isActive); 
-        this.cdr.detectChanges();
-      });
-    } else if (this.currentUser?.masterSiteId) {
+    if (role?.toLowerCase() === 'superadmin' || role?.toLowerCase()=== 'manager' || role?.toLowerCase() === 'supportengineer') {
+    this.masterSiteService.getSites({ pageNumber: 1, pageSize: 1000 }).subscribe(res => {
+      this.masterSites = (res.data || []).filter((site: any) => site.isActive); 
+      this.cdr.detectChanges();
+    });
+    
+  }  else if (this.currentUser?.masterSiteId) {
       this.masterSiteService.getSiteViewDetails(this.currentUser.masterSiteId).subscribe(res => {
         this.masterSites = [res];
         this.form.get('masterSiteId')?.setValue(this.currentUser.masterSiteId);

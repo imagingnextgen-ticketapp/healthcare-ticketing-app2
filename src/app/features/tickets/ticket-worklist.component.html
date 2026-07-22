@@ -20,7 +20,8 @@
         <!-- TABS BAR CONTROL (Only renders the tabs headers, no internal template destruction) -->
     <ng-container
       *ngIf="
-        currentUser?.role === ROLES.SUPER_ADMIN || currentUser?.role === ROLES.SUPPORT_ENGINEER;
+        currentUser?.role === ROLES.SUPER_ADMIN || currentUser?.role === ROLES.SUPPORT_ENGINEER
+        || currentUser?.role === ROLES.MANAGER;
         else hospitalView
       "
     >
@@ -62,17 +63,47 @@
         <input matInput formControlName="ticketId" placeholder="e.g. 101" />
       </mat-form-field>
 
+     
       <mat-form-field appearance="outline">
-        <mat-label> Status </mat-label>
+  <mat-label>Status</mat-label>
 
-        <mat-select formControlName="status">
-          <mat-option [value]="null"> All Statuses </mat-option>
+  <mat-select formControlName="status">
+    <mat-option [value]="null">All Statuses</mat-option>
 
-          <mat-option *ngFor="let s of statusOptions" [value]="s.value">
-            {{ s.label }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
+    <mat-option *ngFor="let s of statusOptions" [value]="s.value">
+      {{ s.label }}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+
+<!-- Hospital Filter -->
+<mat-form-field
+    appearance="outline"
+    *ngIf="currentUser?.role === ROLES.SUPER_ADMIN
+        || currentUser?.role === ROLES.SUPPORT_ENGINEER
+        || currentUser?.role === ROLES.MANAGER">
+
+    <mat-label>Hospital</mat-label>
+
+    <mat-select
+    formControlName="masterSiteId"
+    panelClass="hospital-select-panel">
+
+        <mat-option [value]="null">
+            All Hospitals
+        </mat-option>
+
+        <mat-option
+            *ngFor="let site of sites"
+            [value]="site.masterSiteId">
+
+            {{ site.name }}
+
+        </mat-option>
+
+    </mat-select>
+
+</mat-form-field>
 
 <!-- 1. Created Date Field -->
 
@@ -322,11 +353,12 @@
       </button>
 
       <button mat-menu-item 
-              *ngIf="currentUser?.role === ROLES.SUPER_ADMIN"
-              (click)="openAssignPopup(ticket)">
-        <mat-icon style="color: #008542">person_add</mat-icon>
-        <span>Assign to Engineer</span>
-      </button>
+        *ngIf="currentUser?.role === ROLES.SUPER_ADMIN || currentUser?.role === ROLES.MANAGER"
+        (click)="openAssignPopup(ticket)">
+  <mat-icon style="color: #008542">person_add</mat-icon>
+  <span>Assign to Engineer</span>
+</button>
+
     </ng-container>
 
     <!-- 3. CORE ACTION CONTROLS -->

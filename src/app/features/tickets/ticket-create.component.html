@@ -20,32 +20,34 @@
   <mat-dialog-content class="dialog-content">
     <form [formGroup]="form" class="template-form">
       <!-- ROW 1 -->
-      <div class="fuji-grid fuji-two-cols">
-        <mat-form-field appearance="outline">
-          <mat-label>Master Site</mat-label>
+     
+<div class="fuji-grid fuji-two-cols">
+  <mat-form-field appearance="outline">
+    <mat-label>Master Site</mat-label>
 
-          <mat-select formControlName="masterSiteId" (selectionChange)="onSiteChange($event.value)">
-            <mat-option *ngFor="let site of masterSites" [value]="site.masterSiteId">
-              {{ site.name || site.siteName }}
-            </mat-option>
-          </mat-select>
+    <mat-select formControlName="masterSiteId" (selectionChange)="onSiteChange($event.value)">
+      <!-- 🟢 FIXED: Added fallback checking targets to support multiple API return styles -->
+      <mat-option *ngFor="let site of masterSites" [value]="site.masterSiteId ?? site.id ?? site.Id">
+        {{ site.name || site.siteName || site.SiteName || 'Unknown Facility Site' }}
+      </mat-option>
+    </mat-select>
 
-          <mat-error *ngIf="form.get('masterSiteId')?.hasError('required')">
-            Master Site is required
-          </mat-error>
-        </mat-form-field>
+    <mat-error *ngIf="form.get('masterSiteId')?.hasError('required')">
+      Master Site is required
+    </mat-error>
+  </mat-form-field>
 
-        <!-- 🟢 ENFORCED CATALOG BINDING IN HTML -->
-        <mat-form-field appearance="outline" class="w-100">
-          <mat-label>Product</mat-label>
-          <mat-select formControlName="productId" (selectionChange)="onProductChange($event.value)">
-            <!-- 🚨 CHANGE [value] EXPLICITLY TO prod.productId TO SEND 26 INSTEAD OF 39 -->
-            <mat-option *ngFor="let prod of products" [value]="prod.productId || prod.ProductId">
-              {{ prod.productName || prod.name }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
+  <!-- PRODUCT CATALOG BINDING -->
+  <mat-form-field appearance="outline" class="w-100">
+    <mat-label>Product</mat-label>
+    <mat-select formControlName="productId" (selectionChange)="onProductChange($event.value)">
+      <mat-option *ngFor="let prod of products" [value]="prod.productId ?? prod.id ?? prod.Id ?? prod.ProductId">
+        {{ prod.productName || prod.name || prod.ProductName }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+</div>
+
 
       <!-- ROW 2 -->
            <!-- 🟢 JOINED FIELD GRID LAYER -->
