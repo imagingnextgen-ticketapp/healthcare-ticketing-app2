@@ -20,7 +20,8 @@
         <!-- TABS BAR CONTROL (Only renders the tabs headers, no internal template destruction) -->
     <ng-container
       *ngIf="
-        currentUser?.role === ROLES.SUPER_ADMIN || currentUser?.role === ROLES.SUPPORT_ENGINEER;
+        currentUser?.role === ROLES.SUPER_ADMIN || currentUser?.role === ROLES.SUPPORT_ENGINEER
+        || currentUser?.role === ROLES.MANAGER;
         else hospitalView
       "
     >

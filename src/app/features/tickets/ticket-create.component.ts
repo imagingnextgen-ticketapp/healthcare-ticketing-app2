@@ -499,7 +499,7 @@ if (isRestrictedUser && assignedSiteId) {
 
   loadInitialSiteList(): void {
     const role = this.currentUser?.role;
-    if (role === 'superadmin' || role === 'manager' || role === 'supportengineer') {
+    if (role?.toLowerCase() === 'superadmin' || role?.toLowerCase()=== 'manager' || role?.toLowerCase() === 'supportengineer') {
     this.masterSiteService.getSites({ pageNumber: 1, pageSize: 1000 }).subscribe(res => {
       this.masterSites = (res.data || []).filter((site: any) => site.isActive); 
       this.cdr.detectChanges();

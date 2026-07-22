@@ -547,7 +547,12 @@ viewResolutionNotes(ticket: TicketResponseDto): void {
   ) {
     return true;
   }
-
+ if (
+    userRole === 'manager'
+   
+  ) {
+    return true;
+  }
   // HospitalAdmin
   if (
     userRole === 'hospitaladmin' ||
@@ -628,6 +633,7 @@ private getNormalizedStatus(ticket: any): number {
 
   const isSuperAdmin =
     this.currentUser.role === this.ROLES.SUPER_ADMIN;
+    const isManager=this.currentUser.role===this.ROLES.MANAGER;
 
   const isSupportEng =
     this.currentUser.role === this.ROLES.SUPPORT_ENGINEER;
@@ -635,7 +641,7 @@ private getNormalizedStatus(ticket: any): number {
   const isAssignedToMe =
     Number(ticket.assignedToUserId) === Number(this.currentUser.userId);
 
-  if (isSuperAdmin) {
+  if (isSuperAdmin || isManager) {
     return true;
   }
 
@@ -689,7 +695,7 @@ canStartWork(ticket: any): boolean {
     Number(currentUserId) === Number(assignedUserId);
 
   // 🟢 Super Admin: Open, Assigned, Reopened
-  if (isSuperAdmin) {
+  if (isSuperAdmin || isManager) {
     return status === 1 || status === 2 || status === 5;
   }
 
@@ -714,6 +720,7 @@ canClose(ticket: any): boolean {
   const isHospitalUser  = this.currentUser.role === this.ROLES.HOSPITAL_USER;
   const isSuperAdmin    = this.currentUser.role === this.ROLES.SUPER_ADMIN;
   const isSupportEng    = this.currentUser.role === this.ROLES.SUPPORT_ENGINEER;
+  const isManager=this.currentUser.role===this.ROLES.MANAGER;
   // 3. Status checks mapped directly to your TicketStatus Enum parameters
   const isClosed = ticket.status === 4 || ticket.status === 'Closed';
   const isInProgress = ticket.status === 3 || 
@@ -728,7 +735,7 @@ canClose(ticket: any): boolean {
 
   // 5. Role Rule for SuperAdmin & Support Engineer:
   // They can ONLY close the ticket if the status is strictly InProgress (Status 3)
-  if (isSuperAdmin || isSupportEng) {
+  if (isSuperAdmin || isSupportEng ||isManager) {
     return isInProgress;
   }
 
