@@ -10,6 +10,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { SelectSiteDialogComponent } from './select-site-dialog/select-site-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
+import { EMPTY } from 'rxjs';
+import { finalize, switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-login',
@@ -17,16 +21,16 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
   imports: [
-    CommonModule,           // Crucial for *ngIf
-    ReactiveFormsModule,    // Crucial for [formGroup]
-    MatFormFieldModule, 
-    MatInputModule, 
-    MatButtonModule, 
-    MatCardModule, 
-    MatIconModule, 
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatCardModule,
+    MatIconModule,
     MatSnackBarModule,
     RouterModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
   ]
 })
 export class LoginComponent implements OnInit {
@@ -40,48 +44,85 @@ export class LoginComponent implements OnInit {
     private route: ActivatedRoute,
     private auth: AuthService,
     private snackbar: MatSnackBar,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
-
-    // Initialize form
     this.form = this.fb.group({
       username: ['', Validators.required],
       password: ['', Validators.required]
     });
 
-    // Logout only if not returning from redirect
     if (!this.route.snapshot.queryParams['returnUrl']) {
       this.auth.logout();
     }
   }
 
-    submit(): void {
-    if (this.form.invalid) return;
+  submit(): void {
+    if (this.form.invalid) {
+      return;
+    }
 
     this.loading = true;
+    this.cdr.detectChanges();
 
-    // Passing the form value object to match your C# LoginDto
-    this.auth.login(this.form.value).subscribe({
-      next: () => {
-        this.snackbar.open('Login Successful', 'OK', { duration: 2000 });
-        
-        const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/tickets';
-        this.router.navigateByUrl(returnUrl);
-      },
-      error: (err) => {
-        this.loading = false;
+    this.auth.login(this.form.value)
+      .pipe(
+        switchMap((res: any) => {
+          if (res.requiresSiteSelection) {
+            this.loading = false;
+            this.cdr.detectChanges();
 
-        // Validation: err.message pulls your C# Exception string
-        // e.g., "Your account is deactivated."
-        this.snackbar.open(err.message || 'Invalid username or password', 'Close', {
-          duration: 5000
-        });
+            const dialogRef = this.dialog.open(SelectSiteDialogComponent, {
+              width: window.innerWidth < 600 ? '95vw' : '420px',
+              maxWidth: '95vw',
+              autoFocus: false,
+              disableClose: true,
+              panelClass: 'fujifilm-responsive-dialog', // Changed custom class name to isolate layout rules
+              data: {
+                userId: res.userId,
+                sites: res.sites
+              }
+            });
 
-        this.cdr.detectChanges();
-      }
-    });
+            return dialogRef.afterClosed().pipe(
+              switchMap((selectedSiteId) => {
+                if (!selectedSiteId) {
+                  return EMPTY;
+                }
+                
+                this.loading = true;
+                this.cdr.detectChanges();
+
+                return this.auth.selectSite({
+                  userId: res.userId,
+                  siteId: selectedSiteId
+                });
+              })
+            );
+          }
+
+          return [res];
+        }),
+        finalize(() => {
+          this.loading = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.snackbar.open('Login Successful', 'OK', { duration: 2000 });
+          const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/tickets';
+          this.router.navigateByUrl(returnUrl);
+        },
+        error: (err) => {
+          this.snackbar.open(
+            err.message || 'Authentication failed. Please verify credentials.',
+            'Close',
+            { duration: 5000 }
+          );
+        }
+      });
   }
-
 }

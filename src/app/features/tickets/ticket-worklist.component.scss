@@ -366,3 +366,29 @@ $border: #e2e8f0;
     }
   }
 }
+
+::ng-deep .hospital-select-panel {
+  max-height: 260px !important;
+}
+
+::ng-deep .hospital-select-panel .mat-mdc-option {
+  min-height: 48px !important;
+  height: auto !important; /* CRITICAL: Allows the option cell to stretch vertically if text runs into two rows */
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+::ng-deep .hospital-select-panel .mdc-list-item__primary-text {
+  white-space: normal !important;
+  word-break: break-word !important;
+  text-overflow: unset !important; /* CRITICAL: Removes the hidden '...' cutting rule */
+  display: block !important;       /* CRITICAL: Overrides flexbox blocking layout constraints */
+}
+
+@media (max-width: 768px) {
+  ::ng-deep .hospital-select-panel {
+    width: calc(100vw - 32px) !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: 240px !important;
+  }
+}

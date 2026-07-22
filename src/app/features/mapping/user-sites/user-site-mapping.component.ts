@@ -40,26 +40,20 @@ export class UserSiteMappingComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // 🟢 Fix 1: Wrap initial loads in setTimeout to avoid the ExpressionChanged error
-    setTimeout(() => {
-      this.loadSites();
-      this.loadAllAvailableUsers();
-    });
+    this.loadSites();
+    this.loadAllAvailableUsers();
   }
 
- loadSites(): void {
-  this.masterSiteService.getSites({ pageNumber: 1, pageSize: 100 }).subscribe({
-    next: (res) => {
-      setTimeout(() => {
-        // Show only active sites in the dropdown
+  loadSites(): void {
+    this.masterSiteService.getSites({ pageNumber: 1, pageSize: 100 }).subscribe({
+      next: (res) => {
+        // Filter active sites natively
         this.sites = (res.data || []).filter((site: any) => site.isActive);
-
         this.cdr.detectChanges();
-      });
-    },
-    error: () => this.showSnackBar('Failed to load sites')
-  });
-}
+      },
+      error: () => this.showSnackBar('Failed to load sites')
+    });
+  }
 
   loadAllAvailableUsers(): void {
     this.isLoading = true;
@@ -70,26 +64,23 @@ export class UserSiteMappingComponent implements OnInit {
   private fetchUserPage(pageNumber: number): void {
     this.userService.getUsers({ pageNumber, pageSize: 50 }).subscribe({
       next: (res: any) => {
-        setTimeout(() => {
-         const filteredUsers = (res.data || []).filter((user: any) =>
-  ![
-    'superadmin',
-    'supportengineer',
-    'manager',
-    'systemuser'
-  ].includes(
-    user.roleName?.replace(/\s/g, '').toLowerCase()
-  )
-);
+        const filteredUsers = (res.data || []).filter((user: any) =>
+          ![
+            'superadmin',
+            'supportengineer',
+            'manager',
+            'systemuser'
+          ].includes(user.roleName?.replace(/\s/g, '').toLowerCase())
+        );
 
-this.availableUsers = [...this.availableUsers, ...filteredUsers];
-          if (res.pageNumber < res.totalPages) {
-            this.fetchUserPage(pageNumber + 1);
-          } else {
-            this.isLoading = false;
-          }
+        this.availableUsers = [...this.availableUsers, ...filteredUsers];
+        
+        if (res.pageNumber < res.totalPages) {
+          this.fetchUserPage(pageNumber + 1);
+        } else {
+          this.isLoading = false;
           this.cdr.detectChanges(); 
-        });
+        }
       },
       error: () => { 
         this.isLoading = false; 
@@ -100,84 +91,72 @@ this.availableUsers = [...this.availableUsers, ...filteredUsers];
 
   onSiteChange(): void {
     if (this.selectedSiteId) {
-      // 🟢 Fix 3: Clear the table immediately when changing sites
       this.assignedUsers = []; 
       this.currentPage = 1; // Reset to page 1 on site change
       this.loadMappings();
     }
   }
 
-  // =========================================================================
-  // HANDLES THE PAGINATED RES ENVELOPE STRUCTURAL OBJECT
-  // Pass current page indices down into your Angular UserSiteService
-  // =========================================================================
   loadMappings(): void {
     if (!this.selectedSiteId) return;
     
     this.userSiteService.getUsersBySite(this.selectedSiteId, this.currentPage, this.pageSize).subscribe({
       next: (res) => {
-        // FIX: Wrap the data assignment inside a macro-task/setTimeout to prevent NG0100 timing errors
-        setTimeout(() => {
-          this.assignedUsers = res.data || [];
-          this.totalRecords = res.totalRecords || 0;
-          
-          // This safely signals the engine that data layout boundaries have securely stabilized
-          this.cdr.detectChanges();
-        });
+        this.assignedUsers = res.data || [];
+        this.totalRecords = res.totalRecords || 0;
+        this.cdr.detectChanges();
       },
       error: () => this.showSnackBar('Error loading assigned users')
     });
   }
 
-  // ⚡ Handles page click change interaction events emitted from HTML
   onPageChange(event: any): void {
-    this.currentPage = event.pageIndex + 1; // Material Paginator is 0-indexed, Backend is 1-indexed
+    this.currentPage = event.pageIndex + 1; 
     this.pageSize = event.pageSize;
     this.loadMappings();
   }
 
   onAssign(): void {
-  if (!this.selectedSiteId || this.selectedUserIds.length === 0) return;
+    if (!this.selectedSiteId || this.selectedUserIds.length === 0) return;
 
-  const dto = {
-    masterSiteId: this.selectedSiteId,
-    userIds: this.selectedUserIds
-  };
+    const dto = {
+      masterSiteId: this.selectedSiteId,
+      userIds: this.selectedUserIds
+    };
 
-  this.userSiteService.assignUsers(dto).subscribe({
-    next: (response: any) => {
-
-      const message =
-        typeof response === 'string'
+    this.userSiteService.assignUsers(dto).subscribe({
+      next: (response: any) => {
+        const message = typeof response === 'string'
           ? response
           : response?.message || 'Users processed successfully';
 
-      this.showSnackBar(message);
+        this.showSnackBar(message);
 
-      this.selectedUserIds = [];
-
-      this.loadMappings();
-      this.loadAllAvailableUsers();
-    },
-error: (err: any) => {
-
-  let message = 'Failed to process users';
-
-  try {
-    if (typeof err.error === 'string') {
-      const parsed = JSON.parse(err.error);
-      message = parsed.message;
-    } else if (err.error?.message) {
-      message = err.error.message;
-    }
-  } catch {
-    message = err.error || message;
+        // 🟢 THE FIX: Defer resetting the model arrays to the next macro-task.
+        // This lets the Material dropdown finish its active closure cycle before data arrays reset.
+        setTimeout(() => {
+          this.selectedUserIds = [];
+          this.loadMappings();
+          this.loadAllAvailableUsers();
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err: any) => {
+        let message = 'Failed to process users';
+        try {
+          if (typeof err.error === 'string') {
+            const parsed = JSON.parse(err.error);
+            message = parsed.message;
+          } else if (err.error?.message) {
+            message = err.error.message;
+          }
+        } catch {
+          message = err.error || message;
+        }
+        this.showSnackBar(message);
+      }
+    });
   }
-
-  this.showSnackBar(message);
-}
-  });
-}
 
   updateStatus(user: any, shouldActivate: boolean): void {
     const siteId = Number(this.selectedSiteId);
@@ -195,9 +174,6 @@ error: (err: any) => {
     request$.subscribe({
       next: () => {
         this.showSnackBar(`User ${shouldActivate ? 'activated' : 'deactivated'} successfully`);
-        
-        // ⚡ YOUR BUSINESS RULE AT ONE GO: Because the backend updates both data tables together,
-        // reloading mappings here instantly syncs the display states on the client layout view.
         this.loadMappings(); 
       },
       error: () => this.showSnackBar('Error updating status')
