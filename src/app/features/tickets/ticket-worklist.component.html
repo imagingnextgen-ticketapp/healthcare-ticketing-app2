@@ -278,9 +278,9 @@
       <ng-container matColumnDef="actualTatHours">
         <th mat-header-cell *matHeaderCellDef>Actual</th>
 
-        <td mat-cell *matCellDef="let e">
-          {{ e.actualTatHours ? e.actualTatHours + 'h' : '-' }}
-        </td>
+       <td mat-cell *matCellDef="let e">
+  {{ e.actualTatHours > 0 ? formatTat(e.actualTatHours) : '-' }}
+</td>
       </ng-container>
 
            <!-- ===================================================== -->
@@ -352,8 +352,10 @@
         <span>Assign to Me</span>
       </button>
 
-      <button mat-menu-item 
-        *ngIf="currentUser?.role === ROLES.SUPER_ADMIN || currentUser?.role === ROLES.MANAGER"
+      <button mat-menu-item
+        *ngIf="currentUser?.role === ROLES.SUPER_ADMIN ||
+               currentUser?.role === ROLES.MANAGER ||
+               currentUser?.role === ROLES.SUPPORT_ENGINEER"
         (click)="openAssignPopup(ticket)">
   <mat-icon style="color: #008542">person_add</mat-icon>
   <span>Assign to Engineer</span>
