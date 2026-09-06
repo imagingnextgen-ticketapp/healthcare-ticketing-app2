@@ -22,20 +22,52 @@
       <!-- ROW 1 -->
      
 <div class="fuji-grid fuji-two-cols">
-  <mat-form-field appearance="outline">
-    <mat-label>Master Site</mat-label>
+ <mat-form-field appearance="outline">
+  <mat-label>Master Site</mat-label>
 
-    <mat-select formControlName="masterSiteId" (selectionChange)="onSiteChange($event.value)">
-      <!-- 🟢 FIXED: Added fallback checking targets to support multiple API return styles -->
-      <mat-option *ngFor="let site of masterSites" [value]="site.masterSiteId ?? site.id ?? site.Id">
-        {{ site.name || site.siteName || site.SiteName || 'Unknown Facility Site' }}
-      </mat-option>
-    </mat-select>
+  <input
+    matInput
+    type="text"
+    [formControl]="masterSiteSearchControl"
+    [matAutocomplete]="masterSiteAutocomplete"
+    placeholder="Search Master Site"
+    autocomplete="off"
+  />
 
-    <mat-error *ngIf="form.get('masterSiteId')?.hasError('required')">
-      Master Site is required
-    </mat-error>
-  </mat-form-field>
+  <mat-autocomplete
+    #masterSiteAutocomplete="matAutocomplete"
+    [displayWith]="displayMasterSite"
+    (optionSelected)="onMasterSiteSelected($event.option.value)">
+
+    <mat-option
+      *ngFor="let site of masterSites"
+      [value]="site">
+
+      {{ site.name || site.siteName || site.SiteName || 'Unknown Facility Site' }}
+
+    </mat-option>
+
+    <mat-option
+      *ngIf="
+        typeof masterSiteSearchControl.value === 'string' &&
+        masterSiteSearchControl.value.trim().length >= 2 &&
+        masterSites.length === 0
+      "
+      disabled>
+
+      No Master Site found
+
+    </mat-option>
+
+  </mat-autocomplete>
+
+  <mat-error
+    *ngIf="form.get('masterSiteId')?.hasError('required')">
+
+    Master Site is required
+
+  </mat-error>
+</mat-form-field>
 
   <!-- PRODUCT CATALOG BINDING -->
   <mat-form-field appearance="outline" class="w-100">

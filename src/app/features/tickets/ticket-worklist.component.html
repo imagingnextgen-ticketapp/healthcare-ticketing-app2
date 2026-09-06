@@ -318,13 +318,13 @@
   </div>
 
   <!-- PAGINATOR ELEMENT -->
-  <mat-paginator
-    [length]="totalRecords"
-    [pageSize]="pageSize"
-    [pageSizeOptions]="pageSizeOptions"
-    (page)="onPageChange($event)"
-  >
-  </mat-paginator>
+ <mat-paginator
+  [length]="totalRecords"
+  [pageIndex]="pageNumber - 1"
+  [pageSize]="pageSize"
+  [pageSizeOptions]="pageSizeOptions"
+  (page)="onPageChange($event)">
+</mat-paginator>
 </ng-template>
 
 <!-- ===================================================== -->
@@ -343,26 +343,32 @@
 
     <mat-divider style="margin: 4px 0;"></mat-divider>
 
-    <!-- 2. ASSIGN OPTIONS LAYER -->
-    <ng-container *ngIf="canAssign(ticket)">
-      <button mat-menu-item 
-              *ngIf="ticket.assignedToUserId != currentUser?.userId"
-              (click)="assignTicket(ticket.ticketId, currentUser)">
-        <mat-icon style="color: #008542">person</mat-icon>
-        <span>Assign to Me</span>
-      </button>
+   <!-- ========================================= -->
+<!-- ASSIGN TO ME                              -->
+<!-- ========================================= -->
 
-      <button mat-menu-item
-        *ngIf="currentUser?.role === ROLES.SUPER_ADMIN ||
-               currentUser?.role === ROLES.MANAGER ||
-               currentUser?.role === ROLES.SUPPORT_ENGINEER"
+<!-- 2. ASSIGN OPTIONS LAYER -->
+
+<!-- Assign to Me -->
+<button mat-menu-item
+        *ngIf="
+          (currentUser?.role === ROLES.SUPER_ADMIN ||
+           currentUser?.role === ROLES.MANAGER ||
+           currentUser?.role === ROLES.SUPPORT_ENGINEER) &&
+          ticket.assignedToUserId != currentUser?.userId
+        "
+        (click)="assignTicket(ticket.ticketId, currentUser)">
+  <mat-icon style="color: #008542">person</mat-icon>
+  <span>Assign to Me</span>
+</button>
+
+<!-- Assign to Engineer -->
+<button mat-menu-item
+        *ngIf="canAssign(ticket)"
         (click)="openAssignPopup(ticket)">
   <mat-icon style="color: #008542">person_add</mat-icon>
   <span>Assign to Engineer</span>
 </button>
-
-    </ng-container>
-
     <!-- 3. CORE ACTION CONTROLS -->
     <button mat-menu-item *ngIf="canStartWork(ticket)" (click)="handleAction(ticket, 'start')">
       <mat-icon style="color: #008542">play_arrow</mat-icon>

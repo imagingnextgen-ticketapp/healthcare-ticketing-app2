@@ -48,16 +48,24 @@ export class MisServiceReport {
       .set('pageSize', f.pageSize.toString());
 
     // Format date helper for .NET compatibility (YYYY-MM-DD)
-    const formatDate = (date: any) => {
+    const formatDate = (date: Date | string | null | undefined): string | null => {
       if (!date) return null;
-      const d = new Date(date);
-      return d.toISOString().split('T')[0];
+
+      if (typeof date === 'string') {
+        return date.split('T')[0];
+      }
+
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     };
 
-    // 1. Date Range Filters
-    if (f.fromDate) params = params.set('fromDate', formatDate(f.fromDate)!);
-    if (f.toDate) params = params.set('toDate', formatDate(f.toDate)!);
-    
+    // 1. Date Range Filters 
+    if (f.fromDate) {
+      params = params.set('fromDate', formatDate(f.fromDate)!);
+    }
+
+    if (f.toDate) {
+      params = params.set('toDate', formatDate(f.toDate)!);
+    }
     // 2. Hospital Filter
     if (f.masterSiteId) params = params.set('masterSiteId', f.masterSiteId.toString());
     
@@ -75,6 +83,9 @@ export class MisServiceReport {
     if (f.tatOperator) {
         params = params.set('tatOperator', f.tatOperator);
     }
+    if (f.assignedToUserId) params = params.set('assignedToUserId', f.assignedToUserId.toString());
+    if (f.closedByUserId) params = params.set('closedByUserId', f.closedByUserId.toString());
+    if (f.status) params = params.set('status', f.status.toString());
 
     return params;
   }

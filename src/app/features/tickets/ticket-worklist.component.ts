@@ -5,10 +5,12 @@ import { MatTableDataSource } from '@angular/material/table';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MasterSiteService } from '../../core/services/mastersite.service';
 
+
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { Router } from '@angular/router';
-import { debounceTime, distinctUntilChanged, Subscription, Observable, startWith, map } from 'rxjs';
+import { debounceTime, distinctUntilChanged,  catchError,
+  of,Subscription,switchMap, Observable, startWith, map } from 'rxjs';
 
 import { TicketService } from '../../core/services/ticket.service';
 import { UserService } from '../../core/services/user.service';
@@ -77,8 +79,8 @@ export class AssignTicketDialog {
   templateUrl: './ticket-worklist.component.html',
   styleUrls: ['./ticket-worklist.component.scss']
 })
-export class TicketWorklistComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
+export class TicketWorklistComponent implements OnInit, OnDestroy {
+  ///@ViewChild(MatPaginator) paginator!: MatPaginator;
   displayedColumns: string[] = ['ticketId', 'issueType', 'description', 'createdDate', 'productName', 'siteName', 'reOpenCount', 'createdBy', 'assignedTo', 'status', 'closedDate', 'tatHours', 'severity', 'actualTatHours', 'actions'];
   
   dataSource = new MatTableDataSource<any>([]);
@@ -129,7 +131,7 @@ export class TicketWorklistComponent implements OnInit, AfterViewInit, OnDestroy
 });
   }
 
-  ngAfterViewInit() { this.dataSource.paginator = this.paginator; }
+  //ngAfterViewInit() { this.dataSource.paginator = this.paginator; }
   ngOnDestroy() { this.filterSubscription?.unsubscribe(); }
 
   initFilterForm() { this.filterForm = this.fb.group({ ticketId: [null], status: [null], createdDate: [null], resolveDate: [null] , masterSiteId: [null], }); }
@@ -493,7 +495,7 @@ viewResolutionNotes(ticket: TicketResponseDto): void {
     });
   }
 
-   canEditTicket(ticket: any): boolean {
+ canEditTicket(ticket: any): boolean {
   if (!ticket || !this.currentUser) {
     return false;
   }
@@ -519,22 +521,13 @@ viewResolutionNotes(ticket: TicketResponseDto): void {
     ticket.assignedToUserId ||
     ticket.AssignedToUserId;
 
-  const rawStatus =
-    String(ticket.status || ticket.Status || '')
-      .trim()
-      .toLowerCase();
+  const status = this.getNormalizedStatus(ticket);
 
-  // Open, Assigned, Reopened only
   const isEditableStatus =
-    rawStatus === 'open' ||
-    rawStatus === 'assigned' ||
-    rawStatus === 'reopened' ||
-    rawStatus === '1' ||
-    rawStatus === '2' ||
-    rawStatus === '5' ||
-    ticket.status === 1 ||
-    ticket.status === 2 ||
-    ticket.status === 5;
+    status === TicketStatus.Open ||
+    status === TicketStatus.Assigned ||
+    status === TicketStatus.InProgress ||
+    status === TicketStatus.Reopened;
 
   if (!isEditableStatus) {
     return false;
@@ -547,12 +540,12 @@ viewResolutionNotes(ticket: TicketResponseDto): void {
   ) {
     return true;
   }
- if (
-    userRole === 'manager'
-   
-  ) {
+
+  // Manager
+  if (userRole === 'manager') {
     return true;
   }
+
   // HospitalAdmin
   if (
     userRole === 'hospitaladmin' ||
@@ -617,43 +610,56 @@ private getNormalizedStatus(ticket: any): number {
   }
 }
 
-
 // --- GUARDS ---
-  canAssign(ticket: any): boolean {
+// --- GUARDS ---
+canAssign(ticket: any): boolean {
   if (!ticket || !this.currentUser) {
     return false;
   }
 
   const status = this.getNormalizedStatus(ticket);
 
-  // Never allow assignment on closed tickets
+  // Closed tickets cannot be assigned
   if (status === 4 || ticket.closedDate) {
     return false;
   }
 
+  const currentUserId =
+    this.currentUser.userId ??
+    this.currentUser.UserId;
+
+  const assignedToUserId =
+    ticket.assignedToUserId ??
+    ticket.AssignedToUserId;
+
   const isSuperAdmin =
     this.currentUser.role === this.ROLES.SUPER_ADMIN;
-    const isManager=this.currentUser.role===this.ROLES.MANAGER;
+
+  const isManager =
+    this.currentUser.role === this.ROLES.MANAGER;
 
   const isSupportEng =
     this.currentUser.role === this.ROLES.SUPPORT_ENGINEER;
 
-  const isAssignedToMe =
-    Number(ticket.assignedToUserId) === Number(this.currentUser.userId);
-
+  // Manager and SuperAdmin can assign any non-closed ticket
   if (isSuperAdmin || isManager) {
     return true;
   }
 
+  // Support Engineer:
+  // Unassigned ticket -> hide "Assign to Engineer"
+  // Own ticket -> show "Assign to Engineer"
+  // Another user's ticket -> hide "Assign to Engineer"
   if (isSupportEng) {
-    return !isAssignedToMe;
+    if (assignedToUserId == null) {
+      return false;
+    }
+
+    return Number(assignedToUserId) === Number(currentUserId);
   }
 
   return false;
 }
-
-/// 🛠️ START WORK: Shows only for status 2 (Assigned/Open)
-
 
 canStartWork(ticket: any): boolean {
   console.log(

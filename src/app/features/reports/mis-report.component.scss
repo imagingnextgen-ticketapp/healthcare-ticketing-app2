@@ -49,6 +49,42 @@ $border: #e2e8f0;
     }
   }
 
+  .mat-mdc-autocomplete-panel.fuji-dropdown-panel {
+    background : white !important;
+    border: 1px solid $border !important;
+    border-radius: 10px !important;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
+    padding: 4px 0 !important;
+    max-height: 260px !important;
+    min-width: 200px !important;
+
+    .mat-mdc-option {
+      min-height: 36px !important;
+      padding: 0 14px !important;
+      font-size: 0.8375rem !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      word-break: normal !important;
+      overflow-wrap: normal !important;
+
+      .mdc-list-item__primary-text {
+        display: block !important;
+        width: 100% !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        word-break: normal !important;
+        overflow-wrap: normal !important;
+      }
+
+      &.mdc-list-item--selected:not(.mat-mdc-option-disabled) {
+        background: $brand-light !important;
+        .mdc-list-item__primary-text { color: $brand !important; font-weight: 600 !important; }
+    }
+    }
+  }
+
   .fuji-custom-field {
     width: 100%;
 
@@ -187,14 +223,14 @@ $border: #e2e8f0;
     .row-secondary {
       .filter-item-wide { flex: 0 1 170px; }
 
-      .tat-filter-group {
+      .date-range-group {
         display: flex;
-        gap: 4px;
-        align-items: center;
-        flex: 0 1 190px;
-        .operator-field { width: 52px !important; flex: none; }
-        .value-field { flex: 1; }
-        .suffix-text { font-size: 0.75rem; color: #64748b; font-weight: 500; }
+        gap: 10px;
+        flex: 0 1 auto;
+      }
+
+      .tat-filter-group {
+        flex: 0 1 240px;
       }
 
       .action-cell {
@@ -221,6 +257,113 @@ $border: #e2e8f0;
           mat-icon { margin-right: 2px; font-size: 14px; width: 14px; height: 14px; }
         }
       }
+    }
+  }
+}
+
+/* ---- TAT Filter (Operator + Hours combined pill) ---- */
+.tat-filter-group {
+  position: relative;
+  width: 100%;
+
+  .tat-label {
+    position: absolute;
+    top: 50%;
+    left: 108px;
+    transform: translateY(-50%);
+    background: transparent;
+    padding: 0;
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: #94a3b8;
+    text-transform: none;
+    letter-spacing: normal;
+    pointer-events: none;
+    transition: left 0.15s ease, font-size 0.15s ease, top 0.15s ease, color 0.15s ease, background 0.15s ease, padding 0.15s ease;
+    z-index: 1;
+  }
+
+  &:focus-within, &.tat-has-value {
+    .tat-label {
+      top: 0;
+      left: 10px;
+      background: white;
+      padding: 0 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #64748b;
+      left-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+  }
+
+  &:focus-within .tat-label {color: $brand; }
+
+  .tat-input-row {
+    display: flex;
+    align-items: center;
+    height: 40px;
+    background: white;
+    border: 1px solid $border;
+    border-radius: 8px;
+    padding: 0 12px 0 4px;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:focus-within {
+      border-color: $brand;
+      box-shadow: 0 0 0 3px $brand-light;
+    }
+
+    .tat-operator-select {
+      flex: 0 0 auto;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: $brand;
+      width: 90px;
+
+      ::ng-deep .mat-mdc-select-trigger { padding: 0 4px; }
+      ::ng-deep .mat-mdc-select-arrow { color: $brand !important; }
+    }
+
+    .tat-op-icon {
+      font-size: 14px !important;
+      width: 14px !important;
+      height: 14px !important;
+      vertical-align: middle;
+      margin-right: 2px;
+    }
+
+    .tat-divider {
+      width: 1px;
+      height: 22px;
+      background: $border;
+      margin: 0 10px;
+      flex: none;
+    }
+
+    .tat-hours-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      text-align: right;
+      font-size: 0.8rem;
+      color: #035b16;
+      background: transparent;
+      min-width: 0;
+
+      /* Hide native number spinners for a cleaner look */
+      &::-webkit-outer-spin-button,
+      &::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+      &[type='number'] { appearance: textfield; -moz-appearance: textfield; }
+    }
+
+    .tat-suffix {
+      font-size: 0.75rem;
+      color: #64748b;
+      font-weight: 500;
+      margin-left: 8px;
+      flex: none;
     }
   }
 }
@@ -310,8 +453,26 @@ $border: #e2e8f0;
 
     .filter-flex-container {
       .filter-row { flex-direction: column !important; }
-      .filter-item, .filter-item-wide { max-width: 100% !important; flex: 1 1 100% !important; }
-      .row-secondary .tat-filter-group { flex: 1 1 100%; }
+      .filter-item,
+      .status-filter { max-width: 100% !important; flex: 1 1 100% !important; width: 100% !important; }
+      .row-secondary .tat-filter-group {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        min-width: 0 !important;
+      }
+      .date-range-group {
+        display: flex !important;
+        flex-direction: row !important;
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        gap: 10px !important;
+
+        .filter-item-wide {
+          flex: 1 1 50% !important;
+          width: 50% !important;
+          min-width: 0 !important;
+        }
+      }
       .action-cell {
   width: 100%;
   margin-left: 0 !important;
@@ -324,9 +485,21 @@ $border: #e2e8f0;
     }
   }
 
+  .fuji-custom-field {
+    .mat-mdc-autocomplete-panel,
+    .mat-mdc-select-panel { max-width: 90vw !important; }
+  }
+
   .table-container {
     overflow-x: auto;
+    overflow-y: auto;
+    max-height: 55vh;
     -webkit-overflow-scrolling: touch;
     table { min-width: 700px; }
   }
+
+  mat-paginator {
+    overflow-x: auto;
+  }
 }
+

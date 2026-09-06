@@ -87,13 +87,14 @@
     </table>
 
     <!-- 🔷 PAGINATION BAR -->
-    <mat-paginator 
-      [length]="totalRecords"
-      [pageSize]="pageSize"
-      [pageSizeOptions]="pageSizeOptions"
-      (page)="onPageChange($event)"
-      aria-label="Select page of products">
-    </mat-paginator>
+    <mat-paginator
+  [length]="totalRecords"
+  [pageIndex]="currentPage - 1"
+  [pageSize]="pageSize"
+  [pageSizeOptions]="pageSizeOptions"
+  (page)="onPageChange($event)"
+  aria-label="Product list pagination">
+</mat-paginator>
 
   </mat-card>
 </div>
