@@ -611,7 +611,7 @@ private getNormalizedStatus(ticket: any): number {
 }
 
 // --- GUARDS ---
-// --- GUARDS ---
+
 canAssign(ticket: any): boolean {
   if (!ticket || !this.currentUser) {
     return false;

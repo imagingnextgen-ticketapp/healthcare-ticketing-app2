@@ -355,7 +355,8 @@
           (currentUser?.role === ROLES.SUPER_ADMIN ||
            currentUser?.role === ROLES.MANAGER ||
            currentUser?.role === ROLES.SUPPORT_ENGINEER) &&
-          ticket.assignedToUserId != currentUser?.userId
+          ticket.assignedToUserId != currentUser?.userId &&
+          ticket.status !== 'Closed'
         "
         (click)="assignTicket(ticket.ticketId, currentUser)">
   <mat-icon style="color: #008542">person</mat-icon>
