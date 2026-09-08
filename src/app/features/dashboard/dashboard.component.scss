@@ -6,7 +6,9 @@ $brand: #008a4c;
 $brand-dark: #006b38;
 
 .dashboard-wrapper {
-  padding: 0;
+  padding: 24px;
+  background: #f8fafc;
+  min-height: calc(100vh - 64px);
 }
 
 /* --- Page Header --- */
@@ -303,4 +305,147 @@ $brand-dark: #006b38;
   .stats-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ==========================================================================
+   DASHBOARD DATE FILTER
+   ========================================================================== */
+
+.dashboard-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.date-field {
+  width: 220px;
+}
+
+.apply-filter-btn,
+.clear-filter-btn {
+  height: 52px;
+  min-width: 100px;
+}
+
+
+/* ==========================================================================
+   TABLET
+   ========================================================================== */
+
+@media (min-width: 601px) and (max-width: 1024px) {
+
+  .dashboard-filter {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .date-field {
+    width: 200px;
+  }
+}
+
+
+/* ==========================================================================
+   MOBILE
+   ========================================================================== */
+
+@media (max-width: 600px) {
+
+  .dashboard-filter {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .date-field {
+    width: 100%;
+  }
+
+  .apply-filter-btn,
+  .clear-filter-btn {
+    width: 100%;
+    height: 48px;
+    min-width: 0;
+  }
+}
+
+
+/* ==========================================================================
+   VERY SMALL MOBILE
+   ========================================================================== */
+
+@media (max-width: 400px) {
+
+  .apply-filter-btn,
+  .clear-filter-btn {
+    height: 46px;
+  }
+}
+
+/* =========================================================
+   DASHBOARD FILTER BUTTONS
+   ========================================================= */
+
+.apply-filter-btn {
+  height: 52px;
+  min-width: 130px;
+  background: $brand !important;
+  color: #ffffff !important;
+  border-radius: 8px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: all 0.2s ease;
+
+  mat-icon {
+    color: #ffffff;
+    margin-right: 6px;
+  }
+
+  &:hover {
+    background: $brand-dark !important;
+    box-shadow: 0 4px 12px rgba(0, 138, 76, 0.25);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+
+.clear-filter-btn {
+  height: 52px;
+  min-width: 120px;
+  background: #ffffff !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #ecfdf5 !important;
+    color: $brand !important;
+    border-color: $brand !important;
+    box-shadow: 0 3px 10px rgba(0, 138, 76, 0.12);
+  }
+
+  &:active {
+    background: #dff7eb !important;
+  }
+}
+
+.rotating-loader {
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
 }

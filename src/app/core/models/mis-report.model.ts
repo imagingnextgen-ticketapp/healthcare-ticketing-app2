@@ -5,13 +5,19 @@ export interface DashboardDto {
   escalatedTickets: number;
 }
 
+export interface DashboardFilterDto {
+  fromDate?: string;
+  toDate?: string;
+}
+
 export interface MisFilterDto {
   fromDate?: string;
   toDate?: string;
+
   masterSiteId?: number;
   issueType?: string;
 
-  // Dynamic TAT Filtering
+  // TAT Filter
   tatHours?: number;
   tatOperator?: 'gt' | 'lt' | 'eq';
 
@@ -22,12 +28,15 @@ export interface MisFilterDto {
   // Status Filter
   status?: string;
 
+  // Other Filters
   templateId?: number;
   productId?: number;
-
-  // User Filters
   assignedToUserId?: number;
   closedByUserId?: number;
+
+  // Dashboard → MIS
+  escalated?: boolean;
+  dashboardFilter?: string;
 }
 
 export interface MisReportDto {
@@ -48,5 +57,6 @@ export interface MisReportDto {
 
   targetSlaHours: number;
   actualTatHours: number;
+
   isSlaBreached: boolean;
 }

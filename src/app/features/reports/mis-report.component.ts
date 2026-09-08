@@ -10,6 +10,7 @@ import { MisFilterDto, MisReportDto } from '../../core/models/mis-report.model';
 import { SiteProductService } from '../../core/services/site-product.service';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
+import { ActivatedRoute } from '@angular/router';
 
 
 @Component({
@@ -36,7 +37,7 @@ export class MisReportComponent implements OnInit {
   'closedDate',
   'actualTatHours'
 ];
-  
+  private dashboardNavigation = false;
   masterSites: any[] = [];
   filteredMasterSites: any[] = [];
   siteSearchText = '';
@@ -81,11 +82,17 @@ export class MisReportComponent implements OnInit {
   closedByUserId: undefined,
 
   tatHours: undefined,
-  tatOperator: 'gt'
+  tatOperator: 'gt',
+
+  // Dashboard / MIS status filters
+  status: undefined,
+  escalated: undefined,
+  dashboardFilter: undefined  
 };
 
   constructor(
     private misService: MisServiceReport, 
+    private route: ActivatedRoute,
     private masterSiteService: MasterSiteService,
     private templateService: TemplateService,
     private siteproductService: SiteProductService,
@@ -94,10 +101,40 @@ export class MisReportComponent implements OnInit {
     private cdr: ChangeDetectorRef
   ) {}
 
- ngOnInit(): void {
+ngOnInit(): void {
+
   this.loadEngineers();
   this.loadActiveUsers();
-  this.initUserAndData();
+
+  this.route.queryParams.subscribe(params => {
+
+    const fromDate = params['fromDate'];
+    const toDate = params['toDate'];
+    const status = params['status'];
+    const escalated = params['escalated'];
+    const dashboardFilter = params['dashboardFilter'];
+
+    // ✅ Fix 1: Fixed the semicolon typo to properly include dashboardFilter
+    this.dashboardNavigation =
+      !!fromDate ||
+      !!toDate ||
+      !!status ||
+      escalated === 'true' ||
+      dashboardFilter === 'opened';
+
+    // ✅ Fix 2: Reset filter variables to baseline defaults on every URL emission
+    // This stops state leakage when shifting between different summary cards
+    this.filter.fromDate = fromDate || null;
+    this.filter.toDate = toDate || null;
+    this.filter.status = status || '';
+    this.filter.dashboardFilter = dashboardFilter || '';
+    this.filter.escalated = escalated === 'true';
+
+    // Reset pagination to first page when changing dashboard filter scopes
+    this.filter.pageNumber = 1;
+
+    this.initUserAndData();
+  });
 }
 
   initUserAndData(): void {

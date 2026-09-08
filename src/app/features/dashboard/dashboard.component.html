@@ -1,6 +1,8 @@
 <div class="dashboard-wrapper">
 
-  <!-- Page Header -->
+  <!-- =========================================================
+       PAGE HEADER
+       ========================================================= -->
   <div class="dash-header">
     <div class="dash-header-text">
       <h1 class="dash-title">Dashboard</h1>
@@ -8,51 +10,84 @@
     </div>
   </div>
 
-  <!-- Stats Grid -->
+  <!-- =========================================================
+       DATE FILTER
+       ========================================================= -->
+  <div class="dashboard-filter">
+
+    <!-- From Date -->
+    <mat-form-field appearance="outline" class="date-field">
+      <mat-label>From Date</mat-label>
+      <input matInput [matDatepicker]="fromPicker" [(ngModel)]="fromDate" [max]="toDate || null">
+      <mat-datepicker-toggle matSuffix [for]="fromPicker"></mat-datepicker-toggle>
+      <mat-datepicker #fromPicker></mat-datepicker>
+    </mat-form-field>
+
+    <!-- To Date -->
+    <mat-form-field appearance="outline" class="date-field">
+      <mat-label>To Date</mat-label>
+      <input matInput [matDatepicker]="toPicker" [(ngModel)]="toDate" [min]="fromDate || null">
+      <mat-datepicker-toggle matSuffix [for]="toPicker"></mat-datepicker-toggle>
+      <mat-datepicker #toPicker></mat-datepicker>
+    </mat-form-field>
+
+    <!-- Apply -->
+    <button mat-raised-button type="button" class="apply-filter-btn" [disabled]="isLoading" (click)="applyDateFilter()">
+      <mat-icon *ngIf="!isLoading">search</mat-icon>
+      <span class="spinner-icon-wrap" *ngIf="isLoading" style="margin-right: 8px; display: inline-flex; align-items: center;">
+        <mat-icon class="rotating-loader">refresh</mat-icon>
+      </span>
+      <span>Search</span>
+    </button>
+
+    <!-- Clear -->
+    <button mat-stroked-button type="button" class="clear-filter-btn" (click)="clearDateFilter()">Reset</button>
+
+  </div>
+
+  <!-- =========================================================
+       STATISTICS CARDS (ALL ROUTE TO MIS VIA NEW WINDOW)
+       ========================================================= -->
   <div class="stats-grid">
 
-    <!-- Total Tickets -->
-    <div class="stat-card stat-card--brand">
+    <!-- TOTAL TICKETS -->
+    <div class="stat-card stat-card--brand" role="button" tabindex="0" 
+         (click)="openMisReport('total')" (keydown.enter)="openMisReport('total')" (keydown.space)="openMisReport('total')">
       <div class="stat-top">
-        <div class="stat-icon-wrap">
-          <mat-icon>confirmation_number</mat-icon>
-        </div>
-        <span class="stat-trend neutral">ALL TIME</span>
+        <div class="stat-icon-wrap"><mat-icon>confirmation_number</mat-icon></div>
+        <span class="stat-trend neutral">TOTAL</span>
       </div>
       <div class="stat-value">{{ stats.totalTickets }}</div>
       <div class="stat-label">Total Tickets</div>
     </div>
 
-    <!-- Open Tickets -->
-    <div class="stat-card stat-card--info">
+    <!-- OPEN / ACTIVE TICKETS -->
+    <div class="stat-card stat-card--info" role="button" tabindex="0" 
+         (click)="openMisReport('opened')" (keydown.enter)="openMisReport('opened')" (keydown.space)="openMisReport('opened')">
       <div class="stat-top">
-        <div class="stat-icon-wrap">
-          <mat-icon>hourglass_empty</mat-icon>
-        </div>
+        <div class="stat-icon-wrap"><mat-icon>hourglass_empty</mat-icon></div>
         <span class="stat-trend active">ACTIVE</span>
       </div>
       <div class="stat-value">{{ stats.openedTickets }}</div>
       <div class="stat-label">Open Tickets</div>
     </div>
 
-    <!-- Resolved -->
-    <div class="stat-card stat-card--success">
+    <!-- RESOLVED / CLOSED TICKETS -->
+    <div class="stat-card stat-card--success" role="button" tabindex="0" 
+         (click)="openMisReport('closed')" (keydown.enter)="openMisReport('closed')" (keydown.space)="openMisReport('closed')">
       <div class="stat-top">
-        <div class="stat-icon-wrap">
-          <mat-icon>check_circle</mat-icon>
-        </div>
+        <div class="stat-icon-wrap"><mat-icon>check_circle</mat-icon></div>
         <span class="stat-trend resolved">RESOLVED</span>
       </div>
       <div class="stat-value">{{ stats.closedTickets }}</div>
       <div class="stat-label">Resolved Tickets</div>
     </div>
 
-    <!-- Escalated -->
-    <div class="stat-card stat-card--danger">
+    <!-- ESCALATED TICKETS -->
+    <div class="stat-card stat-card--danger" role="button" tabindex="0" 
+         (click)="openMisReport('escalated')" (keydown.enter)="openMisReport('escalated')" (keydown.space)="openMisReport('escalated')">
       <div class="stat-top">
-        <div class="stat-icon-wrap">
-          <mat-icon>report_problem</mat-icon>
-        </div>
+        <div class="stat-icon-wrap"><mat-icon>report_problem</mat-icon></div>
         <span class="stat-trend escalated">ESCALATED</span>
       </div>
       <div class="stat-value">{{ stats.escalatedTickets }}</div>
@@ -61,50 +96,37 @@
 
   </div>
 
-  <!-- Quick Actions -->
+  <!-- =========================================================
+       QUICK ACTIONS
+       ========================================================= -->
   <div class="quick-section">
     <h2 class="section-title">Quick Actions</h2>
     <div class="quick-actions-grid">
+
       <a class="quick-action-card" routerLink="/tickets">
         <div class="qa-icon qa-icon--blue"><mat-icon>assignment_late</mat-icon></div>
-        <div class="qa-content">
-          <span class="qa-title">Active Worklist</span>
-          <span class="qa-desc">View and manage open tickets</span>
-        </div>
+        <div class="qa-content"><span class="qa-title">Active Worklist</span><span class="qa-desc">View and manage open tickets</span></div>
         <mat-icon class="qa-arrow">chevron_right</mat-icon>
       </a>
+
       <a class="quick-action-card" routerLink="/history">
         <div class="qa-icon qa-icon--green"><mat-icon>history_toggle_off</mat-icon></div>
-        <div class="qa-content">
-          <span class="qa-title">Audit Trail</span>
-          <span class="qa-desc">Track ticket activity history</span>
-        </div>
+        <div class="qa-content"><span class="qa-title">Audit Trail</span><span class="qa-desc">Track ticket activity history</span></div>
         <mat-icon class="qa-arrow">chevron_right</mat-icon>
       </a>
-      <a class="quick-action-card" routerLink="/mis-report">
+
+      <a class="quick-action-card" (click)="openMisReport('total')" style="cursor: pointer;">
         <div class="qa-icon qa-icon--purple"><mat-icon>insights</mat-icon></div>
-        <div class="qa-content">
-          <span class="qa-title">MIS Analytics</span>
-          <span class="qa-desc">Reports and performance metrics</span>
-        </div>
+        <div class="qa-content"><span class="qa-title">MIS Analytics</span><span class="qa-desc">Reports and performance metrics</span></div>
         <mat-icon class="qa-arrow">chevron_right</mat-icon>
       </a>
-      <a
-  *ngIf="currentUser?.role === ROLES.SUPER_ADMIN"
-  class="quick-action-card"
-  routerLink="/mastersites">
 
-  <div class="qa-icon qa-icon--orange">
-    <mat-icon>location_city</mat-icon>
-  </div>
+      <a *ngIf="currentUser?.role === ROLES.SUPER_ADMIN" class="quick-action-card" routerLink="/mastersites">
+        <div class="qa-icon qa-icon--orange"><mat-icon>location_city</mat-icon></div>
+        <div class="qa-content"><span class="qa-title">Hospital Sites</span><span class="qa-desc">Manage facility configurations</span></div>
+        <mat-icon class="qa-arrow">chevron_right</mat-icon>
+      </a>
 
-  <div class="qa-content">
-    <span class="qa-title">Hospital Sites</span>
-    <span class="qa-desc">Manage facility configurations</span>
-  </div>
-
-  <mat-icon class="qa-arrow">chevron_right</mat-icon>
-</a>
     </div>
   </div>
 

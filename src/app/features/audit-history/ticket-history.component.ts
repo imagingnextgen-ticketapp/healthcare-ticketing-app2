@@ -25,8 +25,8 @@ export class TicketHistoryComponent implements OnInit {
 
   filter = {
     ticketId: 0,
-    fromDate: undefined,
-    toDate: undefined,
+    fromDate: undefined as Date | string | undefined,
+    toDate: undefined as Date | string | undefined,
     actionByUserId: undefined as number | undefined, 
     pageNumber: 1,
     pageSize: 10
@@ -68,20 +68,22 @@ export class TicketHistoryComponent implements OnInit {
    * Main execution method for fetching history records
    */
   loadHistory(): void {
-    // FIX: Allow the call if there is a TicketId OR a User selected OR a Date range
-    const hasTicketId = this.filter.ticketId > 0;
-    const hasUser = this.filter.actionByUserId !== undefined && this.filter.actionByUserId !== null && this.filter.actionByUserId !== 0;
-    const hasDate = !!this.filter.fromDate;
+    this.isLoading = true;
+    this.cdr.detectChanges();
 
-    // Only stop if absolutely NO filters are applied
-    if (!hasTicketId && !hasUser && !hasDate) {
-      this.historyLogs = [];
-      this.totalRecords = 0;
-      return;
+    // Deep clone filter to format dates safely without corrupting UI ngModel bindings
+    const requestPayload = {
+      ...this.filter,
+      fromDate: this.filter.fromDate ? this.formatDate(this.filter.fromDate) : undefined,
+      toDate: this.filter.toDate ? this.formatDate(this.filter.toDate) : undefined
+    };
+
+    // Clean up "All Users" selection if it defaults to 0
+    if (requestPayload.actionByUserId === 0) {
+      requestPayload.actionByUserId = undefined;
     }
 
-    this.isLoading = true;
-    this.ticketService.getTicketHistory(this.filter).subscribe({
+    this.ticketService.getTicketHistory(requestPayload).subscribe({
       next: (res) => {
         this.historyLogs = res.data ? [...res.data] : [];
         this.totalRecords = res.totalRecords || 0;
@@ -92,33 +94,33 @@ export class TicketHistoryComponent implements OnInit {
         console.error('History API error:', err);
         this.isLoading = false;
         this.historyLogs = [];
+        this.totalRecords = 0;
         this.cdr.detectChanges();
       }
     });
   }
-resetFilters(): void {
-  this.filter = {
-    ticketId: this.ticketId || 0, 
-    fromDate: undefined,
-    toDate: undefined,
-    actionByUserId: undefined,
-    pageNumber: 1,
-    pageSize: 10
-  };
-  this.loadHistory();
-}
+
+  /**
+   * Clear active filter values and return to baseline pagination parameters
+   */
+  resetFilters(): void {
+    this.filter = {
+      ticketId: this.ticketId || 0, 
+      fromDate: undefined,
+      toDate: undefined,
+      actionByUserId: undefined,
+      pageNumber: 1,
+      pageSize: 10
+    };
+    this.loadHistory();
+  }
+
   /**
    * Triggered by the "Search" button or dropdown selection change
    */
   applyFilters(): void {
-    // Reset to first page for new search
+    // Reset to first page for new search scope contexts
     this.filter.pageNumber = 1;
-    
-    // Clean up "All Users" selection if it defaults to 0
-    if (this.filter.actionByUserId === 0) {
-      this.filter.actionByUserId = undefined;
-    }
-
     this.loadHistory();
   }
 
@@ -129,5 +131,19 @@ resetFilters(): void {
     this.filter.pageNumber = event.pageIndex + 1;
     this.filter.pageSize = event.pageSize;
     this.loadHistory();
+  }
+
+  /**
+   * 🛡️ Helper: Convert raw UI calendar data cleanly into ISO strings for .NET mapping
+   */
+  private formatDate(date: any): string | undefined {
+    if (!date) return undefined;
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return undefined;
+    
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}T00:00:00.000Z`;
   }
 }
