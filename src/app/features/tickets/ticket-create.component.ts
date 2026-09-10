@@ -362,8 +362,34 @@ if (isRestrictedUser && assignedSiteId) {
             this.products = fetchedProducts;
             this.templates = fetchedTemplates;
 
-            this.form.get('masterSiteId')?.disable({ emitEvent: false });
+            if (this.isEditMode) {
 
+              const selectedSite =
+                this.masterSites.find(site =>
+                  Number(
+                    site.masterSiteId ??
+                    site.id ??
+                    site.Id
+                  ) === Number(siteId)
+                );
+
+              if (selectedSite) {
+                // Display selected site name in autocomplete
+                this.masterSiteSearchControl.setValue(
+                  selectedSite,
+                  { emitEvent: false }
+                );
+              }
+
+              // Lock both the form value and autocomplete input
+              this.form.get('masterSiteId')?.disable({
+                emitEvent: false
+              });
+
+              this.masterSiteSearchControl.disable({
+                emitEvent: false
+              });
+            }
             this.form.patchValue({
               productId: prodId,
               templateId: templateId,

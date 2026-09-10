@@ -738,7 +738,7 @@ canClose(ticket: any): boolean {
   const isHospitalAdmin = this.currentUser.role === this.ROLES.HOSPITAL_ADMIN;
   const isHospitalUser  = this.currentUser.role === this.ROLES.HOSPITAL_USER;
   const isSuperAdmin    = this.currentUser.role === this.ROLES.SUPER_ADMIN;
-  const isSupportEng    = this.currentUser.role === this.ROLES.SUPPORT_ENGINEER;
+  const isSupportEng    = this.currentUser.role === this.ROLES.SUPPORT_ENGINEER && ticket.assignedToUserId === this.currentUser.userId;
   const isManager=this.currentUser.role===this.ROLES.MANAGER;
   // 3. Status checks mapped directly to your TicketStatus Enum parameters
   const isClosed = ticket.status === 4 || ticket.status === 'Closed';
@@ -766,12 +766,18 @@ canClose(ticket: any): boolean {
 canReopen(ticket: any): boolean {
   if (!ticket) return false;
 
-  // Track both number and string variations coming from the backend data grid rows
-  const isClosed = ticket.status === 4 || 
-                   ticket.status === '4' || 
-                   String(ticket.status).trim().toLowerCase() === 'closed';
+  const isSupportEng    = this.currentUser.role === this.ROLES.SUPPORT_ENGINEER;
 
-  // 🟢 FIX: Removed the role-based guard clause so it is exposed to all users
+  // Track both number and string variations coming from the backend data grid rows
+  let isClosed = (ticket.status === 4 || 
+                   ticket.status === '4' || 
+                   String(ticket.status).trim().toLowerCase() === 'closed');
+
+  if(isSupportEng)
+  {
+    isClosed =  ticket.assignedToUserId === this.currentUser.userId && isClosed;
+  }
+  
   return isClosed;
 }
 
