@@ -24,13 +24,13 @@ export class TicketHistoryComponent implements OnInit {
   isLoading = false;
 
   filter = {
-    ticketId: 0,
-    fromDate: undefined as Date | string | undefined,
-    toDate: undefined as Date | string | undefined,
-    actionByUserId: undefined as number | undefined, 
-    pageNumber: 1,
-    pageSize: 10
-  };
+  ticketId: undefined as number | undefined,
+  fromDate: undefined as Date | string | undefined,
+  toDate: undefined as Date | string | undefined,
+  actionByUserId: undefined as number | undefined,
+  pageNumber: 1,
+  pageSize: 10
+};
 
   constructor(
     private ticketService: TicketService, 
@@ -38,18 +38,18 @@ export class TicketHistoryComponent implements OnInit {
     private cdr: ChangeDetectorRef
   ) {}
 
-  ngOnInit(): void {
-    // 1. Initialize Ticket ID from Parent if available
-    if (this.ticketId) {
-      this.filter.ticketId = this.ticketId;
-    }
-    
-    // 2. Load users for the filter dropdown
-    this.loadUsersLookup();
-
-    // 3. Initial load of history
-    this.loadHistory();
+ ngOnInit(): void {
+  // Set Ticket ID only when it is provided by the parent
+  if (this.ticketId) {
+    this.filter.ticketId = this.ticketId;
   }
+
+  // Load active users for Action By dropdown
+  this.loadUsersLookup();
+
+  // Load history
+  this.loadHistory();
+}
 
   /**
    * Fetches users to populate the "Action By User" dropdown
@@ -103,18 +103,18 @@ export class TicketHistoryComponent implements OnInit {
   /**
    * Clear active filter values and return to baseline pagination parameters
    */
-  resetFilters(): void {
-    this.filter = {
-      ticketId: this.ticketId || 0, 
-      fromDate: undefined,
-      toDate: undefined,
-      actionByUserId: undefined,
-      pageNumber: 1,
-      pageSize: 10
-    };
-    this.loadHistory();
-  }
+ resetFilters(): void {
+  this.filter = {
+    ticketId: this.ticketId || undefined,
+    fromDate: undefined,
+    toDate: undefined,
+    actionByUserId: undefined,
+    pageNumber: 1,
+    pageSize: 10
+  };
 
+  this.loadHistory();
+}
   /**
    * Triggered by the "Search" button or dropdown selection change
    */
