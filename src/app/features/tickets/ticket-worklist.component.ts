@@ -29,6 +29,8 @@ import { MatListModule } from '@angular/material/list';
 import { MatButtonModule } from '@angular/material/button';
 import { TicketResponseDto } from '../../core/models/ticket.model';
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
+import { TicketAddProgressNoteDialogComponent } from './ticket-add-progress-note.dialog.component';
+import { TicketProgressNotesDialogComponent } from './ticket-progress-notes.dialog.component';
 @Component({
   selector: 'app-assign-ticket-dialog',
   standalone: true,
@@ -81,7 +83,23 @@ export class AssignTicketDialog {
 })
 export class TicketWorklistComponent implements OnInit, OnDestroy {
   ///@ViewChild(MatPaginator) paginator!: MatPaginator;
-  displayedColumns: string[] = ['ticketId', 'issueType', 'description', 'createdDate', 'productName', 'siteName', 'reOpenCount', 'createdBy', 'assignedTo', 'status', 'closedDate', 'tatHours', 'severity', 'actualTatHours', 'actions'];
+  displayedColumns: string[] = [
+  'actions',
+  'ticketId',
+  'issueType',
+  'description',
+  'createdDate',
+  'productName',
+  'siteName',
+  'reOpenCount',
+  'createdBy',
+  'assignedTo',
+  'status',
+  'closedDate',
+  'tatHours',
+  'severity',
+  'actualTatHours'
+];
   
   dataSource = new MatTableDataSource<any>([]);
   pageSizeOptions = [10, 25, 50, 100];
@@ -109,6 +127,7 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
     private dialog: MatDialog, 
     private cdr: ChangeDetectorRef, 
     private snackBar: MatSnackBar,
+     private router: Router
     //private breakpointObserver: BreakpointObserver
   ) {
   /*  this.isMobile$ = this.breakpointObserver
@@ -139,7 +158,7 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
   setupAutoSearch() { 
     this.filterSubscription = this.filterForm.valueChanges.pipe(debounceTime(500), distinctUntilChanged()).subscribe(() => { this.pageNumber = 1; this.refresh(); }); 
   }
-
+  
   loadEngineers(): void {
   this.userService.getEngineers().subscribe({
     next: (users: any) => {
@@ -239,6 +258,69 @@ loadSites(): void {
     this.pageNumber = 1;
     this.refresh();
   }
+
+
+  //add progress buttons
+
+openProgressNotes(ticket: TicketResponseDto): void {
+  if (!ticket?.ticketId) {
+    return;
+  }
+
+  this.dialog.open(TicketProgressNotesDialogComponent, {
+    width: '650px',
+    maxWidth: '95vw',
+    maxHeight: '90vh',
+    data: { ticketId: ticket.ticketId }
+  });
+}
+
+
+canViewProgressNotes(): boolean {
+
+  if (!this.currentUser) {
+    return false;
+  }
+
+  return (
+    this.currentUser.role === this.ROLES.SUPER_ADMIN ||
+    this.currentUser.role === this.ROLES.MANAGER ||
+    this.currentUser.role === this.ROLES.SUPPORT_ENGINEER ||
+    this.currentUser.role === this.ROLES.HOSPITAL_ADMIN ||
+    this.currentUser.role === this.ROLES.HOSPITAL_USER
+  );
+}
+canAddProgressNote(ticket: TicketResponseDto): boolean {
+
+  if (!ticket || !this.currentUser) {
+    return false;
+  }
+
+  const currentUserId =
+    this.currentUser.userId ??
+    this.currentUser.UserId;
+
+  const assignedToUserId =
+    ticket.assignedToUserId ??
+    (ticket as any).AssignedToUserId;
+
+  const role = this.currentUser.role;
+
+  if (
+    role === this.ROLES.SUPER_ADMIN ||
+    role === this.ROLES.MANAGER
+  ) {
+    return true;
+  }
+
+  if (role === this.ROLES.SUPPORT_ENGINEER) {
+    return Number(currentUserId) === Number(assignedToUserId);
+  }
+
+  return false;
+}
+
+  ///
    // =====================================================
   // 🟢 FIXED LOOKUP HELPER (Handles Numbers and Strings)
   // =====================================================
@@ -814,8 +896,70 @@ canReopen(ticket: any): boolean {
   //   });
   // }
 
+  canViewTicketHistory(): boolean {
+
+  if (!this.currentUser) {
+    return false;
+  }
+
+  return (
+    this.currentUser.role === this.ROLES.SUPER_ADMIN ||
+    this.currentUser.role === this.ROLES.MANAGER ||
+    this.currentUser.role === this.ROLES.SUPPORT_ENGINEER
+  );
+}
+
+openAddProgressNote(
+  ticket: TicketResponseDto
+): void {
+
+  if (!ticket?.ticketId) {
+    return;
+  }
+
+  const dialogRef = this.dialog.open(
+    TicketAddProgressNoteDialogComponent,
+    {
+      width: '600px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      data: {
+        ticketId: ticket.ticketId
+      }
+    }
+  );
+
+  dialogRef.afterClosed().subscribe(
+    (result) => {
+
+      if (result === true) {
+        // Progress note saved successfully.
+        // Worklist does not need to refresh.
+      }
+
+    }
+  );
+}
+
+
+openTicketHistory(
+  ticket: TicketResponseDto
+): void {
+
+  this.router.navigate(
+    ['/history'],
+    {
+      queryParams: {
+        ticketId: ticket.ticketId
+      }
+    }
+  );
+}
+
 
 } // 🛑 THIS MUST BE THE ABSOLUTE LAST CHARACTER IN YOUR FILE
+
+
 
 
 

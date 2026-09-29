@@ -3,7 +3,7 @@ import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-import { Ticket, TicketResponseDto, UpdateTicketDto } from '../models/ticket.model';
+import { Ticket, TicketProgressNoteDto, TicketResponseDto, UpdateTicketDto } from '../models/ticket.model';
 import { TicketHistoryDto, TicketHistoryFilterDto } from '../models/tickethistory.model';
 import { PagedResponse } from '../models/generic-response.model';
 
@@ -136,4 +136,16 @@ export class TicketService {
     };
     return this.http.put<any>(`${this.apiUrl}/update`, dto, httpOptions);
   }
+
+  addProgressNote(dto: {
+  ticketId: number;
+  note: string;
+}): Observable<any> {
+  return this.http.post( `${this.apiUrl}/progress-notes`,dto );
+}
+getProgressNotes(
+  ticketId: number): Observable<TicketProgressNoteDto[]> {
+  return this.http.get<TicketProgressNoteDto[]>(
+    `${this.apiUrl}/${ticketId}/progress-notes`);
+}
 }

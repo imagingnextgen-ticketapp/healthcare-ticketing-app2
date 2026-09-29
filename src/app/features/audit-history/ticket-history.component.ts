@@ -1,4 +1,5 @@
 import { Component, Input, OnInit, ChangeDetectorRef } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';;
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MaterialModules } from '../../shared/material.collection';
@@ -35,10 +36,20 @@ export class TicketHistoryComponent implements OnInit {
   constructor(
     private ticketService: TicketService, 
     private userService: UserService, 
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute
   ) {}
 
  ngOnInit(): void {
+
+  // Read ticketId when opened from Worklist
+  const ticketIdParam =
+    this.route.snapshot.queryParamMap.get('ticketId');
+
+  if (ticketIdParam) {
+    this.ticketId = Number(ticketIdParam);
+  }
+
   // Set Ticket ID only when it is provided by the parent
   if (this.ticketId) {
     this.filter.ticketId = this.ticketId;

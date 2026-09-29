@@ -77,3 +77,17 @@ export interface TicketResponseDto {
   rowVersion?: string; 
 
 }
+
+export interface AddTicketProgressNoteDto {
+  ticketId: number;
+  note: string;
+}
+
+export interface TicketProgressNoteDto {
+  ticketProgressNoteId: number;
+  ticketId: number;
+  note: string;
+  addedByUserId: number;
+  addedByName: string;
+  createdDate: string | Date;
+}
