@@ -276,23 +276,29 @@ openProgressNotes(ticket: TicketResponseDto): void {
 }
 
 
-canViewProgressNotes(): boolean {
-
-  if (!this.currentUser) {
+canViewProgressNotes(ticket: TicketResponseDto): boolean {
+  if (!ticket || !this.currentUser) {
     return false;
   }
 
-  return (
-    this.currentUser.role === this.ROLES.SUPER_ADMIN ||
-    this.currentUser.role === this.ROLES.MANAGER ||
-    this.currentUser.role === this.ROLES.SUPPORT_ENGINEER ||
-    this.currentUser.role === this.ROLES.HOSPITAL_ADMIN ||
-    this.currentUser.role === this.ROLES.HOSPITAL_USER
-  );
-}
-canAddProgressNote(ticket: TicketResponseDto): boolean {
+  const status = this.getNormalizedStatus(ticket);
 
+  return status !== TicketStatus.Open;
+}
+
+
+canAddProgressNote(ticket: TicketResponseDto): boolean {
   if (!ticket || !this.currentUser) {
+    return false;
+  }
+
+  const status = this.getNormalizedStatus(ticket);
+
+  if (
+    status !== TicketStatus.Assigned &&
+    status !== TicketStatus.InProgress &&
+    status !== TicketStatus.Reopened
+  ) {
     return false;
   }
 

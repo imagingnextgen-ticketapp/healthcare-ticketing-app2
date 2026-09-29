@@ -403,14 +403,12 @@
     </button>
 
     <mat-divider style="margin: 4px 0;"></mat-divider>
- <button
+<button
   mat-menu-item
   *ngIf="canAddProgressNote(ticket)"
   (click)="openAddProgressNote(ticket)"
 >
-  <mat-icon
-    style="color: #008542;"
-  >
+  <mat-icon>
     add_comment
   </mat-icon>
 
@@ -420,7 +418,7 @@
 </button>
 <button
   mat-menu-item
-  *ngIf="canViewProgressNotes()"
+ *ngIf="canViewProgressNotes(ticket)"
   (click)="openProgressNotes(ticket)"
 >
   <mat-icon
