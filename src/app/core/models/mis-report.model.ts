@@ -3,6 +3,7 @@ export interface DashboardDto {
   openedTickets: number;
   closedTickets: number;
   escalatedTickets: number;
+  activeEscalatedTickets: number;
 }
 
 export interface DashboardFilterDto {

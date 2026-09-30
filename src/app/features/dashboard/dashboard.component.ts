@@ -24,7 +24,8 @@ type DashboardCard =
   | 'total'
   | 'opened'
   | 'closed'
-  | 'escalated';
+  | 'escalated'
+  | 'allEscalated';
 
 @Component({
   selector: 'app-dashboard',
@@ -51,7 +52,8 @@ export class DashboardComponent implements OnInit {
     totalTickets: 0,
     openedTickets: 0,
     closedTickets: 0,
-    escalatedTickets: 0
+    escalatedTickets: 0,
+    activeEscalatedTickets: 0
   };
 
 
@@ -236,6 +238,9 @@ export class DashboardComponent implements OnInit {
       case 'escalated':
         queryParams.escalated = 'true';
         break;
+        case 'allEscalated':
+  queryParams.dashboardFilter = 'allEscalated';
+  break;
     }
 
     // 3. Serialize and launch in a new browser window

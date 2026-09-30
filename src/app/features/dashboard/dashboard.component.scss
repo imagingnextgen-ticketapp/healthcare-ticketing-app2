@@ -5,13 +5,23 @@
 $brand: #008a4c;
 $brand-dark: #006b38;
 
+
+/* ==========================================================================
+   DASHBOARD WRAPPER
+   ========================================================================== */
+
 .dashboard-wrapper {
   padding: 24px;
   background: #f8fafc;
   min-height: calc(100vh - 64px);
+  box-sizing: border-box;
 }
 
-/* --- Page Header --- */
+
+/* ==========================================================================
+   PAGE HEADER
+   ========================================================================== */
+
 .dash-header {
   margin-bottom: 24px;
 
@@ -30,140 +40,596 @@ $brand-dark: #006b38;
   }
 }
 
-/* --- Stats Grid --- */
+
+/* ==========================================================================
+   STATS GRID
+   ========================================================================== */
+
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+
+  /*
+   * Four equal columns.
+   * minmax(0, 1fr) prevents card content from expanding columns.
+   */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  /*
+   * Fixed row height.
+   * This prevents the dashboard cards from becoming vertically stretched.
+   */
+  grid-auto-rows: 280px;
+
   gap: 16px;
+
+  width: 100%;
+
+  /*
+   * IMPORTANT:
+   * Do not stretch cards vertically inside the grid.
+   */
+  align-items: start;
+
+  box-sizing: border-box;
 }
 
-/* --- Base Stat Card --- */
+
+/* ==========================================================================
+   BASE STAT CARD
+   ========================================================================== */
+
 .stat-card {
   background: white;
+
   border: 1px solid #e2e8f0;
   border-radius: 16px;
+
   padding: 24px;
+
   display: flex;
   flex-direction: column;
+
   gap: 12px;
+
+  /*
+   * Keep cards compact and equal.
+   */
+  height: 280px;
+  min-height: 280px;
+  max-height: 280px;
+
+  /*
+   * Prevent width/height problems caused by padding.
+   */
+  width: 100%;
+  min-width: 0;
+
+  box-sizing: border-box;
+
+  /*
+   * Prevent grid from stretching this card.
+   */
+  align-self: start;
+
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  transition: all 0.2s ease;
+
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+
   position: relative;
+
   overflow: hidden;
+
+
+  /* ------------------------------------------------------------------------
+     Top Accent
+     ------------------------------------------------------------------------ */
 
   &::after {
     content: '';
+
     position: absolute;
+
     top: 0;
     left: 0;
     right: 0;
+
     height: 3px;
+
     background: var(--card-accent, transparent);
   }
 
+
+  /* ------------------------------------------------------------------------
+     Hover
+     ------------------------------------------------------------------------ */
+
   &:hover {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+
     transform: translateY(-2px);
   }
 
+
+  /* ------------------------------------------------------------------------
+     Card Header
+     ------------------------------------------------------------------------ */
+
   .stat-top {
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
+
+    min-width: 0;
+
+    flex-shrink: 0;
   }
+
+
+  /* ------------------------------------------------------------------------
+     Icon
+     ------------------------------------------------------------------------ */
 
   .stat-icon-wrap {
     width: 44px;
     height: 44px;
+
     border-radius: 12px;
+
     display: flex;
+
     align-items: center;
     justify-content: center;
+
+    flex-shrink: 0;
+
     background: var(--icon-bg, #f1f5f9);
 
     mat-icon {
       color: var(--icon-color, #64748b);
+
       font-size: 22px;
+
       width: 22px;
       height: 22px;
     }
   }
 
+
+  /* ------------------------------------------------------------------------
+     Trend Badge
+     ------------------------------------------------------------------------ */
+
   .stat-trend {
     font-size: 0.65rem;
+
     font-weight: 700;
+
     letter-spacing: 0.08em;
+
     text-transform: uppercase;
+
     padding: 3px 8px;
+
     border-radius: 20px;
 
-    &.neutral { background: #f1f5f9; color: #64748b; }
-    &.active { background: #dbeafe; color: #1d4ed8; }
-    &.resolved { background: #dcfce7; color: #15803d; }
-    &.escalated { background: #fee2e2; color: #b91c1c; }
+    white-space: nowrap;
+
+    flex-shrink: 0;
+
+    &.neutral {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+
+    &.active {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    &.resolved {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    &.escalated {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
   }
+
+
+  /* ------------------------------------------------------------------------
+     Value
+     ------------------------------------------------------------------------ */
 
   .stat-value {
     font-size: 2.5rem;
+
     font-weight: 800;
+
     line-height: 1;
+
     letter-spacing: -0.04em;
+
     color: var(--value-color, #0f172a);
+
+    min-width: 0;
+
+    flex-shrink: 0;
   }
+
+
+  /* ------------------------------------------------------------------------
+     Label
+     ------------------------------------------------------------------------ */
 
   .stat-label {
     font-size: 0.75rem;
+
     font-weight: 600;
+
     text-transform: uppercase;
+
     letter-spacing: 0.06em;
+
     color: var(--label-color, #94a3b8);
+
+    line-height: 1.4;
+
+    min-width: 0;
+
+    flex-shrink: 0;
   }
 }
 
-/* --- Brand Card (Total) --- */
+
+/* ==========================================================================
+   BRAND CARD — TOTAL
+   ========================================================================== */
+
 .stat-card--brand {
-  background: linear-gradient(140deg, #008a4c 0%, #005a32 100%);
+  background: linear-gradient(
+    140deg,
+    #008a4c 0%,
+    #005a32 100%
+  );
+
   border-color: transparent;
-  box-shadow: 0 4px 16px rgba(0, 138, 76, 0.25);
+
+  box-shadow:
+    0 4px 16px rgba(0, 138, 76, 0.25);
+
   --card-accent: transparent;
+
   --icon-bg: rgba(255, 255, 255, 0.15);
+
   --icon-color: white;
+
   --value-color: white;
+
   --label-color: rgba(255, 255, 255, 0.75);
 
-  .stat-trend { background: rgba(255, 255, 255, 0.15); color: white; }
+
+  .stat-trend {
+    background: rgba(255, 255, 255, 0.15);
+
+    color: white;
+  }
+
 
   &:hover {
-    box-shadow: 0 12px 28px rgba(0, 138, 76, 0.35);
+    box-shadow:
+      0 12px 28px rgba(0, 138, 76, 0.35);
   }
 }
 
-/* --- Info Card (Open) --- */
+
+/* ==========================================================================
+   INFO CARD — OPEN
+   ========================================================================== */
+
 .stat-card--info {
   --card-accent: #3b82f6;
+
   --icon-bg: #eff6ff;
+
   --icon-color: #3b82f6;
+
   --value-color: #1e40af;
+
   --label-color: #93c5fd;
 }
 
-/* --- Success Card (Resolved) --- */
+
+/* ==========================================================================
+   SUCCESS CARD — RESOLVED
+   ========================================================================== */
+
 .stat-card--success {
   --card-accent: #10b981;
+
   --icon-bg: #ecfdf5;
+
   --icon-color: #059669;
+
   --value-color: #065f46;
+
   --label-color: #6ee7b7;
 }
 
-/* --- Danger Card (Escalated) --- */
+
+/* ==========================================================================
+   DANGER CARD — ESCALATED
+   ========================================================================== */
+
 .stat-card--danger {
   --card-accent: #ef4444;
+
   --icon-bg: #fef2f2;
+
   --icon-color: #ef4444;
+
   --value-color: #b91c1c;
+
   --label-color: #fca5a5;
+
+
+  /* ------------------------------------------------------------------------
+     Active Escalations
+     ------------------------------------------------------------------------ */
+
+  .escalation-main {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+
+    min-width: 0;
+
+    flex-shrink: 0;
+  }
+
+
+  /* ------------------------------------------------------------------------
+     View Active Worklist Button
+     ------------------------------------------------------------------------ */
+
+  .active-worklist-btn {
+    width: 100%;
+
+    min-width: 0;
+
+    min-height: 42px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    margin-top: 3px;
+
+    padding: 9px 12px;
+
+    border: 1px solid #fecaca;
+
+    border-radius: 9px;
+
+    background: #fff7f7;
+
+    color: #b91c1c;
+
+    font-family: inherit;
+
+    font-size: 0.78rem;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-sizing: border-box;
+
+    flex-shrink: 0;
+
+    transition:
+      background 0.2s ease,
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.2s ease;
+
+
+    mat-icon {
+      flex: 0 0 auto;
+
+      font-size: 18px;
+
+      width: 18px;
+      height: 18px;
+
+      line-height: 18px;
+    }
+
+
+    span {
+      flex: 1;
+
+      min-width: 0;
+
+      text-align: left;
+
+      white-space: nowrap;
+
+      overflow: hidden;
+
+      text-overflow: ellipsis;
+    }
+
+
+    .active-worklist-arrow {
+      flex: 0 0 auto;
+
+      margin-left: auto;
+
+      font-size: 17px;
+
+      width: 17px;
+      height: 17px;
+
+      line-height: 17px;
+
+      transition: transform 0.2s ease;
+    }
+
+
+    &:hover {
+      background: #fee2e2;
+
+      border-color: #fca5a5;
+
+      box-shadow:
+        0 3px 10px rgba(185, 28, 28, 0.12);
+
+      transform: translateY(-1px);
+
+
+      .active-worklist-arrow {
+        transform: translateX(2px);
+      }
+    }
+
+
+    &:active {
+      transform: translateY(0);
+
+      box-shadow: none;
+    }
+
+
+    &:focus-visible {
+      outline: 2px solid #ef4444;
+
+      outline-offset: 2px;
+    }
+  }
+
+
+  /* ------------------------------------------------------------------------
+     Total Escalated
+     ------------------------------------------------------------------------ */
+
+  .total-escalated-btn {
+    width: 100%;
+
+    min-width: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    /*
+     * Keep this at the bottom of the card.
+     */
+    margin-top: auto;
+
+    padding: 9px 0 0;
+
+    border: 0;
+
+    border-top: 1px solid #f1f5f9;
+
+    background: transparent;
+
+    color: #94a3b8;
+
+    font-family: inherit;
+
+    font-size: 0.72rem;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    text-align: left;
+
+    box-sizing: border-box;
+
+    flex-shrink: 0;
+
+
+    span {
+      flex: 1;
+
+      min-width: 0;
+
+      white-space: nowrap;
+
+      overflow: hidden;
+
+      text-overflow: ellipsis;
+    }
+
+
+    strong {
+      flex: 0 0 auto;
+
+      font-size: 0.85rem;
+
+      font-weight: 700;
+
+      color: #64748b;
+    }
+
+
+    mat-icon {
+      flex: 0 0 auto;
+
+      font-size: 18px;
+
+      width: 18px;
+      height: 18px;
+
+      color: #cbd5e1;
+
+      transition:
+        color 0.2s ease,
+        transform 0.2s ease;
+    }
+
+
+    &:hover {
+      color: #b91c1c;
+
+
+      strong {
+        color: #b91c1c;
+      }
+
+
+      mat-icon {
+        color: #b91c1c;
+
+        transform: translateX(2px);
+      }
+    }
+
+
+    &:focus-visible {
+      outline: 2px solid #ef4444;
+
+      outline-offset: 2px;
+
+      border-radius: 4px;
+    }
+  }
 }
+
 
 /* ==========================================================================
    QUICK ACTIONS SECTION
@@ -173,139 +639,192 @@ $brand-dark: #006b38;
   margin-top: 32px;
 }
 
+
 .section-title {
   font-size: 1rem;
+
   font-weight: 700;
+
   color: #0f172a;
+
   letter-spacing: -0.01em;
+
   margin: 0 0 16px;
 }
 
+
 .quick-actions-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
   gap: 12px;
+
+  width: 100%;
 }
+
 
 .quick-action-card {
   display: flex;
+
   align-items: center;
+
   gap: 14px;
+
+  min-width: 0;
+
   background: white;
+
   border: 1px solid #e8ecf0;
+
   border-radius: 14px;
+
   padding: 16px;
+
   text-decoration: none;
+
   transition: all 0.2s ease;
+
   cursor: pointer;
+
+  box-sizing: border-box;
+
 
   &:hover {
     border-color: #008a4c;
-    box-shadow: 0 4px 16px rgba(0, 138, 76, 0.12);
+
+    box-shadow:
+      0 4px 16px rgba(0, 138, 76, 0.12);
+
     transform: translateY(-2px);
 
-    .qa-arrow { color: #008a4c; transform: translateX(3px); }
+
+    .qa-arrow {
+      color: #008a4c;
+
+      transform: translateX(3px);
+    }
   }
 }
+
 
 .qa-icon {
   width: 44px;
+
   height: 44px;
+
   border-radius: 12px;
+
   display: flex;
+
   align-items: center;
+
   justify-content: center;
+
   flex-shrink: 0;
 
-  mat-icon { font-size: 22px; width: 22px; height: 22px; }
 
-  &.qa-icon--blue   { background: #eff6ff; mat-icon { color: #3b82f6; } }
-  &.qa-icon--green  { background: #ecfdf5; mat-icon { color: #008a4c; } }
-  &.qa-icon--purple { background: #f5f3ff; mat-icon { color: #7c3aed; } }
-  &.qa-icon--orange { background: #fff7ed; mat-icon { color: #ea580c; } }
+  mat-icon {
+    font-size: 22px;
+
+    width: 22px;
+
+    height: 22px;
+  }
+
+
+  &.qa-icon--blue {
+    background: #eff6ff;
+
+    mat-icon {
+      color: #3b82f6;
+    }
+  }
+
+
+  &.qa-icon--green {
+    background: #ecfdf5;
+
+    mat-icon {
+      color: #008a4c;
+    }
+  }
+
+
+  &.qa-icon--purple {
+    background: #f5f3ff;
+
+    mat-icon {
+      color: #7c3aed;
+    }
+  }
+
+
+  &.qa-icon--orange {
+    background: #fff7ed;
+
+    mat-icon {
+      color: #ea580c;
+    }
+  }
 }
+
 
 .qa-content {
   flex: 1;
+
   min-width: 0;
+
   display: flex;
+
   flex-direction: column;
+
   gap: 2px;
 }
 
+
 .qa-title {
   font-size: 0.875rem;
+
   font-weight: 600;
+
   color: #1e293b;
+
   white-space: nowrap;
+
   overflow: hidden;
+
   text-overflow: ellipsis;
 }
+
 
 .qa-desc {
   font-size: 0.75rem;
+
   color: #94a3b8;
+
   white-space: nowrap;
+
   overflow: hidden;
+
   text-overflow: ellipsis;
 }
 
+
 .qa-arrow {
   font-size: 20px;
+
   width: 20px;
+
   height: 20px;
+
   color: #cbd5e1;
+
   flex-shrink: 0;
+
   transition: all 0.2s ease;
 }
 
-/* ==========================================================================
-   RESPONSIVE
-   ========================================================================== */
-
-@media (max-width: 1280px) {
-  .quick-actions-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 1024px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .quick-actions-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 600px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-
-  .stat-card {
-    padding: 18px;
-    .stat-value { font-size: 2rem; }
-  }
-
-  .quick-actions-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .quick-action-card {
-    padding: 14px;
-  }
-
-  .qa-desc { display: none; }
-}
-
-@media (max-width: 400px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-}
 
 /* ==========================================================================
    DASHBOARD DATE FILTER
@@ -313,20 +832,449 @@ $brand-dark: #006b38;
 
 .dashboard-filter {
   display: flex;
+
   align-items: center;
+
   gap: 12px;
+
   margin-bottom: 24px;
+
   flex-wrap: wrap;
 }
+
 
 .date-field {
   width: 220px;
 }
 
+
 .apply-filter-btn,
 .clear-filter-btn {
   height: 52px;
+
   min-width: 100px;
+}
+
+
+/* ==========================================================================
+   FILTER BUTTONS
+   ========================================================================== */
+
+.apply-filter-btn {
+  height: 52px;
+
+  min-width: 130px;
+
+  background: $brand !important;
+
+  color: #ffffff !important;
+
+  border-radius: 8px;
+
+  font-weight: 600;
+
+  letter-spacing: 0.02em;
+
+  transition: all 0.2s ease;
+
+
+  mat-icon {
+    color: #ffffff;
+
+    margin-right: 6px;
+  }
+
+
+  &:hover {
+    background: $brand-dark !important;
+
+    box-shadow:
+      0 4px 12px rgba(0, 138, 76, 0.25);
+
+    transform: translateY(-1px);
+  }
+
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+
+.clear-filter-btn {
+  height: 52px;
+
+  min-width: 120px;
+
+  background: #ffffff !important;
+
+  color: #334155 !important;
+
+  border: 1px solid #cbd5e1 !important;
+
+  border-radius: 8px;
+
+  font-weight: 500;
+
+  transition: all 0.2s ease;
+
+
+  &:hover {
+    background: #ecfdf5 !important;
+
+    color: $brand !important;
+
+    border-color: $brand !important;
+
+    box-shadow:
+      0 3px 10px rgba(0, 138, 76, 0.12);
+  }
+
+
+  &:active {
+    background: #dff7eb !important;
+  }
+}
+
+
+/* ==========================================================================
+   LOADING SPINNER
+   ========================================================================== */
+
+.rotating-loader {
+  animation: spin 1s linear infinite;
+
+  display: inline-block;
+}
+
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* ==========================================================================
+   RESPONSIVE — LARGE DESKTOP
+   ========================================================================== */
+
+@media (max-width: 1280px) {
+
+  .quick-actions-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+/* ==========================================================================
+   RESPONSIVE — TABLET
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    grid-auto-rows: 280px;
+  }
+
+
+  .stat-card {
+    height: 280px;
+
+    min-height: 280px;
+
+    max-height: 280px;
+  }
+
+
+  .quick-actions-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+
+  .dashboard-filter {
+    display: flex;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap: 12px;
+  }
+
+
+  .date-field {
+    width: 200px;
+  }
+}
+
+
+/* ==========================================================================
+   RESPONSIVE — MOBILE
+   ========================================================================== */
+
+@media (max-width: 600px) {
+
+  .dashboard-wrapper {
+    padding: 18px;
+  }
+
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    grid-auto-rows: 250px;
+
+    gap: 12px;
+  }
+
+
+  .stat-card {
+    height: 250px;
+
+    min-height: 250px;
+
+    max-height: 250px;
+
+    padding: 18px;
+
+
+    .stat-value {
+      font-size: 2rem;
+    }
+
+
+    .stat-label {
+      font-size: 0.68rem;
+    }
+  }
+
+
+  /* Escalated card */
+
+  .stat-card--danger {
+
+    .active-worklist-btn {
+      min-height: 40px;
+
+      padding: 8px 10px;
+
+      font-size: 0.72rem;
+
+
+      mat-icon {
+        font-size: 17px;
+
+        width: 17px;
+
+        height: 17px;
+      }
+
+
+      .active-worklist-arrow {
+        font-size: 16px;
+
+        width: 16px;
+
+        height: 16px;
+      }
+    }
+
+
+    .total-escalated-btn {
+      font-size: 0.68rem;
+
+
+      strong {
+        font-size: 0.8rem;
+      }
+    }
+  }
+
+
+  /* Quick actions */
+
+  .quick-actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+
+  .quick-action-card {
+    padding: 14px;
+  }
+
+
+  .qa-desc {
+    display: none;
+  }
+
+
+  /* Date filters */
+
+  .dashboard-filter {
+    display: grid;
+
+    grid-template-columns: 1fr;
+
+    gap: 10px;
+
+    width: 100%;
+
+    margin-bottom: 20px;
+  }
+
+
+  .date-field {
+    width: 100%;
+  }
+
+
+  .apply-filter-btn,
+  .clear-filter-btn {
+    width: 100%;
+
+    height: 48px;
+
+    min-width: 0;
+  }
+}
+
+
+/* ==========================================================================
+   RESPONSIVE — VERY SMALL MOBILE
+   ========================================================================== */
+
+@media (max-width: 400px) {
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+
+    grid-auto-rows: 230px;
+  }
+
+
+  .stat-card {
+    height: 230px;
+
+    min-height: 230px;
+
+    max-height: 230px;
+  }
+
+
+  .apply-filter-btn,
+  .clear-filter-btn {
+    height: 46px;
+  }
+
+
+  .stat-card--danger {
+
+    .active-worklist-btn {
+      padding: 8px;
+
+
+      span {
+        font-size: 0.68rem;
+      }
+    }
+  }
+}
+
+/* ==========================================================================
+   FINAL DASHBOARD CARD HEIGHT FIX
+   ========================================================================== */
+
+/* Force the statistics row to remain compact */
+.dashboard-wrapper .stats-grid {
+  display: grid !important;
+
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+
+  grid-template-rows: 250px !important;
+
+  grid-auto-rows: 250px !important;
+
+  align-items: start !important;
+
+  gap: 16px !important;
+
+  width: 100% !important;
+}
+
+
+/* Force every statistics card to compact height */
+.dashboard-wrapper .stats-grid > .stat-card {
+  height: 236px !important;
+
+  min-height: 236px !important;
+
+  max-height: 236px !important;
+
+  width: 100% !important;
+
+  min-width: 0 !important;
+
+  max-width: none !important;
+
+  align-self: start !important;
+
+  box-sizing: border-box !important;
+
+  overflow: hidden !important;
+}
+
+
+/* Keep the contents of the normal cards compact */
+.dashboard-wrapper .stats-grid > .stat-card:not(.stat-card--danger) {
+  flex: none !important;
+}
+
+
+/* ==========================================================================
+   ESCALATED CARD
+   ========================================================================== */
+
+.dashboard-wrapper .stat-card--danger {
+  display: flex !important;
+
+  flex-direction: column !important;
+
+  gap: 10px !important;
+}
+
+
+/* Active escalation section */
+.dashboard-wrapper .stat-card--danger .escalation-main {
+  flex: 0 0 auto !important;
+}
+
+
+/* Active Worklist button */
+.dashboard-wrapper .stat-card--danger .active-worklist-btn {
+  flex: 0 0 auto !important;
+
+  width: 100% !important;
+
+  height: 42px !important;
+
+  min-height: 42px !important;
+
+  max-height: 42px !important;
+
+  box-sizing: border-box !important;
+
+  margin-top: 2px !important;
+}
+
+
+/* Total escalated */
+.dashboard-wrapper .stat-card--danger .total-escalated-btn {
+  flex: 0 0 auto !important;
+
+  margin-top: auto !important;
 }
 
 
@@ -334,17 +1282,22 @@ $brand-dark: #006b38;
    TABLET
    ========================================================================== */
 
-@media (min-width: 601px) and (max-width: 1024px) {
+@media (max-width: 1024px) {
 
-  .dashboard-filter {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
+  .dashboard-wrapper .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+
+    grid-template-rows: 250px !important;
+
+    grid-auto-rows: 250px !important;
   }
 
-  .date-field {
-    width: 200px;
+  .dashboard-wrapper .stats-grid > .stat-card {
+    height: 250px !important;
+
+    min-height: 250px !important;
+
+    max-height: 250px !important;
   }
 }
 
@@ -355,23 +1308,28 @@ $brand-dark: #006b38;
 
 @media (max-width: 600px) {
 
-  .dashboard-filter {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
-    width: 100%;
-    margin-bottom: 20px;
+  .dashboard-wrapper .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+
+    grid-template-rows: 230px !important;
+
+    grid-auto-rows: 230px !important;
+
+    gap: 12px !important;
   }
 
-  .date-field {
-    width: 100%;
+  .dashboard-wrapper .stats-grid > .stat-card {
+    height: 230px !important;
+
+    min-height: 230px !important;
+
+    max-height: 230px !important;
+
+    padding: 18px !important;
   }
 
-  .apply-filter-btn,
-  .clear-filter-btn {
-    width: 100%;
-    height: 48px;
-    min-width: 0;
+  .dashboard-wrapper .stats-grid > .stat-card .stat-value {
+    font-size: 2rem;
   }
 }
 
@@ -382,70 +1340,19 @@ $brand-dark: #006b38;
 
 @media (max-width: 400px) {
 
-  .apply-filter-btn,
-  .clear-filter-btn {
-    height: 46px;
-  }
-}
+  .dashboard-wrapper .stats-grid {
+    grid-template-columns: 1fr !important;
 
-/* =========================================================
-   DASHBOARD FILTER BUTTONS
-   ========================================================= */
+    grid-template-rows: 220px !important;
 
-.apply-filter-btn {
-  height: 52px;
-  min-width: 130px;
-  background: $brand !important;
-  color: #ffffff !important;
-  border-radius: 8px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  transition: all 0.2s ease;
-
-  mat-icon {
-    color: #ffffff;
-    margin-right: 6px;
+    grid-auto-rows: 220px !important;
   }
 
-  &:hover {
-    background: $brand-dark !important;
-    box-shadow: 0 4px 12px rgba(0, 138, 76, 0.25);
-    transform: translateY(-1px);
+  .dashboard-wrapper .stats-grid > .stat-card {
+    height: 220px !important;
+
+    min-height: 220px !important;
+
+    max-height: 220px !important;
   }
-
-  &:active {
-    transform: translateY(0);
-  }
-}
-
-
-.clear-filter-btn {
-  height: 52px;
-  min-width: 120px;
-  background: #ffffff !important;
-  color: #334155 !important;
-  border: 1px solid #cbd5e1 !important;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: #ecfdf5 !important;
-    color: $brand !important;
-    border-color: $brand !important;
-    box-shadow: 0 3px 10px rgba(0, 138, 76, 0.12);
-  }
-
-  &:active {
-    background: #dff7eb !important;
-  }
-}
-
-.rotating-loader {
-  animation: spin 1s linear infinite;
-  display: inline-block;
-}
-
-@keyframes spin {
-  100% { transform: rotate(360deg); }
 }
