@@ -75,6 +75,56 @@
     </mat-option>
   </mat-select>
 </mat-form-field>
+<!-- Requested By -->
+<mat-form-field appearance="outline">
+  <mat-label>Requested By</mat-label>
+
+  <mat-select formControlName="createdByUserId">
+    <mat-option [value]="null">
+      All Requesters
+    </mat-option>
+
+    <mat-option
+      *ngFor="let user of allUsers"
+      [value]="user.userId">
+      {{ user.userName }}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+<!-- Assigned To -->
+<mat-form-field appearance="outline">
+  <mat-label>Assigned To</mat-label>
+
+  <mat-select formControlName="assignedToUserId">
+
+    <mat-option [value]="null">
+      All Engineers
+    </mat-option>
+
+    <mat-option
+      *ngFor="let engineer of allEngineers"
+      [value]="engineer.userId">
+      {{ engineer.userName }}
+    </mat-option>
+
+  </mat-select>
+</mat-form-field>
+<!-- Closed By -->
+<mat-form-field appearance="outline">
+  <mat-label>Closed By</mat-label>
+
+  <mat-select formControlName="closedByUserId">
+    <mat-option [value]="null">
+      All Users
+    </mat-option>
+
+    <mat-option
+      *ngFor="let user of allUsers"
+      [value]="user.userId">
+      {{ user.userName }}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
 
 <!-- Hospital Filter -->
 <mat-form-field
@@ -197,12 +247,20 @@
 
       <!-- DESCRIPTION -->
       <ng-container matColumnDef="description">
-        <th mat-header-cell *matHeaderCellDef>Description</th>
+  <th mat-header-cell *matHeaderCellDef>Description</th>
 
-        <td mat-cell *matCellDef="let e" class="truncate" [matTooltip]="e.description">
-          {{ e.description }}
-        </td>
-      </ng-container>
+  <td
+    mat-cell
+    *matCellDef="let ticket"
+    [matTooltip]="ticket.description || '-'"
+    matTooltipPosition="above">
+
+    <span class="truncate">
+      {{ ticket.description || '-' }}
+    </span>
+
+  </td>
+</ng-container>
 
       <!-- PRODUCT -->
       <ng-container matColumnDef="productName">
@@ -244,7 +302,7 @@
 
       <!-- ENGINEER -->
       <ng-container matColumnDef="assignedTo">
-        <th mat-header-cell *matHeaderCellDef>Engineer</th>
+        <th mat-header-cell *matHeaderCellDef>Assigned To</th>
 
         <td mat-cell *matCellDef="let e">
           <span [class.text-muted]="!e.assignedTo">
@@ -252,6 +310,15 @@
           </span>
         </td>
       </ng-container>
+      <ng-container matColumnDef="closedBy">
+  <th mat-header-cell *matHeaderCellDef>
+    Closed By
+  </th>
+
+  <td mat-cell *matCellDef="let ticket">
+    {{ ticket.closedBy || '-' }}
+  </td>
+</ng-container>
 
       <!-- STATUS -->
           <!-- STATUS COLUMN DEF -->
@@ -311,6 +378,8 @@
        <td mat-cell *matCellDef="let e">
   {{ e.actualTatHours > 0 ? formatTat(e.actualTatHours) : '-' }}
 </td>
+
+
       </ng-container>
 
            <!-- ===================================================== -->

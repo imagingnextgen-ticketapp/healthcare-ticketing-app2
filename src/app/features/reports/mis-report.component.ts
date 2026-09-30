@@ -30,12 +30,17 @@ export class MisReportComponent implements OnInit {
   'productName',
   'issueType',
   'assignedTo',
+  'requestedBy',
   'closedBy',
   'severity',
   'status',
   'createdDate',
   'closedDate',
-  'actualTatHours'
+  'actualTatHours',
+  'isSlaBreached',
+  //'isEscalated',
+  
+   
 ];
   private dashboardNavigation = false;
   masterSites: any[] = [];
@@ -52,7 +57,9 @@ export class MisReportComponent implements OnInit {
   assignedToSearchText = '';
   activeUsers: any[] = [];
   filteredActiveUsers: any[] = [];
+  filteredRequestedUsers: any[] = [];
   closedBySearchText = '';
+  requestedBySearchText = '';
   statuses: { value: string; label: string }[] = [
     { value: 'Open', label: 'Open' },
     { value: 'Assigned', label: 'Assigned' },
@@ -80,7 +87,7 @@ export class MisReportComponent implements OnInit {
 
   assignedToUserId: undefined,
   closedByUserId: undefined,
-
+  createdByUserId: undefined,
   tatHours: undefined,
   tatOperator: 'gt',
 
@@ -229,6 +236,8 @@ private loadActiveUsers(): void {
     next: (res) => {
       this.activeUsers = res || [];
       this.filteredActiveUsers = [...this.activeUsers];
+      this.filteredRequestedUsers = [...this.activeUsers];
+
       this.cdr.detectChanges();
     },
     error: (error) => {
@@ -381,7 +390,40 @@ private loadActiveUsers(): void {
           ((u.userName || '') as string).toLowerCase().includes(term)
         );
   }
+  filterRequestedUsers(searchText: string): void {
+  const search = (searchText || '').trim().toLowerCase();
 
+  if (!search) {
+    this.filteredRequestedUsers = [...this.activeUsers];
+    return;
+  }
+
+  this.filteredRequestedUsers = this.activeUsers.filter(user =>
+    (user.userName || '').toLowerCase().includes(search)
+  );
+}
+
+onRequestedBySelected(userId: any): void {
+  this.filter = {
+    ...this.filter,
+    createdByUserId: userId ?? undefined,
+    pageNumber: 1
+  };
+
+  this.applyFilters();
+}
+
+displayRequestedUserName = (userId: any): string => {
+  if (!userId) {
+    return '';
+  }
+
+  const user = this.activeUsers.find(
+    x => Number(x.userId) === Number(userId)
+  );
+
+  return user?.userName ?? '';
+};
   onClosedBySelected(userId: any): void {
     this.filter = { ...this.filter, closedByUserId: userId };
     this.applyFilters();

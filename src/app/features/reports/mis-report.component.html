@@ -54,7 +54,7 @@
             (optionSelected)="onSiteSelected($event.option.value)">
 
             <mat-option *ngIf="!siteSearchText" [value]="null">
-              -- All Hospitals --
+              - All Hospitals -
             </mat-option>
 
             <mat-option
@@ -95,7 +95,7 @@
             (optionSelected)="onProductSelected($event.option.value)">
 
             <mat-option *ngIf="!productSearchText" [value]="null">
-              -- All Products --
+              - All Products -
             </mat-option>
 
             <mat-option
@@ -136,7 +136,7 @@
             (optionSelected)="onTemplateSelected($event.option.value)">
 
             <mat-option *ngIf="!templateSearchText" [value]="null">
-              -- All Issues --
+              - All Issues -
             </mat-option>
 
             <mat-option
@@ -150,7 +150,46 @@
           </mat-autocomplete>
 
         </mat-form-field>
+<!-- Requested By -->
+<mat-form-field
+  appearance="outline"
+  class="fuji-custom-field filter-item">
 
+  <mat-label>Requested By</mat-label>
+
+ <input
+  type="text"
+  matInput
+  placeholder="Type to search..."
+  autocomplete="off"
+  [(ngModel)]="requestedBySearchText"
+  [ngModelOptions]="{ standalone: true }"
+  [matAutocomplete]="requestedByAuto"
+  (input)="filterRequestedUsers(requestedBySearchText)">
+
+  <mat-autocomplete
+    #requestedByAuto="matAutocomplete"
+    panelClass="fuji-dropdown-panel"
+    [displayWith]="displayRequestedUserName"
+    (optionSelected)="onRequestedBySelected($event.option.value)">
+
+    <mat-option
+      *ngIf="!requestedBySearchText"
+      [value]="null">
+      - All Users -
+    </mat-option>
+
+    <mat-option
+      *ngFor="let user of filteredRequestedUsers"
+      [value]="user.userId">
+
+      {{ user.userName }}
+
+    </mat-option>
+
+  </mat-autocomplete>
+
+</mat-form-field>
 
         <!-- 4. Assigned To -->
         <mat-form-field
@@ -176,7 +215,7 @@
             (optionSelected)="onAssignedToSelected($event.option.value)">
 
             <mat-option *ngIf="!assignedToSearchText" [value]="null">
-              -- All Users --
+              - All Users -
             </mat-option>
 
             <mat-option
@@ -190,7 +229,7 @@
           </mat-autocomplete>
 
         </mat-form-field>
-
+       
 
         <!-- 5. Closed By -->
         <mat-form-field
@@ -216,7 +255,7 @@
             (optionSelected)="onClosedBySelected($event.option.value)">
 
             <mat-option *ngIf="!closedBySearchText" [value]="null">
-              -- All Users --
+              - All Users -
             </mat-option>
 
             <mat-option
@@ -494,7 +533,19 @@
         </td>
 
       </ng-container>
+      
+<!-- Requested By -->
+<ng-container matColumnDef="requestedBy">
 
+  <th mat-header-cell *matHeaderCellDef>
+    Requested By
+  </th>
+
+  <td mat-cell *matCellDef="let row">
+    {{ row.requestedBy || '-' }}
+  </td>
+
+</ng-container>
 
       <!-- Assigned To -->
       <ng-container matColumnDef="assignedTo">
@@ -581,7 +632,29 @@
 
       </ng-container>
 
+<!-- SLA Breached -->
+<ng-container matColumnDef="isSlaBreached">
 
+  <th mat-header-cell *matHeaderCellDef>
+    SLA Breached
+  </th>
+
+  <td mat-cell *matCellDef="let row">
+    {{ row.isSlaBreached ? 'Yes' : 'No' }}
+  </td>
+<!-- Escalated -->
+<!-- <ng-container matColumnDef="isEscalated">
+
+  <th mat-header-cell *matHeaderCellDef>
+    Escalated
+  </th>
+
+  <td mat-cell *matCellDef="let row">
+    {{ row.isEscalated ? 'Escalated' : 'Not Escalated' }}
+  </td> -->
+
+<!-- </ng-container> -->
+</ng-container>
       <!-- Logged On -->
       <ng-container matColumnDef="createdDate">
 

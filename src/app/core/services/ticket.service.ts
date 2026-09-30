@@ -56,33 +56,82 @@ export class TicketService {
 
   // ✅ WORKLIST: [HttpGet("worklist")]
   getWorklist(filter: any): Observable<PagedResponse<TicketResponseDto>> {
-    let params = new HttpParams()
-      .set('pageNumber', filter.pageNumber?.toString() || '1')
-      .set('pageSize', filter.pageSize?.toString() || '25');
+  let params = new HttpParams()
+    .set('pageNumber', filter.pageNumber?.toString() || '1')
+    .set('pageSize', filter.pageSize?.toString() || '25');
 
-    if (filter.ticketId) params = params.set('ticketId', filter.ticketId.toString());
-    if (filter.status != null) params = params.set('status', filter.status.toString());
-    if (filter.assignedToUserId) params = params.set('assignedToUserId', filter.assignedToUserId.toString());
-    if (filter.masterSiteId != null) {params = params.set('masterSiteId', filter.masterSiteId.toString());
-
-}
-    
-    // 1. Format Created Date
-    if (filter.createdDate) {
-      const cDate = new Date(filter.createdDate);
-      const cStr = cDate.getFullYear() + '-' + ('0' + (cDate.getMonth() + 1)).slice(-2) + '-' + ('0' + cDate.getDate()).slice(-2);
-      params = params.set('createdDate', cStr);
-    }
-
-    // 2. Add and Format Resolve Date
-    if (filter.resolveDate) {
-      const rDate = new Date(filter.resolveDate);
-      const rStr = rDate.getFullYear() + '-' + ('0' + (rDate.getMonth() + 1)).slice(-2) + '-' + ('0' + rDate.getDate()).slice(-2);
-      params = params.set('resolveDate', rStr); 
-    }
-
-    return this.http.get<PagedResponse<TicketResponseDto>>(`${this.apiUrl}/worklist`, { params });
+  if (filter.ticketId) {
+    params = params.set('ticketId', filter.ticketId.toString());
   }
+
+  if (filter.status != null) {
+    params = params.set('status', filter.status.toString());
+  }
+
+  // Assigned Engineer
+  if (filter.assignedToUserId) {
+    params = params.set(
+      'assignedToUserId',
+      filter.assignedToUserId.toString()
+    );
+  }
+
+  // Requested By / Created By
+  if (filter.createdByUserId) {
+    params = params.set(
+      'createdByUserId',
+      filter.createdByUserId.toString()
+    );
+  }
+
+  // Closed By
+  if (filter.closedByUserId) {
+    params = params.set(
+      'closedByUserId',
+      filter.closedByUserId.toString()
+    );
+  }
+
+  if (filter.masterSiteId != null) {
+    params = params.set(
+      'masterSiteId',
+      filter.masterSiteId.toString()
+    );
+  }
+
+  // Created Date
+  if (filter.createdDate) {
+    const cDate = new Date(filter.createdDate);
+
+    const cStr =
+      cDate.getFullYear() +
+      '-' +
+      ('0' + (cDate.getMonth() + 1)).slice(-2) +
+      '-' +
+      ('0' + cDate.getDate()).slice(-2);
+
+    params = params.set('createdDate', cStr);
+  }
+
+  // Resolve Date
+  if (filter.resolveDate) {
+    const rDate = new Date(filter.resolveDate);
+
+    const rStr =
+      rDate.getFullYear() +
+      '-' +
+      ('0' + (rDate.getMonth() + 1)).slice(-2) +
+      '-' +
+      ('0' + rDate.getDate()).slice(-2);
+
+    params = params.set('resolveDate', rStr);
+  }
+
+  return this.http.get<PagedResponse<TicketResponseDto>>(
+    `${this.apiUrl}/worklist`,
+    { params }
+  );
+}
 
   // ✅ GET BY ID: Useful for Reopen/Details view
   getTicketById(id: number): Observable<TicketResponseDto> {

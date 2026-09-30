@@ -95,6 +95,7 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
   'createdBy',
   'assignedTo',
   'status',
+  'closedBy',
   'closedDate',
   'tatHours',
   'severity',
@@ -111,7 +112,7 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
    // 2. ADD COMPONENT PROPERTIES FOR THE RESPONSIVE DATEPICKER
   maxDate = new Date();
   //isMobile$: Observable<boolean>;
-  totalRecords = 0; pageSize = 10; pageNumber = 1; currentTabIndex = 0; sites: any[] = [];allEngineers: any[] = [];
+  totalRecords = 0; pageSize = 10; pageNumber = 1; currentTabIndex = 0; sites: any[] = [];allEngineers: any[] = [];allUsers: any[] = [];
   
 
   readonly ROLES = { SUPER_ADMIN: 'SuperAdmin', SUPPORT_ENGINEER: 'SupportEngineer', HOSPITAL_ADMIN: 'HospitalAdmin', HOSPITAL_USER: 'HospitalUser', MANAGER:'Manager' };
@@ -144,6 +145,7 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
     this.initFilterForm();
     this.setupAutoSearch();
     this.loadEngineers();
+    this.loadUsers();
   setTimeout(() => {
   this.loadSites();
   this.refresh();
@@ -153,7 +155,7 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
   //ngAfterViewInit() { this.dataSource.paginator = this.paginator; }
   ngOnDestroy() { this.filterSubscription?.unsubscribe(); }
 
-  initFilterForm() { this.filterForm = this.fb.group({ ticketId: [null], status: [null], createdDate: [null], resolveDate: [null] , masterSiteId: [null], }); }
+  initFilterForm() { this.filterForm = this.fb.group({ ticketId: [null], status: [null], createdDate: [null], resolveDate: [null] , masterSiteId: [null],  createdByUserId: [null],closedByUserId: [null],assignedToUserId: [null],}); }
 
   setupAutoSearch() { 
     this.filterSubscription = this.filterForm.valueChanges.pipe(debounceTime(500), distinctUntilChanged()).subscribe(() => { this.pageNumber = 1; this.refresh(); }); 
@@ -259,6 +261,19 @@ loadSites(): void {
     this.refresh();
   }
 
+//load users 
+loadUsers(): void {
+  this.userService.getActiveUsers().subscribe({
+    next: (users: any) => {
+      this.allUsers = users || [];
+      this.cdr.detectChanges();
+    },
+    error: (err) => {
+      console.error('Failed to load users:', err);
+      this.allUsers = [];
+    }
+  });
+}
 
   //add progress buttons
 
@@ -381,7 +396,7 @@ onTabChange(index: number) {
     // 5. Clear the freshly mounted form controls safely without side-effects
     if (this.filterForm) {
       this.filterForm.patchValue(
-        { ticketId: null, status: null, createdDate: null, resolveDate: null },
+        { ticketId: null, status: null, createdDate: null, resolveDate: null, masterSiteId: null,createdByUserId: null,closedByUserId:null },
         { emitEvent: false }
       );
     }

@@ -33,7 +33,7 @@ export interface MisFilterDto {
   productId?: number;
   assignedToUserId?: number;
   closedByUserId?: number;
-
+  createdByUserId?: number;
   // Dashboard → MIS
   escalated?: boolean;
   dashboardFilter?: string;
@@ -44,7 +44,7 @@ export interface MisReportDto {
   hospitalName: string;
   productName: string;
   issueType: string;
-
+  requestedBy:string;
   assignedTo: string;
   closedBy: string;
 
@@ -54,9 +54,9 @@ export interface MisReportDto {
 
   createdDate: string | Date;
   closedDate?: string | Date;
-
+  
   targetSlaHours: number;
   actualTatHours: number;
-
+  isEscalated: boolean;
   isSlaBreached: boolean;
 }

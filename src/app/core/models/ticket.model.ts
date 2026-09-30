@@ -24,7 +24,8 @@ export interface Ticket {
 
   assignedToUserId?: number;
   assignedToUser?: User;
-
+  closedByUserId?: number;
+  closedByUser?: User;
   status: TicketStatus;
   priority: string;
   severity: TicketSeverity;
@@ -75,6 +76,7 @@ export interface TicketResponseDto {
   ProductId:number;
   TemplateId:number;
   rowVersion?: string; 
+  closedBy: string;
 
 }
 
