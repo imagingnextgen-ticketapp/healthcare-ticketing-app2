@@ -100,6 +100,12 @@ getDashboard(
     }
     if (f.assignedToUserId) params = params.set('assignedToUserId', f.assignedToUserId.toString());
     if (f.closedByUserId) params = params.set('closedByUserId', f.closedByUserId.toString());
+    if (f.createdByUserId) {
+  params = params.set(
+    'createdByUserId',
+    f.createdByUserId.toString()
+  );
+}
     if (f.status) params = params.set('status', f.status.toString());
     
     // 🟢 ADDED: Maps dashboardFilter parameter safely to the outgoing payload

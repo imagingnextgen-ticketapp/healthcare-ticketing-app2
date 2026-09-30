@@ -29,8 +29,8 @@ export class MisReportComponent implements OnInit {
   'hospitalName',
   'productName',
   'issueType',
-  'assignedTo',
   'requestedBy',
+  'assignedTo',
   'closedBy',
   'severity',
   'status',
@@ -528,53 +528,69 @@ console.log('MIS FILTER SENT:', this.filter);
   /**
    * 🟢 RESET: Optimized high-speed layout state initialization
    */
-  resetFilters(): void {
-    const user = this.authService.getUser();
-    const assignedSiteId = user?.masterSiteId;
 
-   this.filter = {
-  pageNumber: 1,
-  pageSize: 10,
-  tatOperator: 'gt',
+ resetFilters(): void {
+  const user = this.authService.getUser();
+  const assignedSiteId = user?.masterSiteId;
 
-  masterSiteId: this.isHospitalAdmin
-    ? Number(assignedSiteId)
-    : undefined,
+  this.filter = {
+    pageNumber: 1,
+    pageSize: 10,
+    tatOperator: 'gt',
 
-  productId: undefined,
-  templateId: undefined,
-  fromDate: undefined,
-  toDate: undefined,
-  tatHours: undefined,
-  status: undefined,
+    masterSiteId: this.isHospitalAdmin
+      ? Number(assignedSiteId)
+      : undefined,
 
-  assignedToUserId: undefined,
-  closedByUserId: undefined
-};
-    this.siteSearchText = this.isHospitalAdmin ? this.displaySiteName(Number(assignedSiteId)) : '';
-    this.filteredMasterSites = this.masterSites.map(s => ({ ...s }));
-    this.productSearchText = '';
-    this.templateSearchText = '';
-    this.assignedToSearchText = '';
-    this.closedBySearchText = '';
-    this.statusSearchText = '';
-    this.filteredEngineers = this.engineers.map(s => ({ ...s }));
-    this.filteredActiveUsers = this.activeUsers.map(s => ({ ...s }));
-    this.filteredStatuses = this.statuses.map(s => ({ ...s }));
-    // FIX: Decouple operational states from structural service network endpoints to achieve fast loading
-    if (this.isHospitalAdmin) {
-      this.templates = [];
-      this.filteredTemplates = [];
-      this.filteredProducts = this.products.map(s => ({ ...s }));
-      this.loadReportData();
-    } else {
-      this.products = [];
-      this.filteredProducts = [];
-      this.templates = [];
-      this.filteredTemplates = [];
-      this.loadReportData();
-    }
+    productId: undefined,
+    templateId: undefined,
+    fromDate: undefined,
+    toDate: undefined,
+    tatHours: undefined,
+    status: undefined,
+
+    assignedToUserId: undefined,
+    createdByUserId: undefined,   // Requested By
+    closedByUserId: undefined
+  };
+
+  // Hospital filter
+  this.siteSearchText = this.isHospitalAdmin
+    ? this.displaySiteName(Number(assignedSiteId))
+    : '';
+
+  this.filteredMasterSites = this.masterSites.map(s => ({ ...s }));
+
+  // Other filter search text
+  this.productSearchText = '';
+  this.templateSearchText = '';
+  this.assignedToSearchText = '';
+  this.requestedBySearchText = '';   // Requested By
+  this.closedBySearchText = '';
+  this.statusSearchText = '';
+
+  // Reset dropdown lists
+  this.filteredEngineers = this.engineers.map(s => ({ ...s }));
+  this.filteredRequestedUsers = this.activeUsers.map(s => ({ ...s })); // Requested By
+  this.filteredActiveUsers = this.activeUsers.map(s => ({ ...s }));
+  this.filteredStatuses = this.statuses.map(s => ({ ...s }));
+
+  // Reset dependent filters/data
+  if (this.isHospitalAdmin) {
+    this.templates = [];
+    this.filteredTemplates = [];
+    this.filteredProducts = this.products.map(s => ({ ...s }));
+
+    this.loadReportData();
+  } else {
+    this.products = [];
+    this.filteredProducts = [];
+    this.templates = [];
+    this.filteredTemplates = [];
+
+    this.loadReportData();
   }
+}
 
 
   getStatusLabel(s: any): string {

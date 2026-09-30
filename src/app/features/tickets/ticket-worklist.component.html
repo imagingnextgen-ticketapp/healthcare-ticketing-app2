@@ -251,13 +251,11 @@
 
   <td
     mat-cell
-    *matCellDef="let ticket"
-    [matTooltip]="ticket.description || '-'"
-    matTooltipPosition="above">
+    *matCellDef="let e"
+    class="truncate"
+    [matTooltip]="e.description">
 
-    <span class="truncate">
-      {{ ticket.description || '-' }}
-    </span>
+    {{ e.description }}
 
   </td>
 </ng-container>

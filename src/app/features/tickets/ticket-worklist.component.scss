@@ -189,7 +189,7 @@ $border: #e2e8f0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      //touch-action: pan-y !important;
+      touch-action: pan-y !important;
       touch-action: auto !important;
     }
 
@@ -348,7 +348,7 @@ $border: #e2e8f0;
     .fuji-table { min-width: 900px; }
     .truncate {
         touch-action: auto !important;
-        //pointer-events: none !important;
+        pointer-events: none !important;
       }
   }
 }
@@ -362,7 +362,7 @@ $border: #e2e8f0;
     min-width: 800px;
     .truncate {
       touch-action: auto !important;
-      //pointer-events: none !important;
+      pointer-events: none !important;
     }
   }
 }
