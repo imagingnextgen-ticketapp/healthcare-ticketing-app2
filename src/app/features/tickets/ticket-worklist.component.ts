@@ -23,6 +23,7 @@ import { TicketCreateComponent } from './ticket-create.component';
 import { TicketCloseDialogComponent } from './ticket-close.component';
 import { SolutionViewDialogComponent } from './solution-view.dialog.component';
 import { MatIcon, MatIconModule } from '@angular/material/icon';
+import type { MatTooltip } from '@angular/material/tooltip';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
@@ -113,6 +114,7 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
   maxDate = new Date();
   //isMobile$: Observable<boolean>;
   totalRecords = 0; pageSize = 10; pageNumber = 1; currentTabIndex = 0; sites: any[] = [];allEngineers: any[] = [];allUsers: any[] = [];
+  private descriptionTooltipTimer: ReturnType<typeof setTimeout> | undefined;
   
 
   readonly ROLES = { SUPER_ADMIN: 'SuperAdmin', SUPPORT_ENGINEER: 'SupportEngineer', HOSPITAL_ADMIN: 'HospitalAdmin', HOSPITAL_USER: 'HospitalUser', MANAGER:'Manager' };
@@ -153,7 +155,24 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
   }
 
   //ngAfterViewInit() { this.dataSource.paginator = this.paginator; }
-  ngOnDestroy() { this.filterSubscription?.unsubscribe(); }
+  ngOnDestroy() {
+    this.filterSubscription?.unsubscribe();
+    if (this.descriptionTooltipTimer) {
+      clearTimeout(this.descriptionTooltipTimer);
+    }
+  }
+
+  showDescriptionTooltip(tooltip: MatTooltip): void {
+    if (this.descriptionTooltipTimer) {
+      clearTimeout(this.descriptionTooltipTimer);
+    }
+
+    tooltip.show();
+    this.descriptionTooltipTimer = setTimeout(() => {
+      tooltip.hide();
+      this.descriptionTooltipTimer = undefined;
+    }, 2500);
+  }
 
   initFilterForm() { this.filterForm = this.fb.group({ ticketId: [null], status: [null], createdDate: [null], resolveDate: [null] , masterSiteId: [null],  createdByUserId: [null],closedByUserId: [null],assignedToUserId: [null],}); }
 
@@ -164,9 +183,7 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
   loadEngineers(): void {
   this.userService.getEngineers().subscribe({
     next: (users: any) => {
-      Promise.resolve().then(() => {
-        this.allEngineers = users || [];
-      });
+      this.allEngineers = users || [];
     }
   });
 }
@@ -210,6 +227,7 @@ if (this.currentUser.role === 'HospitalUser' || this.currentUser.role === 'Hospi
     next: (res: any) => {
       this.dataSource.data = res.data || [];
       this.totalRecords = res.totalRecords || 0;
+      this.cdr.detectChanges();
 
       // Introduce a brief 200ms visual buffer so the reload animation is clearly visible
       setTimeout(() => {

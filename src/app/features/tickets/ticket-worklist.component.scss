@@ -367,6 +367,12 @@ $border: #e2e8f0;
   }
 }
 
+@media (max-width: 768px) {
+  .table-container .fuji-table .description-cell {
+    pointer-events: auto !important;
+  }
+}
+
 ::ng-deep .hospital-select-panel {
   max-height: 260px !important;
 }

@@ -252,8 +252,11 @@
   <td
     mat-cell
     *matCellDef="let e"
-    class="truncate"
-    [matTooltip]="e.description">
+    class="truncate description-cell"
+    [matTooltip]="e.description"
+    matTooltipTouchGestures="on"
+    #descriptionTooltip="matTooltip"
+    (click)="e.description?.length > 30 && showDescriptionTooltip(descriptionTooltip)">
 
     {{ e.description }}
 

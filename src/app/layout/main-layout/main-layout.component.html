@@ -170,24 +170,55 @@
     <button mat-button color="primary" (click)="markAllRead()" *ngIf="unreadCount > 0">Mark all read</button>
   </div>
   <mat-divider></mat-divider>
-  <div class="notif-scroll-area">
-    <button mat-menu-item *ngFor="let n of notifications" (click)="markAsRead(n)" [class.unread]="!n.isRead">
-      <div class="notif-item-content">
-        <mat-icon [color]="!n.isRead ? 'primary' : ''">{{ !n.isRead ? 'mark_email_unread' : 'mark_email_read' }}</mat-icon>
-        <div class="notif-text">
-          <div class="notif-title">
-  {{ n.title || 'System Alert' }}
-</div>
-          <div class="notif-message">{{ n.message }}</div>
-          <div class="notif-date">{{ n.createdDate | date:'shortTime' }}</div>
+ <div class="notif-scroll-area">
+
+  <button
+    mat-menu-item
+    *ngFor="let n of notifications"
+    (click)="markAsRead(n)"
+    class="notif-item"
+    [class.unread]="!n.isRead">
+
+    <div class="notif-item-content">
+
+      <!-- Notification Icon -->
+      <mat-icon
+        class="notif-icon"
+        [color]="!n.isRead ? 'primary' : ''">
+        {{ !n.isRead ? 'mark_email_unread' : 'mark_email_read' }}
+      </mat-icon>
+
+      <!-- Notification Content -->
+      <div class="notif-text">
+
+        <!-- Title -->
+        <div class="notif-title">
+          {{ n.title || 'System Alert' }}
         </div>
+
+        <!-- Short Message Preview -->
+        <div class="notif-message">
+          {{ n.message }}
+        </div>
+
+        <!-- Time -->
+        <div class="notif-date">
+          {{ n.createdDate | date:'shortTime' }}
+        </div>
+
       </div>
-    </button>
-    <div *ngIf="notifications.length === 0" class="empty-notif">
-      <mat-icon>notifications_off</mat-icon>
-      <p>No notifications yet</p>
+
     </div>
+
+  </button>
+
+  <!-- Empty State -->
+  <div *ngIf="notifications.length === 0" class="empty-notif">
+    <mat-icon>notifications_off</mat-icon>
+    <p>No new notifications</p>
   </div>
+
+</div>
 </mat-menu>
 
 
