@@ -38,6 +38,10 @@ export class TicketCreateComponent implements OnInit,OnDestroy  {
   currentUser: any;
   loading = false;
 masterSiteSearchControl = new FormControl<string | any>('');
+productSearchControl = new FormControl<string | any>(
+  '',
+  control => typeof control.value === 'string' ? { productSelectionRequired: true } : null
+);
 templateSearchControl = new FormControl<string | any>(
   '',
   control => typeof control.value === 'string' ? { templateSelectionRequired: true } : null
@@ -131,6 +135,51 @@ displayMasterSite(site: any): string {
     site.SiteName ||
     ''
   );
+}
+
+get filteredProducts(): any[] {
+  const value = this.productSearchControl.value;
+  const query = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return query
+    ? this.products.filter(product => this.displayProduct(product).toLowerCase().includes(query))
+    : this.products;
+}
+
+displayProduct(product: any): string {
+  if (!product) return '';
+  if (typeof product === 'string') return product;
+  return product.productName || product.name || product.ProductName || '';
+}
+
+private getProductId(product: any): number {
+  return Number(product?.productId ?? product?.id ?? product?.Id ?? product?.ProductId);
+}
+
+onProductSearchInput(): void {
+  if (typeof this.productSearchControl.value !== 'string') return;
+
+  this.form.patchValue({
+    productId: null,
+    templateId: null,
+    issueType: '',
+    description: '',
+    severity: null,
+    priority: '',
+    tatHours: 0
+  }, { emitEvent: false });
+  this.templates = [];
+  this.templateSearchControl.setValue('', { emitEvent: false });
+}
+
+onProductSelected(product: any): void {
+  if (!product) return;
+
+  const productId = this.getProductId(product);
+  if (!Number.isFinite(productId) || productId <= 0) return;
+
+  this.productSearchControl.setValue(product, { emitEvent: false });
+  this.form.get('productId')?.setValue(productId);
+  this.onProductChange(productId);
 }
 
 get filteredTemplates(): any[] {
@@ -448,6 +497,11 @@ if (isRestrictedUser && assignedSiteId) {
             );
             this.templateSearchControl.setValue(selectedTemplate || '', { emitEvent: false });
 
+            const selectedProduct = this.products.find(
+              product => this.getProductId(product) === Number(prodId)
+            );
+            this.productSearchControl.setValue(selectedProduct || '', { emitEvent: false });
+
             this.form.get('masterSiteId')?.setValue(siteId, { emitEvent: false, onlySelf: true });
 
             // =========================================================================
@@ -455,12 +509,14 @@ if (isRestrictedUser && assignedSiteId) {
             // =========================================================================
             if (isReadOnly) {
               this.form.get('productId')?.disable({ emitEvent: false });
+              this.productSearchControl.disable({ emitEvent: false });
               this.form.get('templateId')?.disable({ emitEvent: false });
               this.templateSearchControl.disable({ emitEvent: false });
               this.form.get('description')?.disable({ emitEvent: false });
               this.form.get('severity')?.disable({ emitEvent: false });
             } else {
               this.form.get('productId')?.enable({ emitEvent: false });
+              this.productSearchControl.enable({ emitEvent: false });
               this.form.get('templateId')?.enable({ emitEvent: false });
               this.templateSearchControl.enable({ emitEvent: false });
               this.form.get('description')?.enable({ emitEvent: false });
@@ -666,6 +722,7 @@ if (isRestrictedUser && assignedSiteId) {
       priority: '', 
       tatHours: 0 
     }, { emitEvent: false });
+    this.productSearchControl.setValue('', { emitEvent: false });
     this.templateSearchControl.setValue('', { emitEvent: false });
 
     // 2. Completely empty out your component's template and product arrays
@@ -762,11 +819,11 @@ if (isRestrictedUser && assignedSiteId) {
         const firstItem = this.products[0];
 
         const firstProdId =
-          firstItem?.productId ||
-          firstItem?.ProductId;
+          this.getProductId(firstItem);
 
         if (firstProdId) {
-          this.form.get('productId')?.setValue(firstProdId);
+          this.productSearchControl.setValue(firstItem, { emitEvent: false });
+          this.form.get('productId')?.setValue(firstProdId, { emitEvent: false });
           this.onProductChange(firstProdId);
         }
       }
@@ -779,6 +836,11 @@ if (isRestrictedUser && assignedSiteId) {
 
 
 onProductChange(productId: number): void {
+  const selectedProduct = this.products.find(product => this.getProductId(product) === Number(productId));
+  if (selectedProduct) {
+    this.productSearchControl.setValue(selectedProduct, { emitEvent: false });
+  }
+
   this.form.patchValue({
     templateId: null,
     issueType: '',

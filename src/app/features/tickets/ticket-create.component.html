@@ -72,11 +72,32 @@
   <!-- PRODUCT CATALOG BINDING -->
   <mat-form-field appearance="outline" class="w-100">
     <mat-label>Product</mat-label>
-    <mat-select formControlName="productId" (selectionChange)="onProductChange($event.value)">
-      <mat-option *ngFor="let prod of products" [value]="prod.productId ?? prod.id ?? prod.Id ?? prod.ProductId">
-        {{ prod.productName || prod.name || prod.ProductName }}
+    <input
+      matInput
+      type="text"
+      [formControl]="productSearchControl"
+      [matAutocomplete]="productAutocomplete"
+      placeholder="Search Product"
+      autocomplete="off"
+      (input)="onProductSearchInput()" />
+
+    <mat-autocomplete
+      #productAutocomplete="matAutocomplete"
+      [displayWith]="displayProduct"
+      (optionSelected)="onProductSelected($event.option.value)">
+      <mat-option *ngFor="let product of filteredProducts" [value]="product">
+        {{ displayProduct(product) }}
       </mat-option>
-    </mat-select>
+      <mat-option
+        *ngIf="typeof productSearchControl.value === 'string' && productSearchControl.value.trim() && filteredProducts.length === 0"
+        disabled>
+        No Product found
+      </mat-option>
+    </mat-autocomplete>
+
+    <mat-error *ngIf="form.get('productId')?.hasError('required')">
+      Product is required
+    </mat-error>
   </mat-form-field>
 </div>
 
