@@ -172,6 +172,29 @@ export class TicketService {
   return this.http.get<any>(`${this.apiUrl}/history`, { params });
 }
 
+  exportTicketHistory(filter: TicketHistoryFilterDto): Observable<Blob> {
+    const formatLocalDate = (date: Date | string | undefined): string | undefined => {
+      if (!date) return undefined;
+      const value = new Date(date);
+      if (isNaN(value.getTime())) return undefined;
+      return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+    };
+
+    let params = new HttpParams();
+    if (filter.ticketId) params = params.set('ticketId', filter.ticketId.toString());
+    if (filter.actionByUserId) params = params.set('actionByUserId', filter.actionByUserId.toString());
+
+    const fromDate = formatLocalDate(filter.fromDate);
+    const toDate = formatLocalDate(filter.toDate);
+    if (fromDate) params = params.set('fromDate', `${fromDate}T00:00:00`);
+    if (toDate) params = params.set('toDate', `${toDate}T23:59:59`);
+
+    return this.http.get(`${this.apiUrl}/history/export`, {
+      params,
+      responseType: 'blob'
+    });
+  }
+
 
   // ✅ ESCALATE: [HttpPost("escalate")]
   escalateTickets(): Observable<{ message: string }> {

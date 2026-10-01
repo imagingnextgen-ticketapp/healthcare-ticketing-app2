@@ -42,6 +42,16 @@
       <button mat-stroked-button class="reset-btn" (click)="resetFilters()" [disabled]="isLoading">
         <mat-icon>restart_alt</mat-icon> Reset
       </button>
+
+      <button
+        mat-icon-button
+        class="export-btn"
+        matTooltip="Export toExcel"
+        [attr.aria-label]="isExporting ? 'Exporting audit history' : 'Download audit history as Excel'"
+        (click)="exportHistory()"
+        [disabled]="isLoading || isExporting">
+        <mat-icon>{{ isExporting ? 'hourglass_empty' : 'download' }}</mat-icon>
+      </button>
     </div>
   </mat-card>
 

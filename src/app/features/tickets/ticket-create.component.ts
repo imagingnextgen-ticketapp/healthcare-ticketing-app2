@@ -38,6 +38,10 @@ export class TicketCreateComponent implements OnInit,OnDestroy  {
   currentUser: any;
   loading = false;
 masterSiteSearchControl = new FormControl<string | any>('');
+templateSearchControl = new FormControl<string | any>(
+  '',
+  control => typeof control.value === 'string' ? { templateSelectionRequired: true } : null
+);
 private masterSiteSearchSubscription?: Subscription;
   // DUAL-MODE TRACKING STATES
   isEditMode = false;
@@ -128,6 +132,45 @@ displayMasterSite(site: any): string {
     ''
   );
 }
+
+get filteredTemplates(): any[] {
+  const searchValue = this.templateSearchControl.value;
+  const query = typeof searchValue === 'string' ? searchValue.trim().toLowerCase() : '';
+  return query
+    ? this.templates.filter(template => template.issueType?.toLowerCase().includes(query))
+    : this.templates;
+}
+
+displayIssueTemplate(template: any): string {
+  return typeof template === 'string' ? template : template?.issueType || '';
+}
+
+onTemplateSearchInput(): void {
+  if (typeof this.templateSearchControl.value !== 'string') {
+    return;
+  }
+
+  this.form.patchValue({
+    templateId: null,
+    issueType: '',
+    description: '',
+    severity: null,
+    priority: '',
+    tatHours: 0
+  }, { emitEvent: false });
+}
+
+onTemplateSelected(template: any): void {
+  if (!template) {
+    return;
+  }
+
+  this.templateSearchControl.setValue(template, { emitEvent: false });
+  const templateId = Number(template.templateId);
+  this.form.get('templateId')?.setValue(templateId);
+  this.onTemplateChange(templateId);
+}
+
    private initForm(): void {
     // If SuperAdmin has no site, initialize with null but mark as pristine
     const initialSiteValue = this.currentUser?.masterSiteId || null;
@@ -400,6 +443,11 @@ if (isRestrictedUser && assignedSiteId) {
               issueType: ticket.issueType || ticket.IssueType || ''
             }, { emitEvent: false });
 
+            const selectedTemplate = this.templates.find(
+              template => Number(template.templateId) === Number(templateId)
+            );
+            this.templateSearchControl.setValue(selectedTemplate || '', { emitEvent: false });
+
             this.form.get('masterSiteId')?.setValue(siteId, { emitEvent: false, onlySelf: true });
 
             // =========================================================================
@@ -408,11 +456,13 @@ if (isRestrictedUser && assignedSiteId) {
             if (isReadOnly) {
               this.form.get('productId')?.disable({ emitEvent: false });
               this.form.get('templateId')?.disable({ emitEvent: false });
+              this.templateSearchControl.disable({ emitEvent: false });
               this.form.get('description')?.disable({ emitEvent: false });
               this.form.get('severity')?.disable({ emitEvent: false });
             } else {
               this.form.get('productId')?.enable({ emitEvent: false });
               this.form.get('templateId')?.enable({ emitEvent: false });
+              this.templateSearchControl.enable({ emitEvent: false });
               this.form.get('description')?.enable({ emitEvent: false });
               this.form.get('severity')?.enable({ emitEvent: false });
             }
@@ -616,6 +666,7 @@ if (isRestrictedUser && assignedSiteId) {
       priority: '', 
       tatHours: 0 
     }, { emitEvent: false });
+    this.templateSearchControl.setValue('', { emitEvent: false });
 
     // 2. Completely empty out your component's template and product arrays
     this.products = [];
@@ -736,6 +787,7 @@ onProductChange(productId: number): void {
     priority: '',
     tatHours: 0
   });
+  this.templateSearchControl.setValue('', { emitEvent: false });
 
   this.templateService
     .getTemplateViewByProduct(productId)

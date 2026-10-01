@@ -6,7 +6,9 @@ import { MaterialModules } from '../../shared/material.collection';
 import { TicketService } from '../../core/services/ticket.service';
 import { UserService } from '../../core/services/user.service'; 
 import { TicketHistoryDto } from '../../core/models/tickethistory.model';
+import { TicketHistoryFilterDto } from '../../core/models/tickethistory.model';
 import { provideNativeDateAdapter } from '@angular/material/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-ticket-history',
@@ -23,6 +25,7 @@ export class TicketHistoryComponent implements OnInit {
   users: any[] = []; 
   totalRecords = 0;
   isLoading = false;
+  isExporting = false;
 
   filter = {
   ticketId: undefined as number | undefined,
@@ -37,7 +40,8 @@ export class TicketHistoryComponent implements OnInit {
     private ticketService: TicketService, 
     private userService: UserService, 
     private cdr: ChangeDetectorRef,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private snackBar: MatSnackBar
   ) {}
 
  ngOnInit(): void {
@@ -133,6 +137,44 @@ export class TicketHistoryComponent implements OnInit {
     // Reset to first page for new search scope contexts
     this.filter.pageNumber = 1;
     this.loadHistory();
+  }
+
+  exportHistory(): void {
+    const exportFilter: TicketHistoryFilterDto = {
+      ticketId: this.filter.ticketId,
+      fromDate: this.filter.fromDate,
+      toDate: this.filter.toDate,
+      actionByUserId: this.filter.actionByUserId
+    };
+
+    this.isExporting = true;
+    this.ticketService.exportTicketHistory(exportFilter).subscribe({
+      next: (file) => {
+        const url = window.URL.createObjectURL(file);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `AuditTrail_${this.createExportTimestamp()}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+        this.isExporting = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Ticket history export failed:', err);
+        this.isExporting = false;
+        this.cdr.detectChanges();
+        this.snackBar.open('Failed to export audit history.', 'Close', { duration: 3000 });
+      }
+    });
+  }
+
+  private createExportTimestamp(): string {
+    const now = new Date();
+    const date = now.toISOString().slice(0, 10).replace(/-/g, '');
+    const time = now.toTimeString().slice(0, 8).replace(/:/g, '');
+    return `${date}_${time}`;
   }
 
   /**

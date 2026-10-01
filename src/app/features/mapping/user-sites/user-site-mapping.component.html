@@ -9,24 +9,75 @@
       <div class="controls-row">
         <mat-form-field appearance="outline">
           <mat-label>Select Hospital</mat-label>
-          <mat-select [(ngModel)]="selectedSiteId" (selectionChange)="onSiteChange()">
-            <mat-option *ngFor="let site of sites" [value]="site.masterSiteId">
-              {{ site.name }}
+          <input
+            matInput
+            type="text"
+            [formControl]="siteSearchControl"
+            [matAutocomplete]="siteAutocomplete"
+            placeholder="Search Hospital"
+            autocomplete="off"
+            (input)="onSiteSearchInput()" />
+          <mat-autocomplete
+            #siteAutocomplete="matAutocomplete"
+            [displayWith]="displaySite"
+            (optionSelected)="onSiteSelected($event.option.value)">
+            <mat-option *ngFor="let site of filteredSites" [value]="site">
+              {{ site.name || site.siteName }}
             </mat-option>
-          </mat-select>
+            <mat-option
+              *ngIf="typeof siteSearchControl.value === 'string' && siteSearchControl.value.trim() && filteredSites.length === 0"
+              disabled>
+              No Hospital found
+            </mat-option>
+          </mat-autocomplete>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Select Users</mat-label>
-          <mat-select [(ngModel)]="selectedUserIds" multiple>
-            <mat-option *ngFor="let u of availableUsers" [value]="u.userId">
-              {{ u.userName }}
+          <input
+            #userSearchInput
+            matInput
+            [placeholder]="selectedUserIds.length === 1 ? '1 user selected' : selectedUserIds.length ? selectedUserIds.length + ' users selected' : 'Search users'"
+            [formControl]="userSearchControl"
+            [matAutocomplete]="userAutocomplete"
+            autocomplete="off" />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            aria-label="Clear selected users"
+            matTooltip="Clear selected users"
+            [disabled]="selectedUserIds.length === 0"
+            (click)="clearSelectedUsers(); $event.stopPropagation()">
+            <mat-icon>close</mat-icon>
+          </button>
+          <mat-autocomplete
+            #userAutocomplete="matAutocomplete"
+            (optionSelected)="toggleUser($event.option.value, userSearchInput)">
+            <mat-option
+              *ngFor="let user of filteredAvailableUsers"
+              [value]="user.userId"
+              [disabled]="isUserAssigned(user.userId)">
+              <span class="mapping-search-option" [class.selected]="isUserSelected(user.userId) || isUserAssigned(user.userId)">
+                <span>{{ user.userName }}</span>
+                <span *ngIf="isUserAssigned(user.userId)" class="mapping-item-status">Already assigned</span>
+                <mat-icon>{{ isUserSelected(user.userId) || isUserAssigned(user.userId) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+              </span>
             </mat-option>
-          </mat-select>
+            <mat-option *ngIf="isLoadingAssignedUsers" disabled>
+              Checking current assignments...
+            </mat-option>
+            <mat-option *ngIf="assignedUsersLookupFailed" disabled>
+              Could not verify current assignments. Select the hospital again to retry.
+            </mat-option>
+            <mat-option *ngIf="!isLoadingAssignedUsers && userSearchControl.value && filteredAvailableUsers.length === 0" disabled>
+              No matching users
+            </mat-option>
+          </mat-autocomplete>
         </mat-form-field>
 
         <button mat-raised-button class="fuji-btn" 
-                [disabled]="!selectedSiteId || selectedUserIds.length === 0" 
+                [disabled]="!selectedSiteId || isLoadingAssignedUsers || assignedUsersLookupFailed || selectedUserIds.length === 0" 
                 (click)="onAssign()">
           <mat-icon>person_add</mat-icon> Assign
         </button>

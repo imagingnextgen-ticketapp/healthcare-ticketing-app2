@@ -5,7 +5,7 @@ import { MasterSiteService } from "../../../core/services/mastersite.service";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { CommonModule } from "@angular/common";
 import { MaterialModules } from "../../../shared/material.collection";
-import { FormsModule } from "@angular/forms";
+import { FormControl, FormsModule } from "@angular/forms";
 
 @Component({
   selector: 'app-site-usersite-mapping',
@@ -22,7 +22,13 @@ export class UserSiteMappingComponent implements OnInit {
   
   selectedSiteId: number | null = null;
   selectedUserIds: number[] = [];
+  assignedUserIds = new Set<number>();
   isLoading = false;
+  isLoadingAssignedUsers = false;
+  assignedUsersLookupFailed = false;
+  siteSearchControl = new FormControl<string | any>('');
+  userSearchControl = new FormControl({ value: '', disabled: true });
+  private assignedUsersRequestId = 0;
 
   // ⚡ Pagination State Tracking for the Data Grid
   totalRecords = 0;
@@ -53,6 +59,74 @@ export class UserSiteMappingComponent implements OnInit {
       },
       error: () => this.showSnackBar('Failed to load sites')
     });
+  }
+
+  get filteredSites(): any[] {
+    const value = this.siteSearchControl.value;
+    const query = typeof value === 'string' ? value.trim().toLowerCase() : '';
+    return query
+      ? this.sites.filter(site => (site.name || site.siteName || '').toLowerCase().includes(query))
+      : this.sites;
+  }
+
+  displaySite(site: any): string {
+    return typeof site === 'string' ? site : site?.name || site?.siteName || '';
+  }
+
+  onSiteSelected(site: any): void {
+    const siteId = Number(site?.masterSiteId ?? site?.id ?? site?.Id);
+    if (!siteId) return;
+
+    this.siteSearchControl.setValue(site, { emitEvent: false });
+    this.selectedSiteId = siteId;
+    this.onSiteChange();
+  }
+
+  onSiteSearchInput(): void {
+    if (typeof this.siteSearchControl.value !== 'string') return;
+
+    this.assignedUsersRequestId++;
+    this.isLoadingAssignedUsers = false;
+    this.assignedUsersLookupFailed = false;
+    this.userSearchControl.disable({ emitEvent: false });
+    this.selectedSiteId = null;
+    this.selectedUserIds = [];
+    this.assignedUserIds.clear();
+    this.assignedUsers = [];
+    this.totalRecords = 0;
+    this.currentPage = 1;
+  }
+
+  get filteredAvailableUsers(): any[] {
+    const value = this.userSearchControl.value;
+    const query = typeof value === 'string' ? value.trim().toLowerCase() : '';
+    return this.availableUsers.filter(user => !query || user.userName?.toLowerCase().includes(query));
+  }
+
+  isUserAssigned(userId: number): boolean {
+    return this.assignedUserIds.has(Number(userId));
+  }
+
+  isUserSelected(userId: number): boolean {
+    return this.selectedUserIds.some(id => Number(id) === Number(userId));
+  }
+
+  toggleUser(userId: number, input: HTMLInputElement): void {
+    if (this.isUserAssigned(userId)) return;
+
+    if (this.isUserSelected(userId)) {
+      this.selectedUserIds = this.selectedUserIds.filter(id => Number(id) !== Number(userId));
+    } else {
+      this.selectedUserIds = [...this.selectedUserIds, Number(userId)];
+    }
+    setTimeout(() => {
+      input.value = '';
+      this.userSearchControl.setValue('');
+    });
+  }
+
+  clearSelectedUsers(): void {
+    this.selectedUserIds = [];
   }
 
   loadAllAvailableUsers(): void {
@@ -94,7 +168,53 @@ export class UserSiteMappingComponent implements OnInit {
       this.assignedUsers = []; 
       this.currentPage = 1; // Reset to page 1 on site change
       this.loadMappings();
+      this.loadAssignedUserIds();
     }
+  }
+
+  private loadAssignedUserIds(): void {
+    const siteId = this.selectedSiteId;
+    if (!siteId) return;
+
+    const requestId = ++this.assignedUsersRequestId;
+    const pageSize = 500;
+    const assignedIds = new Set<number>();
+    let pageNumber = 1;
+    this.assignedUserIds = new Set<number>();
+    this.isLoadingAssignedUsers = true;
+    this.assignedUsersLookupFailed = false;
+    this.userSearchControl.disable({ emitEvent: false });
+
+    const loadPage = (): void => {
+      this.userSiteService.getUsersBySite(siteId, pageNumber, pageSize).subscribe({
+        next: response => {
+          if (requestId !== this.assignedUsersRequestId) return;
+
+          const rows = response.data || [];
+          rows.forEach(row => assignedIds.add(Number(row.userId)));
+
+          if (assignedIds.size < response.totalRecords && rows.length > 0) {
+            pageNumber++;
+            loadPage();
+            return;
+          }
+
+          this.assignedUserIds = assignedIds;
+          this.isLoadingAssignedUsers = false;
+          this.userSearchControl.enable({ emitEvent: false });
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          if (requestId !== this.assignedUsersRequestId) return;
+          this.isLoadingAssignedUsers = false;
+          this.assignedUsersLookupFailed = true;
+          this.showSnackBar('Could not verify existing user mappings');
+          this.cdr.detectChanges();
+        }
+      });
+    };
+
+    loadPage();
   }
 
   loadMappings(): void {
@@ -117,7 +237,7 @@ export class UserSiteMappingComponent implements OnInit {
   }
 
   onAssign(): void {
-    if (!this.selectedSiteId || this.selectedUserIds.length === 0) return;
+    if (!this.selectedSiteId || this.isLoadingAssignedUsers || this.assignedUsersLookupFailed || this.selectedUserIds.length === 0) return;
 
     const dto = {
       masterSiteId: this.selectedSiteId,
@@ -137,6 +257,7 @@ export class UserSiteMappingComponent implements OnInit {
         setTimeout(() => {
           this.selectedUserIds = [];
           this.loadMappings();
+          this.loadAssignedUserIds();
           this.loadAllAvailableUsers();
           this.cdr.detectChanges();
         });

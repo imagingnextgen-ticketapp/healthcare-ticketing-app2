@@ -9,13 +9,14 @@
     </div>
 
     <button
-      mat-raised-button
-      class="fuji-btn"
+      mat-icon-button
+      class="export-btn"
+      matTooltip="Export to Excel"
+      aria-label="Export MIS report to Excel"
       (click)="handleExport()"
       [disabled]="isLoading">
 
-      <mat-icon>file_download</mat-icon>
-      Export to Excel
+      <mat-icon>download</mat-icon>
 
     </button>
 

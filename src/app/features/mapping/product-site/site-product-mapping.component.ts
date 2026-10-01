@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, ViewEncapsulation, ViewChild } from '@angular/core'; // 🔷 Added ViewChild
 import { CommonModule } from '@angular/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormsModule } from '@angular/forms';
 import { MatTableDataSource } from '@angular/material/table'; // 🔷 Added MatTableDataSource
 import { MatPaginator, PageEvent } from '@angular/material/paginator'; // 🔷 Added Paginator imports
 
@@ -25,12 +25,17 @@ export class SiteProductMappingComponent implements OnInit {
   // Selection Models
   masterSiteId: number | null = null;
   selectedProductIds: number[] = [];
+  assignedProductIds = new Set<number>();
+  isLoadingAssignedProducts = false;
+  assignedProductsLookupFailed = false;
   
   // Data Arrays & Sources
   // 🔷 Converted to MatTableDataSource to allow pagination to operate
   dataSource = new MatTableDataSource<any>([]); 
   availableProducts: any[] = [];
   availableSites: any[] = [];
+  siteSearchControl = new FormControl<string | any>('');
+  productSearchControl = new FormControl({ value: '', disabled: true });
   
   // 🔷 Pagination Properties needed for UI template layout
   totalRecords = 0;
@@ -80,6 +85,72 @@ export class SiteProductMappingComponent implements OnInit {
     });
   }
 
+  get filteredSites(): any[] {
+    const value = this.siteSearchControl.value;
+    const query = typeof value === 'string' ? value.trim().toLowerCase() : '';
+    return query
+      ? this.availableSites.filter(site => (site.name || site.siteName || '').toLowerCase().includes(query))
+      : this.availableSites;
+  }
+
+  displaySite(site: any): string {
+    return typeof site === 'string' ? site : site?.name || site?.siteName || '';
+  }
+
+  onSiteSelected(site: any): void {
+    const siteId = Number(site?.masterSiteId ?? site?.id ?? site?.Id);
+    if (!siteId) return;
+
+    this.siteSearchControl.setValue(site, { emitEvent: false });
+    this.onSiteChange(siteId);
+  }
+
+  onSiteSearchInput(): void {
+    if (typeof this.siteSearchControl.value !== 'string') return;
+
+    this.masterSiteId = null;
+    this.selectedProductIds = [];
+    this.assignedProductIds.clear();
+    this.isLoadingAssignedProducts = false;
+    this.assignedProductsLookupFailed = false;
+    this.productSearchControl.disable({ emitEvent: false });
+    this.dataSource.data = [];
+    this.totalRecords = 0;
+    this.currentPage = 1;
+  }
+
+  get filteredAvailableProducts(): any[] {
+    const value = this.productSearchControl.value;
+    const query = typeof value === 'string' ? value.trim().toLowerCase() : '';
+    return this.availableProducts.filter(product => !query || product.name?.toLowerCase().includes(query));
+  }
+
+  isProductAssigned(productId: number): boolean {
+    return this.assignedProductIds.has(Number(productId));
+  }
+
+  isProductSelected(productId: number): boolean {
+    return this.selectedProductIds.some(id => Number(id) === Number(productId));
+  }
+
+  toggleProduct(productId: number, input: HTMLInputElement): void {
+    if (this.isProductAssigned(productId)) return;
+
+    if (this.isProductSelected(productId)) {
+      this.selectedProductIds = this.selectedProductIds.filter(id => Number(id) !== Number(productId));
+    } else {
+      this.selectedProductIds = [...this.selectedProductIds, Number(productId)];
+    }
+    setTimeout(() => {
+      input.value = '';
+      this.productSearchControl.setValue('');
+    });
+  }
+
+  clearSelectedProducts(): void {
+    this.selectedProductIds = [];
+  }
+
   /**
    * Triggered when Hospital Selection changes
    */
@@ -87,6 +158,7 @@ export class SiteProductMappingComponent implements OnInit {
     this.masterSiteId = value ? Number(value) : null;
     this.dataSource.data = []; // 🔷 Reset our table datasource wrapper
     this.selectedProductIds = [];
+    this.assignedProductIds.clear();
     this.currentPage = 1; // Reset back to page 1 on site change
     
     if (this.masterSiteId) {
@@ -101,10 +173,20 @@ export class SiteProductMappingComponent implements OnInit {
   loadMappings(): void {
     if (!this.masterSiteId) return;
 
-    this.siteProductService.getProductsViewDetails(this.masterSiteId).subscribe({
+    const siteId = this.masterSiteId;
+    this.isLoadingAssignedProducts = true;
+    this.assignedProductsLookupFailed = false;
+    this.productSearchControl.disable({ emitEvent: false });
+    this.siteProductService.getProductsViewDetails(siteId).subscribe({
       next: (data: any) => {
+        if (siteId !== this.masterSiteId) return;
         // Extract inner rows array safely from backend payload wrapping
         const rows = Array.isArray(data) ? data : (data.data || []);
+        this.assignedProductIds = new Set<number>(
+          rows.map((row: any) => Number(row.productId ?? row.ProductId)).filter((id: number) => Number.isFinite(id))
+        );
+        this.isLoadingAssignedProducts = false;
+        this.productSearchControl.enable({ emitEvent: false });
         
         // 🔷 Bind the raw response list array directly inside our DataSource
         this.dataSource.data = rows;
@@ -117,7 +199,12 @@ export class SiteProductMappingComponent implements OnInit {
 
         this.cdr.detectChanges();
       },
-      error: () => this.showSnackBar('Error loading assigned products')
+      error: () => {
+        if (siteId !== this.masterSiteId) return;
+        this.isLoadingAssignedProducts = false;
+        this.assignedProductsLookupFailed = true;
+        this.showSnackBar('Error loading assigned products');
+      }
     });
   }
 
@@ -125,7 +212,7 @@ export class SiteProductMappingComponent implements OnInit {
    * Maps multiple products to the selected site
    */
  onAssignBulk(): void {
-  if (this.isLoading || !this.masterSiteId || this.selectedProductIds.length === 0) {
+  if (this.isLoading || this.isLoadingAssignedProducts || this.assignedProductsLookupFailed || !this.masterSiteId || this.selectedProductIds.length === 0) {
     return;
   }
 

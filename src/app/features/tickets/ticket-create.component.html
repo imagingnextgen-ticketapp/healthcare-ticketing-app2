@@ -88,11 +88,29 @@
         <!-- ISSUE TEMPLATE (Spans 2 columns on desktop) -->
         <mat-form-field appearance="outline" class="w-100 col-span-2-desktop">
           <mat-label>Issue Template</mat-label>
-          <mat-select formControlName="templateId" (selectionChange)="onTemplateChange($event.value)">
-            <mat-option *ngFor="let temp of templates" [value]="temp.templateId">
+          <input
+            matInput
+            type="text"
+            [formControl]="templateSearchControl"
+            [matAutocomplete]="templateAutocomplete"
+            placeholder="Search Issue Template"
+            autocomplete="off"
+            (input)="onTemplateSearchInput()" />
+
+          <mat-autocomplete
+            #templateAutocomplete="matAutocomplete"
+            [displayWith]="displayIssueTemplate"
+            (optionSelected)="onTemplateSelected($event.option.value)">
+            <mat-option *ngFor="let temp of filteredTemplates" [value]="temp">
               {{ temp.issueType }}
             </mat-option>
-          </mat-select>
+            <mat-option
+              *ngIf="typeof templateSearchControl.value === 'string' && templateSearchControl.value.trim() && filteredTemplates.length === 0"
+              disabled>
+              No Issue Template found
+            </mat-option>
+          </mat-autocomplete>
+
           <mat-error *ngIf="form.get('templateId')?.hasError('required')">
             Template is required
           </mat-error>
