@@ -24,7 +24,8 @@ export interface Ticket {
 
   assignedToUserId?: number;
   assignedToUser?: User;
-
+  closedByUserId?: number;
+  closedByUser?: User;
   status: TicketStatus;
   priority: string;
   severity: TicketSeverity;
@@ -75,5 +76,20 @@ export interface TicketResponseDto {
   ProductId:number;
   TemplateId:number;
   rowVersion?: string; 
+  closedBy: string;
 
+}
+
+export interface AddTicketProgressNoteDto {
+  ticketId: number;
+  note: string;
+}
+
+export interface TicketProgressNoteDto {
+  ticketProgressNoteId: number;
+  ticketId: number;
+  note: string;
+  addedByUserId: number;
+  addedByName: string;
+  createdDate: string | Date;
 }

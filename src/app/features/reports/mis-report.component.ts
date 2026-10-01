@@ -9,6 +9,9 @@ import { MasterSiteService } from '../../core/services/mastersite.service';
 import { MisFilterDto, MisReportDto } from '../../core/models/mis-report.model';
 import { SiteProductService } from '../../core/services/site-product.service';
 import { AuthService } from '../../core/services/auth.service';
+import { UserService } from '../../core/services/user.service';
+import { ActivatedRoute } from '@angular/router';
+
 
 @Component({
   selector: 'app-mis-report',
@@ -21,34 +24,125 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class MisReportComponent implements OnInit {
   dataSource: MisReportDto[] = [];
-  displayedColumns: string[] = ['ticketId', 'hospitalName', 'productName', 'issueType', 'severity', 'status', 'createdDate', 'closedDate', 'actualTatHours'];
+  displayedColumns: string[] = [
+  'ticketId',
+  'hospitalName',
+  'productName',
+  'issueType',
+  'requestedBy',
+  'assignedTo',
+  'closedBy',
+  'severity',
+  'status',
+  'createdDate',
+  'closedDate',
+  'actualTatHours',
+  'isSlaBreached',
+  //'isEscalated',
   
+   
+];
+  private dashboardNavigation = false;
   masterSites: any[] = [];
+  filteredMasterSites: any[] = [];
+  siteSearchText = '';
   products: any[] = [];
+  filteredProducts: any[] = [];
+  productSearchText = '';
   templates: any[] = [];
+  filteredTemplates: any[] = [];
+  templateSearchText = '';
+  engineers: any[] = [];
+  filteredEngineers: any[] = [];
+  assignedToSearchText = '';
+  activeUsers: any[] = [];
+  filteredActiveUsers: any[] = [];
+  filteredRequestedUsers: any[] = [];
+  closedBySearchText = '';
+  requestedBySearchText = '';
+  statuses: { value: string; label: string }[] = [
+    { value: 'Open', label: 'Open' },
+    { value: 'Assigned', label: 'Assigned' },
+    { value: 'InProgress', label: 'In Progress' },
+    { value: 'Closed', label: 'Closed' },
+    { value: 'Reopened', label: 'Reopened' }
+  ];
+  filteredStatuses: { value: string; label: string }[] = [...this.statuses];
+  statusSearchText = '';
   
   totalRecords = 0;
   isLoading = false;
   isHospitalAdmin = false;
 
-  filter: MisFilterDto = { 
-    pageNumber: 1, pageSize: 10, fromDate: undefined, toDate: undefined,
-    masterSiteId: undefined, productId: undefined, templateId: undefined, 
-    tatHours: undefined, tatOperator: 'gt' 
-  };
+ filter: MisFilterDto = {
+  pageNumber: 1,
+  pageSize: 10,
+
+  fromDate: undefined,
+  toDate: undefined,
+
+  masterSiteId: undefined,
+  productId: undefined,
+  templateId: undefined,
+
+  assignedToUserId: undefined,
+  closedByUserId: undefined,
+  createdByUserId: undefined,
+  tatHours: undefined,
+  tatOperator: 'gt',
+
+  // Dashboard / MIS status filters
+  status: undefined,
+  escalated: undefined,
+  dashboardFilter: undefined  
+};
 
   constructor(
     private misService: MisServiceReport, 
+    private route: ActivatedRoute,
     private masterSiteService: MasterSiteService,
     private templateService: TemplateService,
     private siteproductService: SiteProductService,
     private authService: AuthService,
+    private userService: UserService,
     private cdr: ChangeDetectorRef
   ) {}
 
-  ngOnInit(): void { 
+ngOnInit(): void {
+
+  this.loadEngineers();
+  this.loadActiveUsers();
+
+  this.route.queryParams.subscribe(params => {
+
+    const fromDate = params['fromDate'];
+    const toDate = params['toDate'];
+    const status = params['status'];
+    const escalated = params['escalated'];
+    const dashboardFilter = params['dashboardFilter'];
+
+    // ✅ Fix 1: Fixed the semicolon typo to properly include dashboardFilter
+    this.dashboardNavigation =
+      !!fromDate ||
+      !!toDate ||
+      !!status ||
+      escalated === 'true' ||
+      dashboardFilter === 'opened';
+
+    // ✅ Fix 2: Reset filter variables to baseline defaults on every URL emission
+    // This stops state leakage when shifting between different summary cards
+    this.filter.fromDate = fromDate || null;
+    this.filter.toDate = toDate || null;
+    this.filter.status = status || '';
+    this.filter.dashboardFilter = dashboardFilter || '';
+    this.filter.escalated = escalated === 'true';
+
+    // Reset pagination to first page when changing dashboard filter scopes
+    this.filter.pageNumber = 1;
+
     this.initUserAndData();
-  }
+  });
+}
 
   initUserAndData(): void {
     const user = this.authService.getUser();
@@ -63,6 +157,8 @@ export class MisReportComponent implements OnInit {
         this.masterSiteService.getSiteViewDetails(Number(assignedSiteId)).subscribe({
           next: (res: any) => {
             this.masterSites = [res]; 
+            this.filteredMasterSites = [...this.masterSites];
+            this.siteSearchText = res.name || res.hospitalName || '';
             this.filter = { ...this.filter, masterSiteId: Number(assignedSiteId) };
             this.onSiteChange(this.filter.masterSiteId); 
           },
@@ -85,7 +181,11 @@ export class MisReportComponent implements OnInit {
   onSiteChange(siteId: any): void {
     if (siteId === null || siteId === undefined || siteId === '') {
       this.products = [];
+      this.filteredProducts = [];
+      this.productSearchText = '';
       this.templates = [];
+      this.filteredTemplates = [];
+      this.templateSearchText = '';
       this.filter = { ...this.filter, masterSiteId: undefined, productId: undefined, templateId: undefined };
       this.applyFilters();
       return;
@@ -99,7 +199,11 @@ export class MisReportComponent implements OnInit {
     this.siteproductService.getProductsViewDetails(targetSiteId).subscribe({
       next: (res: any) => {
         this.products = res && Array.isArray(res) ? [...res] : (res?.data ? [...res.data] : []); 
+        this.filteredProducts = [...this.products];
+        this.productSearchText = '';
         this.templates = [];
+        this.filteredTemplates = [];
+        this.templateSearchText = '';
         this.filter = { ...this.filter, masterSiteId: targetSiteId, productId: undefined, templateId: undefined };
         this.isLoading = false;
         this.applyFilters();
@@ -111,12 +215,61 @@ export class MisReportComponent implements OnInit {
     });
   }
 
+  private loadEngineers(): void {
+  this.userService.getEngineers().subscribe({
+    next: (res) => {
+      this.engineers = res || [];
+      this.filteredEngineers = [...this.engineers];
+      this.cdr.detectChanges();
+    },
+    error: (error) => {
+      console.error('Failed to load engineers:', error);
+      this.engineers = [];
+      this.filteredEngineers = [];
+      this.cdr.detectChanges();
+    }
+  });
+}
+
+private loadActiveUsers(): void {
+  this.userService.getActiveUsers().subscribe({
+    next: (res) => {
+      this.activeUsers = res || [];
+      this.filteredActiveUsers = [...this.activeUsers];
+      this.filteredRequestedUsers = [...this.activeUsers];
+
+      this.cdr.detectChanges();
+    },
+    error: (error) => {
+      console.error('Failed to load active users:', error);
+      this.activeUsers = [];
+      this.filteredActiveUsers = [];
+      this.cdr.detectChanges();
+    }
+  });
+}
+
+  formatTat(hours: number): string {
+  const totalMinutes = Math.round(hours * 60);
+
+  if (totalMinutes < 60) {
+    return `${totalMinutes} min`;
+  }
+
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+
   /**
    * 🚀 PRODUCT CHANGE: Loads Issue Types (Templates)
    */
   onProductChange(productId: any): void {
     if (productId === null || productId === undefined || productId === '') {
       this.templates = [];
+      this.filteredTemplates = [];
+      this.templateSearchText = '';
       this.filter = { ...this.filter, productId: undefined, templateId: undefined };
       this.applyFilters();
       return;
@@ -130,6 +283,8 @@ export class MisReportComponent implements OnInit {
     this.templateService.getTemplateViewByProduct(targetProductId).subscribe({
       next: (res: any) => {
         this.templates = res && Array.isArray(res) ? [...res] : (res?.data ? [...res.data] : []); 
+        this.filteredTemplates = [...this.templates];
+        this.templateSearchText = '';
         this.filter = { ...this.filter, productId: targetProductId, templateId: undefined };
         this.isLoading = false;
         this.applyFilters();
@@ -141,16 +296,178 @@ export class MisReportComponent implements OnInit {
     });
   }
 
+  /**
+   * 🔎 PRODUCT SEARCH: Filters product dropdown options by typed text
+   */
+  filterProducts(searchText: string): void {
+    const term = (searchText || '').trim().toLowerCase();
+
+    this.filteredProducts = !term
+      ? [...this.products]
+      : this.products.filter((p: any) =>
+          ((p.name || p.productName || '') as string).toLowerCase().includes(term)
+        );
+  }
+
+  /**
+   * ✅ PRODUCT SELECTED: Fired when a product is picked from the autocomplete panel
+   */
+  onProductSelected(productId: any): void {
+    this.filter = { ...this.filter, productId };
+    this.onProductChange(productId);
+  }
+
+  private getProductId(p: any): any {
+    return p.id !== undefined && p.id !== null ? p.id : p.productId;
+  }
+
+  displayProductName = (productId: any): string => {
+    if (productId === null || productId === undefined) return '';
+    const product = this.products.find((p: any) => this.getProductId(p) === productId);
+    return product ? (product.name || product.productName || '') : '';
+  };
+
+  /**
+   * 🔎 ISSUE TYPE SEARCH: Filters issue type dropdown options by typed text
+   */
+  filterTemplates(searchText: string): void {
+    const term = (searchText || '').trim().toLowerCase();
+
+    this.filteredTemplates = !term
+      ? [...this.templates]
+      : this.templates.filter((t: any) =>
+          ((t.issueType || '') as string).toLowerCase().includes(term)
+        );
+  }
+
+  /**
+   * ✅ ISSUE TYPE SELECTED: Fired when an issue type is picked from the autocomplete panel
+   */
+  onTemplateSelected(templateId: any): void {
+    this.filter = { ...this.filter, templateId };
+    this.applyFilters();
+  }
+
+  displayTemplateName = (templateId: any): string => {
+    if (templateId === null || templateId === undefined) return '';
+    const template = this.templates.find((t: any) => t.templateId === templateId);
+    return template ? (template.issueType || '') : '';
+  };
+
+  /**
+   * 🔎 ASSIGNED TO SEARCH: Filters engineer dropdown options by typed text
+   */
+  filterEngineers(searchText: string): void {
+    const term = (searchText || '').trim().toLowerCase();
+
+    this.filteredEngineers = !term
+      ? [...this.engineers]
+      : this.engineers.filter((e: any) =>
+          ((e.userName || '') as string).toLowerCase().includes(term)
+        );
+  }
+
+  onAssignedToSelected(userId: any): void {
+    this.filter = { ...this.filter, assignedToUserId: userId };
+    this.applyFilters();
+  }
+
+  displayEngineerName = (userId: any): string => {
+    if (userId === null || userId === undefined) return '';
+    const engineer = this.engineers.find((e: any) => e.userId === userId);
+    return engineer ? (engineer.userName || '') : '';
+  };
+
+  /**
+   * 🔎 CLOSED BY SEARCH: Filters active user dropdown options by typed text
+   */
+  filterActiveUsers(searchText: string): void {
+    const term = (searchText || '').trim().toLowerCase();
+
+    this.filteredActiveUsers = !term
+      ? [...this.activeUsers]
+      : this.activeUsers.filter((u: any) =>
+          ((u.userName || '') as string).toLowerCase().includes(term)
+        );
+  }
+  filterRequestedUsers(searchText: string): void {
+  const search = (searchText || '').trim().toLowerCase();
+
+  if (!search) {
+    this.filteredRequestedUsers = [...this.activeUsers];
+    return;
+  }
+
+  this.filteredRequestedUsers = this.activeUsers.filter(user =>
+    (user.userName || '').toLowerCase().includes(search)
+  );
+}
+
+onRequestedBySelected(userId: any): void {
+  this.filter = {
+    ...this.filter,
+    createdByUserId: userId ?? undefined,
+    pageNumber: 1
+  };
+
+  this.applyFilters();
+}
+
+displayRequestedUserName = (userId: any): string => {
+  if (!userId) {
+    return '';
+  }
+
+  const user = this.activeUsers.find(
+    x => Number(x.userId) === Number(userId)
+  );
+
+  return user?.userName ?? '';
+};
+  onClosedBySelected(userId: any): void {
+    this.filter = { ...this.filter, closedByUserId: userId };
+    this.applyFilters();
+  }
+
+  displayActiveUserName = (userId: any): string => {
+    if (userId === null || userId === undefined) return '';
+    const user = this.activeUsers.find((u: any) => u.userId === userId);
+    return user ? (user.userName || '') : '';
+  };
+
+  /**
+   * 🔎 STATUS SEARCH: Filters status dropdown options by typed text
+   */
+  filterStatuses(searchText: string): void {
+    const term = (searchText || '').trim().toLowerCase();
+
+    this.filteredStatuses = !term
+      ? [...this.statuses]
+      : this.statuses.filter((s) => s.label.toLowerCase().includes(term));
+  }
+
+  onStatusSelected(status: any): void {
+    this.filter = { ...this.filter, status };
+    this.applyFilters();
+  }
+
+  displayStatusName = (status: any): string => {
+    if (status === null || status === undefined) return '';
+    const match = this.statuses.find((s) => s.value === status);
+    return match ? match.label : '';
+  };
+
   loadReportData(): void {
     this.isLoading = true;
     this.cdr.detectChanges();
-
+console.log('MIS FILTER SENT:', this.filter);
     this.misService.getConsolidatedReport(this.filter).subscribe({
       next: (res) => {
         this.dataSource = res && res.data ? [...res.data] : [];
         this.totalRecords = res ? res.totalRecords : 0;
         this.isLoading = false;
         this.cdr.detectChanges();
+        //console.log('MIS FILTER:', this.filter);
       },
       error: () => { 
         this.isLoading = false; 
@@ -162,9 +479,10 @@ export class MisReportComponent implements OnInit {
   private loadAllSites(): void {
     this.isLoading = true;
     this.cdr.detectChanges();
-    this.masterSiteService.getSites({ pageNumber: 1, pageSize: 500 }).subscribe({
+    this.masterSiteService.getSites({ pageNumber: 1, pageSize: 300 }).subscribe({
       next: (res) => {
         this.masterSites = (res.data || []).filter((site: any) => site.isActive);
+        this.filteredMasterSites = [...this.masterSites];
 
         this.loadReportData();
       },
@@ -175,6 +493,33 @@ export class MisReportComponent implements OnInit {
     });
   }
 
+  /**
+   * 🔎 SITE SEARCH: Filters hospital dropdown options by typed text
+   */
+  filterSites(searchText: string): void {
+    const term = (searchText || '').trim().toLowerCase();
+
+    this.filteredMasterSites = !term
+      ? [...this.masterSites]
+      : this.masterSites.filter((s: any) =>
+          ((s.name || s.hospitalName || '') as string).toLowerCase().includes(term)
+        );
+  }
+
+  /**
+   * ✅ SITE SELECTED: Fired when a hospital is picked from the autocomplete panel
+   */
+  onSiteSelected(siteId: any): void {
+    this.filter = { ...this.filter, masterSiteId: siteId };
+    this.onSiteChange(siteId);
+  }
+
+  displaySiteName = (siteId: any): string => {
+    if (siteId === null || siteId === undefined) return '';
+    const site = this.masterSites.find((s: any) => s.masterSiteId === siteId);
+    return site ? (site.name || site.hospitalName || '') : '';
+  };
+
   applyFilters(): void {
     this.filter = { ...this.filter, pageNumber: 1 };
     this.loadReportData();
@@ -183,32 +528,70 @@ export class MisReportComponent implements OnInit {
   /**
    * 🟢 RESET: Optimized high-speed layout state initialization
    */
-  resetFilters(): void {
-    const user = this.authService.getUser();
-    const assignedSiteId = user?.masterSiteId;
 
-    this.filter = { 
-      pageNumber: 1, 
-      pageSize: 10, 
-      tatOperator: 'gt',
-      masterSiteId: this.isHospitalAdmin ? Number(assignedSiteId) : undefined,
-      productId: undefined, 
-      templateId: undefined, 
-      fromDate: undefined, 
-      toDate: undefined, 
-      tatHours: undefined
-    };
+ resetFilters(): void {
+  const user = this.authService.getUser();
+  const assignedSiteId = user?.masterSiteId;
 
-    // FIX: Decouple operational states from structural service network endpoints to achieve fast loading
-    if (this.isHospitalAdmin) {
-      this.templates = [];
-      this.loadReportData();
-    } else {
-      this.products = [];
-      this.templates = [];
-      this.loadReportData();
-    }
+  this.filter = {
+    pageNumber: 1,
+    pageSize: 10,
+    tatOperator: 'gt',
+
+    masterSiteId: this.isHospitalAdmin
+      ? Number(assignedSiteId)
+      : undefined,
+
+    productId: undefined,
+    templateId: undefined,
+    fromDate: undefined,
+    toDate: undefined,
+    tatHours: undefined,
+    status: undefined,
+
+    assignedToUserId: undefined,
+    createdByUserId: undefined,   // Requested By
+    closedByUserId: undefined
+  };
+
+  // Hospital filter
+  this.siteSearchText = this.isHospitalAdmin
+    ? this.displaySiteName(Number(assignedSiteId))
+    : '';
+
+  this.filteredMasterSites = this.masterSites.map(s => ({ ...s }));
+
+  // Other filter search text
+  this.productSearchText = '';
+  this.templateSearchText = '';
+  this.assignedToSearchText = '';
+  this.requestedBySearchText = '';   // Requested By
+  this.closedBySearchText = '';
+  this.statusSearchText = '';
+
+  // Reset dropdown lists
+  this.filteredEngineers = this.engineers.map(s => ({ ...s }));
+  this.filteredRequestedUsers = this.activeUsers.map(s => ({ ...s })); // Requested By
+  this.filteredActiveUsers = this.activeUsers.map(s => ({ ...s }));
+  this.filteredStatuses = this.statuses.map(s => ({ ...s }));
+
+  // Reset dependent filters/data
+  if (this.isHospitalAdmin) {
+    this.templates = [];
+    this.filteredTemplates = [];
+    this.filteredProducts = this.products.map(s => ({ ...s }));
+
+    this.loadReportData();
+  } else {
+    this.products = [];
+    this.filteredProducts = [];
+    this.templates = [];
+    this.filteredTemplates = [];
+
+    this.loadReportData();
   }
+}
+
 
   getStatusLabel(s: any): string {
   if (s === null || s === undefined) return 'Open';

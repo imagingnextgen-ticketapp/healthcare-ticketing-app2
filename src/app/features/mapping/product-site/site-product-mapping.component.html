@@ -12,25 +12,75 @@
       <div class="controls-row">
         <mat-form-field appearance="outline">
           <mat-label>Select Hospital</mat-label>
-          <mat-select [ngModel]="masterSiteId" (selectionChange)="onSiteChange($event.value)">
-            <mat-option *ngFor="let site of availableSites" [value]="site.masterSiteId">
-              {{ site.name }}
+          <input
+            matInput
+            type="text"
+            [formControl]="siteSearchControl"
+            [matAutocomplete]="siteAutocomplete"
+            placeholder="Search Hospital"
+            autocomplete="off"
+            (input)="onSiteSearchInput()" />
+          <mat-autocomplete
+            #siteAutocomplete="matAutocomplete"
+            [displayWith]="displaySite"
+            (optionSelected)="onSiteSelected($event.option.value)">
+            <mat-option *ngFor="let site of filteredSites" [value]="site">
+              {{ site.name || site.siteName }}
             </mat-option>
-          </mat-select>
+            <mat-option
+              *ngIf="typeof siteSearchControl.value === 'string' && siteSearchControl.value.trim() && filteredSites.length === 0"
+              disabled>
+              No Hospital found
+            </mat-option>
+          </mat-autocomplete>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Select Products</mat-label>
-          <!-- 🟢 Added panelClass here to hook our custom green theme styles directly into this dropdown -->
-          <mat-select [(ngModel)]="selectedProductIds" multiple panelClass="fuji-select-dropdown-panel">
-            <mat-option *ngFor="let p of availableProducts" [value]="p.productId">
-              {{ p.name }}
+          <input
+            #productSearchInput
+            matInput
+            [placeholder]="selectedProductIds.length === 1 ? '1 product selected' : selectedProductIds.length ? selectedProductIds.length + ' products selected' : 'Search products'"
+            [formControl]="productSearchControl"
+            [matAutocomplete]="productAutocomplete"
+            autocomplete="off" />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            aria-label="Clear selected products"
+            matTooltip="Clear selected products"
+            [disabled]="selectedProductIds.length === 0"
+            (click)="clearSelectedProducts(); $event.stopPropagation()">
+            <mat-icon>close</mat-icon>
+          </button>
+          <mat-autocomplete
+            #productAutocomplete="matAutocomplete"
+            (optionSelected)="toggleProduct($event.option.value, productSearchInput)">
+            <mat-option
+              *ngFor="let product of filteredAvailableProducts"
+              [value]="product.productId"
+              [disabled]="isProductAssigned(product.productId)">
+              <span class="mapping-search-option" [class.selected]="isProductSelected(product.productId) || isProductAssigned(product.productId)">
+                <span>{{ product.name }}</span>
+                <span *ngIf="isProductAssigned(product.productId)" class="mapping-item-status">Already mapped</span>
+                <mat-icon>{{ isProductSelected(product.productId) || isProductAssigned(product.productId) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+              </span>
             </mat-option>
-          </mat-select>
+            <mat-option *ngIf="isLoadingAssignedProducts" disabled>
+              Checking current mappings...
+            </mat-option>
+            <mat-option *ngIf="assignedProductsLookupFailed" disabled>
+              Could not verify current mappings. Select the hospital again to retry.
+            </mat-option>
+            <mat-option *ngIf="productSearchControl.value && filteredAvailableProducts.length === 0" disabled>
+              No matching products
+            </mat-option>
+          </mat-autocomplete>
         </mat-form-field>
 
         <button mat-raised-button class="fuji-btn" 
-                [disabled]="!masterSiteId || selectedProductIds.length === 0 || isLoading" 
+                [disabled]="!masterSiteId || selectedProductIds.length === 0 || isLoading || isLoadingAssignedProducts || assignedProductsLookupFailed" 
                 (click)="onAssignBulk()">
           <mat-progress-spinner *ngIf="isLoading" mode="indeterminate" diameter="20"></mat-progress-spinner>
           <mat-icon *ngIf="!isLoading">add_shopping_cart</mat-icon>

@@ -31,11 +31,11 @@ export interface TicketHistoryDto {
 }
 
 export interface TicketHistoryFilterDto {
-  ticketId: number;
+  ticketId?: number;
   actionByUserId?: number;
-  fromDate?: string;
-  toDate?: string;
-  pageNumber: number;
-  pageSize: number;
+  fromDate?: string | Date;
+  toDate?: string | Date;
+  pageNumber?: number;
+  pageSize?: number;
 }
 

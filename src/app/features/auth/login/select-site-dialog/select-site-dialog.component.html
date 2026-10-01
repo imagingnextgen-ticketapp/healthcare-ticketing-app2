@@ -1,0 +1,48 @@
+<h2 mat-dialog-title>Select Hospital</h2>
+
+<mat-dialog-content>
+
+    <p class="dialog-text">
+        Your account is assigned to multiple hospitals.
+        Please select the hospital you want to work with.
+    </p>
+
+    <mat-radio-group
+        [(ngModel)]="selectedSiteId"
+        class="site-radio-group">
+
+        <mat-radio-button
+            *ngFor="let site of data.sites"
+            [value]="site.siteId"
+            class="site-radio">
+
+            {{site.siteName}}
+
+        </mat-radio-button>
+
+    </mat-radio-group>
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+
+    <button
+    mat-button
+    class="cancel-btn"
+    (click)="onCancel()">
+
+    Cancel
+
+</button>
+
+   <button
+    mat-flat-button
+    class="continue-btn"
+    [disabled]="!selectedSiteId"
+    (click)="onContinue()">
+
+    Continue
+
+</button>
+
+</mat-dialog-actions>

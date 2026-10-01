@@ -1,0 +1,128 @@
+.dialog-text {
+  margin-bottom: 20px;
+  color: #555;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.site-radio-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.site-radio {
+  margin-bottom: 14px;
+}
+
+.site-name {
+  font-size: 15px;
+}
+
+mat-dialog-content {
+  min-width: 420px;
+  overflow-x: hidden;
+}
+
+mat-dialog-actions {
+  padding-top: 20px;
+}
+
+/* =======================================================
+   RESPONSIVE FLEX-BOX LAYOUT CORRECTION
+======================================================= */
+::ng-deep {
+  // Aligns the top level overlay overlay viewport structure using standard grid/flex parameters
+  .cdk-global-overlay-wrapper {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  // Ensures centering occurs natively without breaking fluid layout dimensions
+  .fujifilm-responsive-dialog {
+    max-width: 95vw !important;
+    position: relative !important;
+    margin: 0 auto !important;
+  }
+
+  /* ====================================
+     FORCE FUJIFILM GREEN ON RADIO BUTTON
+  ==================================== */
+  .mat-mdc-radio-button.mat-mdc-radio-checked .mdc-radio__background .mdc-radio__outer-circle {
+    border-color: #008542 !important;
+  }
+  
+  .mat-mdc-radio-button.mat-mdc-radio-checked .mdc-radio__background .mdc-radio__inner-circle {
+    border-color: #008542 !important;
+    background-color: #008542 !important;
+  }
+
+  .mat-mdc-radio-button {
+    --mdc-radio-selected-icon-color: #008542 !important;
+    --mdc-radio-selected-hover-icon-color: #008542 !important;
+    --mdc-radio-selected-focus-icon-color: #008542 !important;
+    --mdc-radio-selected-pressed-icon-color: #008542 !important;
+    --mat-radio-ripple-color: rgba(0, 133, 66, 0.18) !important;
+    --mat-radio-checked-ripple-color: rgba(0, 133, 66, 0.18) !important;
+  }
+}
+
+/* ===========================
+   FUJIFILM BUTTONS
+=========================== */
+.continue-btn {
+  background: #008542 !important;
+  color: #fff !important;
+  min-width: 110px;
+  border-radius: 8px;
+}
+
+.continue-btn:hover {
+  background: #006b35 !important;
+}
+
+.continue-btn:disabled {
+  background: #b7c6bc !important;
+  color: #fff !important;
+}
+
+.cancel-btn {
+  color: #008542 !important;
+}
+
+/* ===========================
+   MOBILE RESPONSIVE
+=========================== */
+@media (max-width: 600px) {
+  mat-dialog-content {
+    min-width: auto !important;
+    width: 100% !important;
+    padding: 16px;
+  }
+
+  .dialog-text {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .site-radio {
+    margin-bottom: 18px;
+  }
+
+  .site-name {
+    font-size: 14px;
+  }
+
+  mat-dialog-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .continue-btn,
+  .cancel-btn {
+    flex: 1;
+    min-width: auto;
+  }
+}

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { DashboardDto, MisFilterDto, MisReportDto } from '../models/mis-report.model';
+import { DashboardDto, DashboardFilterDto, MisFilterDto, MisReportDto } from '../models/mis-report.model';
 import { PagedResponse } from '../models/generic-response.model';
 
 @Injectable({
@@ -13,13 +13,28 @@ export class MisServiceReport {
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * ✅ GET: Dashboard Summary Cards
-   */
-  getDashboard(): Observable<DashboardDto> {
-    return this.http.get<DashboardDto>(`${this.apiUrl}/dashboard`);
+ /**
+ * ✅ GET: Dashboard Summary Cards
+ */
+getDashboard(
+  filter?: DashboardFilterDto
+): Observable<DashboardDto> {
+
+  let params = new HttpParams();
+
+  if (filter?.fromDate) {
+    params = params.set('fromDate', filter.fromDate);
   }
 
+  if (filter?.toDate) {
+    params = params.set('toDate', filter.toDate);
+  }
+
+  return this.http.get<DashboardDto>(
+    `${this.apiUrl}/dashboard`,
+    { params }
+  );
+}
   /**
    * ✅ GET: Consolidated Tabular Data (UI Grid)
    */
@@ -48,16 +63,24 @@ export class MisServiceReport {
       .set('pageSize', f.pageSize.toString());
 
     // Format date helper for .NET compatibility (YYYY-MM-DD)
-    const formatDate = (date: any) => {
+    const formatDate = (date: Date | string | null | undefined): string | null => {
       if (!date) return null;
-      const d = new Date(date);
-      return d.toISOString().split('T')[0];
+
+      if (typeof date === 'string') {
+        return date.split('T')[0];
+      }
+
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     };
 
-    // 1. Date Range Filters
-    if (f.fromDate) params = params.set('fromDate', formatDate(f.fromDate)!);
-    if (f.toDate) params = params.set('toDate', formatDate(f.toDate)!);
-    
+    // 1. Date Range Filters 
+    if (f.fromDate) {
+      params = params.set('fromDate', formatDate(f.fromDate)!);
+    }
+
+    if (f.toDate) {
+      params = params.set('toDate', formatDate(f.toDate)!);
+    }
     // 2. Hospital Filter
     if (f.masterSiteId) params = params.set('masterSiteId', f.masterSiteId.toString());
     
@@ -75,7 +98,24 @@ export class MisServiceReport {
     if (f.tatOperator) {
         params = params.set('tatOperator', f.tatOperator);
     }
+    if (f.assignedToUserId) params = params.set('assignedToUserId', f.assignedToUserId.toString());
+    if (f.closedByUserId) params = params.set('closedByUserId', f.closedByUserId.toString());
+    if (f.createdByUserId) {
+  params = params.set(
+    'createdByUserId',
+    f.createdByUserId.toString()
+  );
+}
+    if (f.status) params = params.set('status', f.status.toString());
+    
+    // 🟢 ADDED: Maps dashboardFilter parameter safely to the outgoing payload
+    if (f.dashboardFilter) {
+        params = params.set('dashboardFilter', f.dashboardFilter);
+    }
 
+    if (f.escalated !== undefined && f.escalated !== null) {
+        params = params.set('escalated', f.escalated.toString());
+    }
     return params;
   }
 }

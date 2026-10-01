@@ -32,7 +32,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
   pageSizeOptions: number[] = Array.of(5, 10, 25, 50, 100); 
 
   // 🔷 Link to template paginator
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  //@ViewChild(MatPaginator) paginator!: MatPaginator;
 
   // Search properties
   private searchSubject = new Subject<string>();
@@ -74,34 +74,33 @@ export class ProductListComponent implements OnInit, OnDestroy {
   /**
    * Fetches data with Pagination arguments
    */
-  loadProducts(searchTerm: string = this.currentSearchTerm): void {
-    this.productService.getProducts({ 
-      pageNumber: this.currentPage, 
-      pageSize: this.pageSize,       
-      name: searchTerm 
-    }).subscribe({
-      next: (res: any) => {
-        const data = res.data || res; 
-        this.dataSource.data = Array.isArray(data) ? data : [];
-        
-        // Dynamic map total record count from backend
-        this.totalRecords = res.totalRecords || res.totalCount || this.dataSource.data.length;
-        
-        if (this.paginator) {
-          this.dataSource.paginator = this.paginator;
-        }
-        
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('Fetch Error:', err);
-        this.snackBar.open('Failed to load products from server', 'Close', { 
+ loadProducts(searchTerm: string = this.currentSearchTerm): void {
+  this.productService.getProducts({
+    pageNumber: this.currentPage,
+    pageSize: this.pageSize,
+    name: searchTerm
+  }).subscribe({
+    next: (res: any) => {
+      this.dataSource.data = res.data || [];
+
+      this.totalRecords = res.totalRecords || 0;
+
+      this.cdr.detectChanges();
+    },
+    error: (err) => {
+      console.error('Fetch Error:', err);
+
+      this.snackBar.open(
+        'Failed to load products from server',
+        'Close',
+        {
           panelClass: ['error-snackbar'],
-          duration: 5000 
-        });
-      }
-    });
-  }
+          duration: 5000
+        }
+      );
+    }
+  });
+}
 
   /**
    * Captures template pagination interaction clicks
