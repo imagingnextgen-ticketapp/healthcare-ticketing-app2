@@ -83,7 +83,12 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     next: (res: any) => {
 
       // Bell should display only unread notifications.
-      this.notifications = (res || []).filter((n: any) => !n.isRead);
+      this.notifications = (res || [])
+        .filter((n: any) => !n.isRead)
+        .map((n: any) => ({
+          ...n,
+          createdDate: this.normalizeNotificationTimestamp(n.createdDate)
+        }));
 
       this.unreadCount = this.notifications.length;
 
@@ -92,6 +97,14 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     error: (err) => console.error('Notification error:', err)
   });
 }
+
+  private normalizeNotificationTimestamp(value: string | Date | null | undefined): string | Date | null | undefined {
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)) {
+      return value;
+    }
+
+    return /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value) ? value : `${value}Z`;
+  }
 
   markAsRead(n: any): void {
     if (!n.isRead) {
