@@ -10,10 +10,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { SelectSiteDialogComponent } from './select-site-dialog/select-site-dialog.component';
-import { MatDialog } from '@angular/material/dialog';
-import { EMPTY } from 'rxjs';
-import { finalize, switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-login',
@@ -44,8 +40,7 @@ export class LoginComponent implements OnInit {
     private route: ActivatedRoute,
     private auth: AuthService,
     private snackbar: MatSnackBar,
-    private cdr: ChangeDetectorRef,
-    private dialog: MatDialog
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -67,56 +62,17 @@ export class LoginComponent implements OnInit {
     this.loading = true;
     this.cdr.detectChanges();
 
-    this.auth.login(this.form.value)
-      .pipe(
-        switchMap((res: any) => {
-          if (res.requiresSiteSelection) {
-            this.loading = false;
-            this.cdr.detectChanges();
-
-            const dialogRef = this.dialog.open(SelectSiteDialogComponent, {
-              width: window.innerWidth < 600 ? '95vw' : '420px',
-              maxWidth: '95vw',
-              autoFocus: false,
-              disableClose: true,
-              panelClass: 'fujifilm-responsive-dialog', // Changed custom class name to isolate layout rules
-              data: {
-                userId: res.userId,
-                sites: res.sites
-              }
-            });
-
-            return dialogRef.afterClosed().pipe(
-              switchMap((selectedSiteId) => {
-                if (!selectedSiteId) {
-                  return EMPTY;
-                }
-                
-                this.loading = true;
-                this.cdr.detectChanges();
-
-                return this.auth.selectSite({
-                  userId: res.userId,
-                  siteId: selectedSiteId
-                });
-              })
-            );
-          }
-
-          return [res];
-        }),
-        finalize(() => {
-          this.loading = false;
-          this.cdr.detectChanges();
-        })
-      )
-      .subscribe({
+    this.auth.login(this.form.value).subscribe({
         next: () => {
+          this.loading = false;
           this.snackbar.open('Login Successful', 'OK', { duration: 2000 });
           const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/tickets';
           this.router.navigateByUrl(returnUrl);
+          this.cdr.detectChanges();
         },
         error: (err) => {
+          this.loading = false;
+          this.cdr.detectChanges();
           this.snackbar.open(
             err.message || 'Authentication failed. Please verify credentials.',
             'Close',

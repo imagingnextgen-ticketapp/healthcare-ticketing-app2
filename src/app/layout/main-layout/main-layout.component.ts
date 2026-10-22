@@ -69,6 +69,19 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     return (this.user?.role || '').toLowerCase();
   }
 
+  get facilityLabel(): string {
+    const sites = this.user?.sites;
+    if (
+      (this.userRole === 'hospitaladmin' || this.userRole === 'hospitaluser')
+      && Array.isArray(sites)
+      && sites.length > 1
+    ) {
+      return 'Hospital Operations Center';
+    }
+
+    return this.user?.masterSiteName || 'Operations Center';
+  }
+
   loadUserData(): void {
     this.user = this.auth.getUser();
     if (!this.user) {

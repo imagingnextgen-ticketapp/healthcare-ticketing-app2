@@ -54,8 +54,8 @@
             [displayWith]="displaySiteName"
             (optionSelected)="onSiteSelected($event.option.value)">
 
-            <mat-option *ngIf="!siteSearchText" [value]="null">
-              - All Hospitals -
+            <mat-option [value]="null">
+              - {{ allHospitalsLabel }} -
             </mat-option>
 
             <mat-option
@@ -744,4 +744,3 @@
   </div>
 
 </div>
-

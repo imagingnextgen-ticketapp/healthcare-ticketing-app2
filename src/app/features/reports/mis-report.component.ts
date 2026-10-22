@@ -73,6 +73,11 @@ export class MisReportComponent implements OnInit {
   totalRecords = 0;
   isLoading = false;
   isHospitalAdmin = false;
+  isHospitalUser = false;
+
+  get allHospitalsLabel(): string {
+    return 'All Hospitals';
+  }
 
  filter: MisFilterDto = {
   pageNumber: 1,
@@ -148,25 +153,26 @@ ngOnInit(): void {
     const user = this.authService.getUser();
     if (user) {
       const userRole = (user.role || '').toLowerCase();
-      const assignedSiteId = user.masterSiteId;
       this.isHospitalAdmin = userRole === 'hospitaladmin';
+      this.isHospitalUser = userRole === 'hospitaluser';
 
-      if (this.isHospitalAdmin && assignedSiteId) {
-        this.isLoading = true;
-        this.cdr.detectChanges();
-        this.masterSiteService.getSiteViewDetails(Number(assignedSiteId)).subscribe({
-          next: (res: any) => {
-            this.masterSites = [res]; 
-            this.filteredMasterSites = [...this.masterSites];
-            this.siteSearchText = res.name || res.hospitalName || '';
-            this.filter = { ...this.filter, masterSiteId: Number(assignedSiteId) };
-            this.onSiteChange(this.filter.masterSiteId); 
-          },
-          error: () => {
-            this.isLoading = false;
-            this.cdr.detectChanges();
-          }
-        });
+      if (this.isHospitalAdmin || this.isHospitalUser) {
+        this.masterSites = (user.sites || [])
+          .map((site: any) => ({
+            masterSiteId: Number(site.siteId ?? site.masterSiteId),
+            name: site.siteName ?? site.name ?? ''
+          }))
+          .filter((site: any) => Number.isInteger(site.masterSiteId) && site.masterSiteId > 0 && site.name);
+        if (!this.masterSites.length && user.masterSiteId) {
+          this.masterSites = [{
+            masterSiteId: Number(user.masterSiteId),
+            name: user.masterSiteName || 'Assigned Hospital'
+          }];
+        }
+        this.filteredMasterSites = [...this.masterSites];
+        this.siteSearchText = this.allHospitalsLabel;
+        this.filter = { ...this.filter, masterSiteId: undefined };
+        this.onSiteChange(null);
       } else {
         this.loadAllSites();
       }
@@ -510,6 +516,9 @@ console.log('MIS FILTER SENT:', this.filter);
    * ✅ SITE SELECTED: Fired when a hospital is picked from the autocomplete panel
    */
   onSiteSelected(siteId: any): void {
+    this.siteSearchText = siteId === null || siteId === undefined
+      ? this.allHospitalsLabel
+      : this.displaySiteName(Number(siteId));
     this.filter = { ...this.filter, masterSiteId: siteId };
     this.onSiteChange(siteId);
   }
@@ -531,16 +540,12 @@ console.log('MIS FILTER SENT:', this.filter);
 
  resetFilters(): void {
   const user = this.authService.getUser();
-  const assignedSiteId = user?.masterSiteId;
-
   this.filter = {
     pageNumber: 1,
     pageSize: 10,
     tatOperator: 'gt',
 
-    masterSiteId: this.isHospitalAdmin
-      ? Number(assignedSiteId)
-      : undefined,
+    masterSiteId: undefined,
 
     productId: undefined,
     templateId: undefined,
@@ -555,9 +560,7 @@ console.log('MIS FILTER SENT:', this.filter);
   };
 
   // Hospital filter
-  this.siteSearchText = this.isHospitalAdmin
-    ? this.displaySiteName(Number(assignedSiteId))
-    : '';
+  this.siteSearchText = this.allHospitalsLabel;
 
   this.filteredMasterSites = this.masterSites.map(s => ({ ...s }));
 
@@ -576,7 +579,7 @@ console.log('MIS FILTER SENT:', this.filter);
   this.filteredStatuses = this.statuses.map(s => ({ ...s }));
 
   // Reset dependent filters/data
-  if (this.isHospitalAdmin) {
+  if (this.isHospitalAdmin || this.isHospitalUser) {
     this.templates = [];
     this.filteredTemplates = [];
     this.filteredProducts = this.products.map(s => ({ ...s }));

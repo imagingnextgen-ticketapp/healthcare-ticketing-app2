@@ -9,8 +9,7 @@
           <h1>Service Desk Operations</h1>
 
           <p>
-            FUJIFILM |
-            {{ currentUser?.masterSiteName || 'Operations Center' }}
+            FUJIFILM | Service Operations
           </p>
         </div>
       </div>
@@ -127,32 +126,26 @@
 </mat-form-field>
 
 <!-- Hospital Filter -->
-<mat-form-field
-    appearance="outline"
-    *ngIf="currentUser?.role === ROLES.SUPER_ADMIN
-        || currentUser?.role === ROLES.SUPPORT_ENGINEER
-        || currentUser?.role === ROLES.MANAGER">
-
-    <mat-label>Hospital</mat-label>
-
-    <mat-select
-    formControlName="masterSiteId"
-    panelClass="hospital-select-panel">
-
-        <mat-option [value]="null">
-            All Hospitals
-        </mat-option>
-
-        <mat-option
-            *ngFor="let site of sites"
-            [value]="site.masterSiteId">
-
-            {{ site.name }}
-
-        </mat-option>
-
-    </mat-select>
-
+<mat-form-field appearance="outline">
+  <mat-label>Hospital/Site</mat-label>
+  <input
+    matInput
+    [formControl]="siteSearchControl"
+    [matAutocomplete]="siteAutocomplete"
+    (input)="clearSiteSelectionWhileSearching()"
+    placeholder="Search hospitals">
+  <mat-autocomplete
+    #siteAutocomplete="matAutocomplete"
+    [displayWith]="displaySite"
+    (optionSelected)="selectSiteFilter($event.option.value)">
+    <mat-option [value]="allSitesOption">{{ allSitesOption.name }}</mat-option>
+    <mat-option *ngFor="let site of filteredSites" [value]="site">
+      {{ site.name }}
+    </mat-option>
+    <mat-option *ngIf="filteredSites.length === 0" disabled>
+      No assigned hospitals match your search
+    </mat-option>
+  </mat-autocomplete>
 </mat-form-field>
 
 <!-- 1. Created Date Field -->
@@ -590,5 +583,3 @@
     </ng-container>
   </ng-template>
 </mat-menu>
-
-

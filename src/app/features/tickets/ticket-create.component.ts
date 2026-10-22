@@ -222,7 +222,7 @@ onTemplateSelected(template: any): void {
 
    private initForm(): void {
     // If SuperAdmin has no site, initialize with null but mark as pristine
-    const initialSiteValue = this.currentUser?.masterSiteId || null;
+    const initialSiteValue = null;
 
     this.form = this.fb.group({
       masterSiteId: [initialSiteValue, Validators.required],
@@ -386,7 +386,15 @@ if (this.isReadOnly) {
         // Correctly determines if the user is bound to a single local facility
         const isRestrictedUser = !elevatedRoles.includes(userRoleOriginal);
 
-        if (isRestrictedUser && assignedSiteId && siteId !== assignedSiteId) {
+        const assignedSiteIds = (this.currentUser?.sites || [])
+          .map((site: any) => Number(site.siteId ?? site.masterSiteId))
+          .filter((id: number) => Number.isInteger(id) && id > 0);
+        const hasAssignedSites = Array.isArray(this.currentUser?.sites)
+          && this.currentUser.sites.length > 0;
+        const canAccessSite = hasAssignedSites
+          ? assignedSiteIds.includes(siteId)
+          : siteId === assignedSiteId;
+        if (isRestrictedUser && !canAccessSite) {
           this.snackBar.open('Unauthorized: You do not have permission to view this ticket.', 'Close', { duration: 5000 });
           this.dialogRef.close();
           return;
@@ -395,14 +403,19 @@ if (this.isReadOnly) {
         // =========================================================================
         // 🟢 FIX: ASYNC TIMEOUT BOUNDARIES TO ELIMINATE NG0100 RUNTIME ERRORS
         // =========================================================================
-if (isRestrictedUser && assignedSiteId) {
-          // Local/Hospital Admins & Users see only their home site location row
-          setTimeout(() => {
-            this.masterSites = [{
-              id: assignedSiteId,
-              masterSiteId: assignedSiteId,
-              name: this.currentUser?.MasterSiteName || this.currentUser?.masterSiteName || 'My Assigned Hospital Site' 
-            }];
+if (isRestrictedUser && (assignedSiteIds.length || assignedSiteId)) {
+  setTimeout(() => {
+    this.masterSites = assignedSiteIds.length
+      ? (this.currentUser.sites || []).map((site: any) => ({
+        id: Number(site.siteId ?? site.masterSiteId),
+        masterSiteId: Number(site.siteId ?? site.masterSiteId),
+        name: site.siteName ?? site.name ?? ''
+      }))
+      : [{
+        id: assignedSiteId,
+        masterSiteId: assignedSiteId,
+        name: this.currentUser?.MasterSiteName || this.currentUser?.masterSiteName || 'My Assigned Hospital Site'
+      }];
             this.loadProductsAndTemplates(siteId, prodId, templateId, ticket, this.isReadOnly);
             this.cdr.detectChanges();
           }, 0);
@@ -692,6 +705,15 @@ if (isRestrictedUser && assignedSiteId) {
   ) {
     // For these roles, Master Sites will be loaded through autocomplete search.
     this.masterSites = [];
+  }
+  else if (Array.isArray(this.currentUser?.sites) && this.currentUser.sites.length > 0) {
+    this.masterSites = this.currentUser.sites
+      .map((site: any) => ({
+        masterSiteId: Number(site.siteId ?? site.masterSiteId),
+        id: Number(site.siteId ?? site.masterSiteId),
+        name: site.siteName ?? site.name ?? ''
+      }))
+      .filter((site: any) => Number.isInteger(site.masterSiteId) && site.masterSiteId > 0 && site.name);
   }
   else if (this.currentUser?.masterSiteId) {
 
@@ -1070,8 +1092,5 @@ onTemplateChange(templateId: number): void {
     this.dialogRef.close(true);
   }
 } 
-
-
-
 
 

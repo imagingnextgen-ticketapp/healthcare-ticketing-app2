@@ -114,6 +114,8 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
   maxDate = new Date();
   //isMobile$: Observable<boolean>;
   totalRecords = 0; pageSize = 10; pageNumber = 1; currentTabIndex = 0; sites: any[] = [];allEngineers: any[] = [];allUsers: any[] = [];
+  siteSearchControl = new FormControl<any>('');
+  readonly allSitesOption = { masterSiteId: null, name: 'All Hospitals' };
   private descriptionTooltipTimer: ReturnType<typeof setTimeout> | undefined;
   
 
@@ -144,6 +146,7 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.currentUser = this.auth.getUser();
+    this.siteSearchControl.setValue(this.allSitesOption, { emitEvent: false });
     this.initFilterForm();
     this.setupAutoSearch();
     this.loadEngineers();
@@ -152,6 +155,33 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
   this.loadSites();
   this.refresh();
 });
+  }
+
+  get isHospitalUser(): boolean {
+    return this.currentUser?.role === this.ROLES.HOSPITAL_ADMIN
+      || this.currentUser?.role === this.ROLES.HOSPITAL_USER;
+  }
+
+  displaySite(site: any): string {
+    return site?.name || '';
+  }
+
+  get filteredSites(): any[] {
+    const value = this.siteSearchControl.value;
+    const query = typeof value === 'string' ? value.trim().toLowerCase() : '';
+    return query
+      ? this.sites.filter(site => site.name.toLowerCase().includes(query))
+      : this.sites;
+  }
+
+  clearSiteSelectionWhileSearching(): void {
+    if (typeof this.siteSearchControl.value === 'string') {
+      this.filterForm.get('masterSiteId')?.setValue(null);
+    }
+  }
+
+  selectSiteFilter(site: any): void {
+    this.filterForm.get('masterSiteId')?.setValue(site?.masterSiteId ?? null);
   }
 
   //ngAfterViewInit() { this.dataSource.paginator = this.paginator; }
@@ -217,12 +247,6 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
   ...formValues
 };
 
-// HospitalUser & HospitalAdmin
-if (this.currentUser.role === 'HospitalUser' || this.currentUser.role === 'HospitalAdmin'
-) {
-  params.masterSiteId = this.currentUser.masterSiteId;
-}
-
   this.ticketService.getWorklist(params).subscribe({
     next: (res: any) => {
       this.dataSource.data = res.data || [];
@@ -254,6 +278,25 @@ if (this.currentUser.role === 'HospitalUser' || this.currentUser.role === 'Hospi
   });
 }
 loadSites(): void {
+  if (this.isHospitalUser) {
+    const assignedSites = (this.currentUser?.sites || [])
+      .map((site: any) => ({
+        masterSiteId: Number(site.siteId ?? site.masterSiteId),
+        name: site.siteName ?? site.name ?? ''
+      }))
+      .filter((site: any) => Number.isInteger(site.masterSiteId) && site.masterSiteId > 0 && site.name);
+    this.sites = assignedSites.length
+      ? assignedSites
+      : this.currentUser?.masterSiteId
+        ? [{
+          masterSiteId: Number(this.currentUser.masterSiteId),
+          name: this.currentUser.masterSiteName || 'Assigned Hospital'
+        }]
+        : [];
+    this.cdr.detectChanges();
+    return;
+  }
+
   this.masterSiteService
     .getSites({ pageNumber: 1, pageSize: 500 })
     .subscribe({
@@ -261,7 +304,10 @@ loadSites(): void {
 
         this.sites = (res.data || []).filter(
           (x: any) => x.isActive
-        );
+        ).map((site: any) => ({
+          ...site,
+          name: site.name ?? site.siteName ?? ''
+        }));
 
         this.cdr.detectChanges();
       },
@@ -275,6 +321,7 @@ loadSites(): void {
 
   resetFilters(): void {
     this.filterForm.reset();
+    this.siteSearchControl.setValue(this.allSitesOption, { emitEvent: false });
     this.pageNumber = 1;
     this.refresh();
   }
@@ -417,6 +464,7 @@ onTabChange(index: number) {
         { ticketId: null, status: null, createdDate: null, resolveDate: null, masterSiteId: null,createdByUserId: null,closedByUserId:null },
         { emitEvent: false }
       );
+      this.siteSearchControl.setValue(this.allSitesOption, { emitEvent: false });
     }
 
     this.cdr.detectChanges();
@@ -997,9 +1045,5 @@ openTicketHistory(
 
 
 } // 🛑 THIS MUST BE THE ABSOLUTE LAST CHARACTER IN YOUR FILE
-
-
-
-
 
 
