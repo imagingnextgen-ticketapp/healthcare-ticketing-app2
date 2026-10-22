@@ -25,6 +25,16 @@ export class AuthService {
       catchError((err) => this.handleError(err))
     );
   }
+  selectSite(dto: any): Observable<any> {
+  return this.http.post<any>(`${this.apiUrl}/select-site`, dto).pipe(
+    tap(res => {
+      if (res?.token) {
+        this.setSession(res);
+      }
+    }),
+    catchError(err => this.handleError(err))
+  );
+}
 
   // 🟢 FIXED: Explicitly scoped arrow function stops 'this' execution leaks
   forgotPassword(dto: ForgotPasswordDto): Observable<any> {
@@ -49,7 +59,7 @@ export class AuthService {
     return !!token && token !== 'undefined';
   }
 
-private setSession(res: any): void {
+public setSession(res: any): void {
   localStorage.setItem('token', res.token);
 
   const user = {

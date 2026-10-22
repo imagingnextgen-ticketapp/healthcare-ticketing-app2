@@ -79,14 +79,31 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   // 🔔 Notification Methods
   loadNotifications(): void {
-    this.notificationService.getMyNotifications().subscribe({
-      next: (res: any) => {
-        this.notifications = res || [];
-        this.unreadCount = this.notifications.filter(n => !n.isRead).length;
-        this.cdr.detectChanges();
-      },
-      error: (err) => console.error('Notification error:', err)
-    });
+  this.notificationService.getMyNotifications().subscribe({
+    next: (res: any) => {
+
+      // Bell should display only unread notifications.
+      this.notifications = (res || [])
+        .filter((n: any) => !n.isRead)
+        .map((n: any) => ({
+          ...n,
+          createdDate: this.normalizeNotificationTimestamp(n.createdDate)
+        }));
+
+      this.unreadCount = this.notifications.length;
+
+      this.cdr.detectChanges();
+    },
+    error: (err) => console.error('Notification error:', err)
+  });
+}
+
+  private normalizeNotificationTimestamp(value: string | Date | null | undefined): string | Date | null | undefined {
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)) {
+      return value;
+    }
+
+    return /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value) ? value : `${value}Z`;
   }
 
   markAsRead(n: any): void {

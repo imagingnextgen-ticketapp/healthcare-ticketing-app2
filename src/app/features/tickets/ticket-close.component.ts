@@ -30,7 +30,7 @@ import { MaterialModules } from '../../shared/material.collection';
               formControlName="solutionComment" 
               rows="4" 
               placeholder="Provide clear steps taken to resolve this problem..."
-              autofocus>
+              cdkFocusInitial>
             </textarea>
             <mat-error *ngIf="closeForm.get('solutionComment')?.hasError('required')">
               Resolution remarks are strictly required to close a ticket.

@@ -114,6 +114,34 @@ $border: #e2e8f0;
     }
   }
 
+  .export-btn {
+    width: 42px !important;
+    min-width: 42px !important;
+    height: 42px !important;
+    padding: 0 !important;
+    flex: 0 0 42px;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    color: $brand !important;
+    border: 1px solid rgba(0, 138, 76, 0.25) !important;
+    background: white !important;
+    transition: all 0.15s ease;
+
+    mat-icon { font-size: 18px !important; width: 18px !important; height: 18px !important; }
+    &:hover:not(:disabled) { background: $brand-light !important; }
+    &:disabled { opacity: 0.55; }
+  }
+
+  ::ng-deep .export-btn .mat-mdc-button-persistent-ripple,
+  ::ng-deep .export-btn .mat-mdc-button-persistent-ripple::before,
+  ::ng-deep .export-btn .mat-mdc-button-ripple {
+    border-radius: 8px !important;
+  }
+
   /* Highlight user / ticket columns */
   .user-text {
     font-weight: 600;

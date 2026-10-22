@@ -112,6 +112,23 @@ if (filter.allowedRoleNames && filter.allowedRoleNames.length > 0) {
   }
 
   /**
+ * GET /api/User/active-users
+ * Returns all active users for Closed By MIS filter
+ */
+getActiveUsers(search?: string): Observable<{ userId: number; userName: string }[]> {
+  let params = new HttpParams();
+
+  if (search) {
+    params = params.set('search', search.trim());
+  }
+
+  return this.http.get<{ userId: number; userName: string }[]>(
+    `${this.apiUrl}/active-users`,
+    { params }
+  );
+}
+
+  /**
    * POST /api/User/admin-reset-password
    */
   adminResetPassword(userId: number, newPassword: string): Observable<any> {

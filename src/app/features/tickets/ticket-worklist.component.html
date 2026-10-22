@@ -20,7 +20,8 @@
         <!-- TABS BAR CONTROL (Only renders the tabs headers, no internal template destruction) -->
     <ng-container
       *ngIf="
-        currentUser?.role === ROLES.SUPER_ADMIN || currentUser?.role === ROLES.SUPPORT_ENGINEER;
+        currentUser?.role === ROLES.SUPER_ADMIN || currentUser?.role === ROLES.SUPPORT_ENGINEER
+        || currentUser?.role === ROLES.MANAGER;
         else hospitalView
       "
     >
@@ -62,17 +63,97 @@
         <input matInput formControlName="ticketId" placeholder="e.g. 101" />
       </mat-form-field>
 
+     
       <mat-form-field appearance="outline">
-        <mat-label> Status </mat-label>
+  <mat-label>Status</mat-label>
 
-        <mat-select formControlName="status">
-          <mat-option [value]="null"> All Statuses </mat-option>
+  <mat-select formControlName="status">
+    <mat-option [value]="null">All Statuses</mat-option>
 
-          <mat-option *ngFor="let s of statusOptions" [value]="s.value">
-            {{ s.label }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
+    <mat-option *ngFor="let s of statusOptions" [value]="s.value">
+      {{ s.label }}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+<!-- Requested By -->
+<mat-form-field appearance="outline">
+  <mat-label>Requested By</mat-label>
+
+  <mat-select formControlName="createdByUserId">
+    <mat-option [value]="null">
+      All Requesters
+    </mat-option>
+
+    <mat-option
+      *ngFor="let user of allUsers"
+      [value]="user.userId">
+      {{ user.userName }}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+<!-- Assigned To -->
+<mat-form-field appearance="outline">
+  <mat-label>Assigned To</mat-label>
+
+  <mat-select formControlName="assignedToUserId">
+
+    <mat-option [value]="null">
+      All Engineers
+    </mat-option>
+
+    <mat-option
+      *ngFor="let engineer of allEngineers"
+      [value]="engineer.userId">
+      {{ engineer.userName }}
+    </mat-option>
+
+  </mat-select>
+</mat-form-field>
+<!-- Closed By -->
+<mat-form-field appearance="outline">
+  <mat-label>Closed By</mat-label>
+
+  <mat-select formControlName="closedByUserId">
+    <mat-option [value]="null">
+      All Users
+    </mat-option>
+
+    <mat-option
+      *ngFor="let user of allUsers"
+      [value]="user.userId">
+      {{ user.userName }}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+
+<!-- Hospital Filter -->
+<mat-form-field
+    appearance="outline"
+    *ngIf="currentUser?.role === ROLES.SUPER_ADMIN
+        || currentUser?.role === ROLES.SUPPORT_ENGINEER
+        || currentUser?.role === ROLES.MANAGER">
+
+    <mat-label>Hospital</mat-label>
+
+    <mat-select
+    formControlName="masterSiteId"
+    panelClass="hospital-select-panel">
+
+        <mat-option [value]="null">
+            All Hospitals
+        </mat-option>
+
+        <mat-option
+            *ngFor="let site of sites"
+            [value]="site.masterSiteId">
+
+            {{ site.name }}
+
+        </mat-option>
+
+    </mat-select>
+
+</mat-form-field>
 
 <!-- 1. Created Date Field -->
 
@@ -118,6 +199,36 @@
   <!-- TABLE -->
   <div class="table-container">
     <table mat-table [dataSource]="dataSource" class="fuji-table">
+        <ng-container matColumnDef="actions">
+
+  <th
+    mat-header-cell
+    *matHeaderCellDef
+    style="width: 60px; text-align: center;"
+  >
+    Actions
+  </th>
+
+  <td
+    mat-cell
+    *matCellDef="let e"
+    style="text-align: center;"
+  >
+
+    <button
+      mat-icon-button
+      [matMenuTriggerFor]="rowActionMenu"
+      [matMenuTriggerData]="{ ticket: e }"
+      matTooltip="More Options"
+    >
+      <mat-icon style="color: #4b5563">
+        more_vert
+      </mat-icon>
+    </button>
+
+  </td>
+
+</ng-container>
       <!-- ID -->
       <ng-container matColumnDef="ticketId">
         <th mat-header-cell *matHeaderCellDef>ID</th>
@@ -136,12 +247,21 @@
 
       <!-- DESCRIPTION -->
       <ng-container matColumnDef="description">
-        <th mat-header-cell *matHeaderCellDef>Description</th>
+  <th mat-header-cell *matHeaderCellDef>Description</th>
 
-        <td mat-cell *matCellDef="let e" class="truncate" [matTooltip]="e.description">
-          {{ e.description }}
-        </td>
-      </ng-container>
+  <td
+    mat-cell
+    *matCellDef="let e"
+    class="truncate description-cell"
+    [matTooltip]="e.description"
+    matTooltipTouchGestures="on"
+    #descriptionTooltip="matTooltip"
+    (click)="e.description?.length > 30 && showDescriptionTooltip(descriptionTooltip)">
+
+    {{ e.description }}
+
+  </td>
+</ng-container>
 
       <!-- PRODUCT -->
       <ng-container matColumnDef="productName">
@@ -183,7 +303,7 @@
 
       <!-- ENGINEER -->
       <ng-container matColumnDef="assignedTo">
-        <th mat-header-cell *matHeaderCellDef>Engineer</th>
+        <th mat-header-cell *matHeaderCellDef>Assigned To</th>
 
         <td mat-cell *matCellDef="let e">
           <span [class.text-muted]="!e.assignedTo">
@@ -191,6 +311,15 @@
           </span>
         </td>
       </ng-container>
+      <ng-container matColumnDef="closedBy">
+  <th mat-header-cell *matHeaderCellDef>
+    Closed By
+  </th>
+
+  <td mat-cell *matCellDef="let ticket">
+    {{ ticket.closedBy || '-' }}
+  </td>
+</ng-container>
 
       <!-- STATUS -->
           <!-- STATUS COLUMN DEF -->
@@ -247,9 +376,11 @@
       <ng-container matColumnDef="actualTatHours">
         <th mat-header-cell *matHeaderCellDef>Actual</th>
 
-        <td mat-cell *matCellDef="let e">
-          {{ e.actualTatHours ? e.actualTatHours + 'h' : '-' }}
-        </td>
+       <td mat-cell *matCellDef="let e">
+  {{ e.actualTatHours > 0 ? formatTat(e.actualTatHours) : '-' }}
+</td>
+
+
       </ng-container>
 
            <!-- ===================================================== -->
@@ -257,21 +388,7 @@
       <!-- ACTIONS COLUMN DEF (DECLUTTERED DESKTOP VIEW)         -->
       <!-- ===================================================== -->
  
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef style="width: 60px; text-align: center;">Actions</th>
-
-        <td mat-cell *matCellDef="let e" style="text-align: center;">
-          <!-- 🟢 Only the single 3-dot trigger button exists here now -->
-          <button
-            mat-icon-button
-            [matMenuTriggerFor]="rowActionMenu"
-            [matMenuTriggerData]="{ ticket: e }"
-            matTooltip="More Options"
-          >
-            <mat-icon style="color: #4b5563">more_vert</mat-icon>
-          </button>
-        </td>
-      </ng-container>
+    
 
 
       <!-- ROW MAT-TABLE DEF LAYOUTS -->
@@ -287,13 +404,13 @@
   </div>
 
   <!-- PAGINATOR ELEMENT -->
-  <mat-paginator
-    [length]="totalRecords"
-    [pageSize]="pageSize"
-    [pageSizeOptions]="pageSizeOptions"
-    (page)="onPageChange($event)"
-  >
-  </mat-paginator>
+ <mat-paginator
+  [length]="totalRecords"
+  [pageIndex]="pageNumber - 1"
+  [pageSize]="pageSize"
+  [pageSizeOptions]="pageSizeOptions"
+  (page)="onPageChange($event)">
+</mat-paginator>
 </ng-template>
 
 <!-- ===================================================== -->
@@ -312,23 +429,33 @@
 
     <mat-divider style="margin: 4px 0;"></mat-divider>
 
-    <!-- 2. ASSIGN OPTIONS LAYER -->
-    <ng-container *ngIf="canAssign(ticket)">
-      <button mat-menu-item 
-              *ngIf="ticket.assignedToUserId != currentUser?.userId"
-              (click)="assignTicket(ticket.ticketId, currentUser)">
-        <mat-icon style="color: #008542">person</mat-icon>
-        <span>Assign to Me</span>
-      </button>
+   <!-- ========================================= -->
+<!-- ASSIGN TO ME                              -->
+<!-- ========================================= -->
 
-      <button mat-menu-item 
-              *ngIf="currentUser?.role === ROLES.SUPER_ADMIN"
-              (click)="openAssignPopup(ticket)">
-        <mat-icon style="color: #008542">person_add</mat-icon>
-        <span>Assign to Engineer</span>
-      </button>
-    </ng-container>
+<!-- 2. ASSIGN OPTIONS LAYER -->
 
+<!-- Assign to Me -->
+<button mat-menu-item
+        *ngIf="
+          (currentUser?.role === ROLES.SUPER_ADMIN ||
+           currentUser?.role === ROLES.MANAGER ||
+           currentUser?.role === ROLES.SUPPORT_ENGINEER) &&
+          ticket.assignedToUserId != currentUser?.userId &&
+          ticket.status !== 'Closed'
+        "
+        (click)="assignTicket(ticket.ticketId, currentUser)">
+  <mat-icon style="color: #008542">person</mat-icon>
+  <span>Assign to Me</span>
+</button>
+
+<!-- Assign to Engineer -->
+<button mat-menu-item
+        *ngIf="canAssign(ticket)"
+        (click)="openAssignPopup(ticket)">
+  <mat-icon style="color: #008542">person_add</mat-icon>
+  <span>Assign to Engineer</span>
+</button>
     <!-- 3. CORE ACTION CONTROLS -->
     <button mat-menu-item *ngIf="canStartWork(ticket)" (click)="handleAction(ticket, 'start')">
       <mat-icon style="color: #008542">play_arrow</mat-icon>
@@ -346,13 +473,46 @@
     </button>
 
     <mat-divider style="margin: 4px 0;"></mat-divider>
+<button
+  mat-menu-item
+  *ngIf="canAddProgressNote(ticket)"
+  (click)="openAddProgressNote(ticket)"
+>
+  <mat-icon style="color: #008542">
+    add_comment
+  </mat-icon>
 
+  <span>
+    Add Progress Note
+  </span>
+</button>
+<button
+  mat-menu-item
+ *ngIf="canViewProgressNotes(ticket)"
+  (click)="openProgressNotes(ticket)"
+>
+  <mat-icon
+    style="color: #008542;"
+  >
+    notes
+  </mat-icon>
+
+  <span>
+    View Progress Notes
+  </span>
+</button>
+<button
+  mat-menu-item
+  *ngIf="canViewTicketHistory()"
+  (click)="openTicketHistory(ticket)">
+ <mat-icon style="color: #008542;" > history</mat-icon>
+<span>View History</span></button>
     <!-- 4. SLIDE-NESTED SUB ATTACHMENTS RETRIEVAL HUB LINK -->
     <button mat-menu-item 
             [matMenuTriggerFor]="attachmentListMenu"
             [matMenuTriggerData]="{ ticket: ticket }"
             (click)="loadTicketAttachments(ticket.ticketId)">
-      <mat-icon style="color: #4b5563">attach_file</mat-icon>
+      <mat-icon style="color: #008542">attach_file</mat-icon>
       <span>View Attachments</span>
     </button>
 
@@ -363,7 +523,7 @@
       <mat-icon style="color: #00838f">assignment_turned_in</mat-icon>
       <span>View Resolution Notes</span>
     </button>
-
+    
   </ng-template>
 </mat-menu>
 

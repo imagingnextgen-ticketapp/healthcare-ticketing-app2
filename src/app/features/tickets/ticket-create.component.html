@@ -20,32 +20,87 @@
   <mat-dialog-content class="dialog-content">
     <form [formGroup]="form" class="template-form">
       <!-- ROW 1 -->
-      <div class="fuji-grid fuji-two-cols">
-        <mat-form-field appearance="outline">
-          <mat-label>Master Site</mat-label>
+     
+<div class="fuji-grid fuji-two-cols">
+ <mat-form-field appearance="outline">
+  <mat-label>Master Site</mat-label>
 
-          <mat-select formControlName="masterSiteId" (selectionChange)="onSiteChange($event.value)">
-            <mat-option *ngFor="let site of masterSites" [value]="site.masterSiteId">
-              {{ site.name || site.siteName }}
-            </mat-option>
-          </mat-select>
+  <input
+    matInput
+    type="text"
+    [formControl]="masterSiteSearchControl"
+    [matAutocomplete]="masterSiteAutocomplete"
+    placeholder="Search Master Site"
+    autocomplete="off"
+  />
 
-          <mat-error *ngIf="form.get('masterSiteId')?.hasError('required')">
-            Master Site is required
-          </mat-error>
-        </mat-form-field>
+  <mat-autocomplete
+    #masterSiteAutocomplete="matAutocomplete"
+    [displayWith]="displayMasterSite"
+    (optionSelected)="onMasterSiteSelected($event.option.value)">
 
-        <!-- 🟢 ENFORCED CATALOG BINDING IN HTML -->
-        <mat-form-field appearance="outline" class="w-100">
-          <mat-label>Product</mat-label>
-          <mat-select formControlName="productId" (selectionChange)="onProductChange($event.value)">
-            <!-- 🚨 CHANGE [value] EXPLICITLY TO prod.productId TO SEND 26 INSTEAD OF 39 -->
-            <mat-option *ngFor="let prod of products" [value]="prod.productId || prod.ProductId">
-              {{ prod.productName || prod.name }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
+    <mat-option
+      *ngFor="let site of masterSites"
+      [value]="site">
+
+      {{ site.name || site.siteName || site.SiteName || 'Unknown Facility Site' }}
+
+    </mat-option>
+
+    <mat-option
+      *ngIf="
+        typeof masterSiteSearchControl.value === 'string' &&
+        masterSiteSearchControl.value.trim().length >= 2 &&
+        masterSites.length === 0
+      "
+      disabled>
+
+      No Master Site found
+
+    </mat-option>
+
+  </mat-autocomplete>
+
+  <mat-error
+    *ngIf="form.get('masterSiteId')?.hasError('required')">
+
+    Master Site is required
+
+  </mat-error>
+</mat-form-field>
+
+  <!-- PRODUCT CATALOG BINDING -->
+  <mat-form-field appearance="outline" class="w-100">
+    <mat-label>Product</mat-label>
+    <input
+      matInput
+      type="text"
+      [formControl]="productSearchControl"
+      [matAutocomplete]="productAutocomplete"
+      placeholder="Search Product"
+      autocomplete="off"
+      (input)="onProductSearchInput()" />
+
+    <mat-autocomplete
+      #productAutocomplete="matAutocomplete"
+      [displayWith]="displayProduct"
+      (optionSelected)="onProductSelected($event.option.value)">
+      <mat-option *ngFor="let product of filteredProducts" [value]="product">
+        {{ displayProduct(product) }}
+      </mat-option>
+      <mat-option
+        *ngIf="typeof productSearchControl.value === 'string' && productSearchControl.value.trim() && filteredProducts.length === 0"
+        disabled>
+        No Product found
+      </mat-option>
+    </mat-autocomplete>
+
+    <mat-error *ngIf="form.get('productId')?.hasError('required')">
+      Product is required
+    </mat-error>
+  </mat-form-field>
+</div>
+
 
       <!-- ROW 2 -->
            <!-- 🟢 JOINED FIELD GRID LAYER -->
@@ -54,11 +109,29 @@
         <!-- ISSUE TEMPLATE (Spans 2 columns on desktop) -->
         <mat-form-field appearance="outline" class="w-100 col-span-2-desktop">
           <mat-label>Issue Template</mat-label>
-          <mat-select formControlName="templateId" (selectionChange)="onTemplateChange($event.value)">
-            <mat-option *ngFor="let temp of templates" [value]="temp.templateId">
+          <input
+            matInput
+            type="text"
+            [formControl]="templateSearchControl"
+            [matAutocomplete]="templateAutocomplete"
+            placeholder="Search Issue Template"
+            autocomplete="off"
+            (input)="onTemplateSearchInput()" />
+
+          <mat-autocomplete
+            #templateAutocomplete="matAutocomplete"
+            [displayWith]="displayIssueTemplate"
+            (optionSelected)="onTemplateSelected($event.option.value)">
+            <mat-option *ngFor="let temp of filteredTemplates" [value]="temp">
               {{ temp.issueType }}
             </mat-option>
-          </mat-select>
+            <mat-option
+              *ngIf="typeof templateSearchControl.value === 'string' && templateSearchControl.value.trim() && filteredTemplates.length === 0"
+              disabled>
+              No Issue Template found
+            </mat-option>
+          </mat-autocomplete>
+
           <mat-error *ngIf="form.get('templateId')?.hasError('required')">
             Template is required
           </mat-error>

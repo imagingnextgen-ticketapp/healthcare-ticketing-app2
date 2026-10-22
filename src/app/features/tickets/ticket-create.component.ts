@@ -1,6 +1,13 @@
-import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  Inject,
+  OnInit,
+  OnDestroy,
+  ChangeDetectorRef
+} from '@angular/core';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule,FormControl } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar'; 
 import { TemplateService } from '../../core/services/template.service';
@@ -15,6 +22,7 @@ import imageCompression from 'browser-image-compression';
 import { ReplaceAttachmentDto, TicketAttachment } from '../../core/models/ticket-attachment.model';
 import { UpdateTicketDto } from '../../core/models/ticket.model';
 
+import { debounceTime, distinctUntilChanged,  catchError,of,Subscription,switchMap, Observable, startWith, map } from 'rxjs';
 @Component({
   selector: 'app-ticket-create',
   standalone: true,
@@ -22,21 +30,30 @@ import { UpdateTicketDto } from '../../core/models/ticket.model';
   templateUrl: './ticket-create.component.html',
   styleUrls: ['./ticket-create.component.scss']
 })
-export class TicketCreateComponent implements OnInit {
+export class TicketCreateComponent implements OnInit,OnDestroy  {
   form!: FormGroup;
   masterSites: any[] = [];
   products: any[] = [];
   templates: any[] = [];
   currentUser: any;
   loading = false;
-
+masterSiteSearchControl = new FormControl<string | any>('');
+productSearchControl = new FormControl<string | any>(
+  '',
+  control => typeof control.value === 'string' ? { productSelectionRequired: true } : null
+);
+templateSearchControl = new FormControl<string | any>(
+  '',
+  control => typeof control.value === 'string' ? { templateSelectionRequired: true } : null
+);
+private masterSiteSearchSubscription?: Subscription;
   // DUAL-MODE TRACKING STATES
   isEditMode = false;
   editingTicketId: number | null = null;
   existingAttachments: TicketAttachment[] = [];
     // 🔒 GLOBAL PERMISSION STATE HOOK
   isReadOnly = false; 
-
+readonly ROLES = { SUPER_ADMIN: 'SuperAdmin', SUPPORT_ENGINEER: 'SupportEngineer', HOSPITAL_ADMIN: 'HospitalAdmin', HOSPITAL_USER: 'HospitalUser', MANAGER:'Manager' };
 
   // IN-LINE FILE REPLACEMENT STATES
   replacingAttachmentId: number | null = null;
@@ -69,14 +86,139 @@ export class TicketCreateComponent implements OnInit {
     }
   }
 
-  ngOnInit(): void {
-    this.initForm();
-    if (this.isEditMode && this.editingTicketId) {
-      this.loadTicketDetailsForEdit(this.editingTicketId);
-    } else {
-      this.loadInitialSiteList();
-    }
+ ngOnInit(): void {
+  this.initForm();
+
+  if (this.isEditMode && this.editingTicketId) {
+    this.loadTicketDetailsForEdit(this.editingTicketId);
+  } else {
+    this.loadInitialSiteList();
+    this.setupMasterSiteSearch();
   }
+}
+ngOnDestroy(): void {
+  // existing cleanup
+
+  this.masterSiteSearchSubscription?.unsubscribe();
+}
+
+onMasterSiteSelected(site: any): void {
+
+  const siteId =
+    site?.masterSiteId ??
+    site?.id ??
+    site?.Id;
+
+  if (!siteId) {
+    return;
+  }
+
+  this.form
+    .get('masterSiteId')
+    ?.setValue(Number(siteId));
+
+  this.onSiteChange(Number(siteId));
+}
+displayMasterSite(site: any): string {
+
+  if (!site) {
+    return '';
+  }
+
+  if (typeof site === 'string') {
+    return site;
+  }
+
+  return (
+    site.name ||
+    site.siteName ||
+    site.SiteName ||
+    ''
+  );
+}
+
+get filteredProducts(): any[] {
+  const value = this.productSearchControl.value;
+  const query = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return query
+    ? this.products.filter(product => this.displayProduct(product).toLowerCase().includes(query))
+    : this.products;
+}
+
+displayProduct(product: any): string {
+  if (!product) return '';
+  if (typeof product === 'string') return product;
+  return product.productName || product.name || product.ProductName || '';
+}
+
+private getProductId(product: any): number {
+  return Number(product?.productId ?? product?.id ?? product?.Id ?? product?.ProductId);
+}
+
+onProductSearchInput(): void {
+  if (typeof this.productSearchControl.value !== 'string') return;
+
+  this.form.patchValue({
+    productId: null,
+    templateId: null,
+    issueType: '',
+    description: '',
+    severity: null,
+    priority: '',
+    tatHours: 0
+  }, { emitEvent: false });
+  this.templates = [];
+  this.templateSearchControl.setValue('', { emitEvent: false });
+}
+
+onProductSelected(product: any): void {
+  if (!product) return;
+
+  const productId = this.getProductId(product);
+  if (!Number.isFinite(productId) || productId <= 0) return;
+
+  this.productSearchControl.setValue(product, { emitEvent: false });
+  this.form.get('productId')?.setValue(productId);
+  this.onProductChange(productId);
+}
+
+get filteredTemplates(): any[] {
+  const searchValue = this.templateSearchControl.value;
+  const query = typeof searchValue === 'string' ? searchValue.trim().toLowerCase() : '';
+  return query
+    ? this.templates.filter(template => template.issueType?.toLowerCase().includes(query))
+    : this.templates;
+}
+
+displayIssueTemplate(template: any): string {
+  return typeof template === 'string' ? template : template?.issueType || '';
+}
+
+onTemplateSearchInput(): void {
+  if (typeof this.templateSearchControl.value !== 'string') {
+    return;
+  }
+
+  this.form.patchValue({
+    templateId: null,
+    issueType: '',
+    description: '',
+    severity: null,
+    priority: '',
+    tatHours: 0
+  }, { emitEvent: false });
+}
+
+onTemplateSelected(template: any): void {
+  if (!template) {
+    return;
+  }
+
+  this.templateSearchControl.setValue(template, { emitEvent: false });
+  const templateId = Number(template.templateId);
+  this.form.get('templateId')?.setValue(templateId);
+  this.onTemplateChange(templateId);
+}
 
    private initForm(): void {
     // If SuperAdmin has no site, initialize with null but mark as pristine
@@ -180,23 +322,25 @@ const role = String(
   ''
 ).trim().toLowerCase();
 
+const rawStatus = ticket.status ?? ticket.Status;
+
 const status = String(
-  ticket.status || ticket.Status || ''
+  ticket.status ?? ticket.Status ?? ''
 ).trim().toLowerCase();
 
-const isEditableStatus =
-  status === 'open' ||
-  status === 'assigned' ||
-  status === 'reopened' ||
-  status === '1' ||
-  status === '2' ||
-  status === '5';
+const editableStatuses = [
+  'open',
+  'assigned',
+  'inprogress',
+  'reopened'
+];
 
+const isEditableStatus = editableStatuses.includes(status);
 let hasPermission = false;
 
 if (isEditableStatus) {
 
-  if (role === 'superadmin' || role === 'super admin') {
+  if (role === 'superadmin' || role === 'super admin' || role === 'manager') {
     hasPermission = true;
   }
   else if (role === 'hospitaladmin' || role === 'hospital admin') {
@@ -223,12 +367,23 @@ if (this.isReadOnly) {
   );
 }
 // =========================================================================
-        const elevatedRoles = ['Superadmin', 'Manager', 'Support Engineer', 'SuperAdmin'];
-        const userRoleOriginal = this.currentUser?.role || this.currentUser?.['http://xmlsoap.org'];
+       // =========================================================================
+        // 🟢 FIXED: LOWERCASE NORMALIZATION & ACCURATE MICROSOFT JWT CLAIM KEYS
+        // =========================================================================
+        const elevatedRoles = ['superadmin', 'manager', 'supportengineer', 'support engineer'];
+        
+        const rawRole = this.currentUser?.role || 
+                        this.currentUser?.roleName ||
+                        this.currentUser?.['http://microsoft.com'] || 
+                        '';
+                        
+        const userRoleOriginal = String(rawRole).trim().toLowerCase();
+
         const assignedSiteId = this.currentUser?.masterSiteId || this.currentUser?.MasterSiteId 
           ? Number(this.currentUser?.masterSiteId || this.currentUser?.MasterSiteId) 
           : null;
 
+        // Correctly determines if the user is bound to a single local facility
         const isRestrictedUser = !elevatedRoles.includes(userRoleOriginal);
 
         if (isRestrictedUser && assignedSiteId && siteId !== assignedSiteId) {
@@ -240,7 +395,8 @@ if (this.isReadOnly) {
         // =========================================================================
         // 🟢 FIX: ASYNC TIMEOUT BOUNDARIES TO ELIMINATE NG0100 RUNTIME ERRORS
         // =========================================================================
-        if (isRestrictedUser && assignedSiteId) {
+if (isRestrictedUser && assignedSiteId) {
+          // Local/Hospital Admins & Users see only their home site location row
           setTimeout(() => {
             this.masterSites = [{
               id: assignedSiteId,
@@ -252,12 +408,14 @@ if (this.isReadOnly) {
           }, 0);
           
         } else {
-          this.masterSiteService.getSites({ pageNumber: 1, pageSize: 1000 }).subscribe({
+          // SuperAdmins and Managers correctly query the complete global master database registry
+          this.masterSiteService.getSites({ pageNumber: 1, pageSize: 200 }).subscribe({
             next: (sitesRes: any) => {
               const fetchedSites = sitesRes?.data || sitesRes?.items || sitesRes || [];
-              
+              console.log('Fetched Master Sites for Edit Mode:', fetchedSites);
               setTimeout(() => {
-                this.masterSites = fetchedSites;
+                // Filter down to only active medical facilities matching your layout rule
+                this.masterSites = fetchedSites.filter((site: any) => site.isActive);
                 this.loadProductsAndTemplates(siteId, prodId, templateId, ticket, this.isReadOnly);
                 this.cdr.detectChanges();
               }, 0);
@@ -277,6 +435,7 @@ if (this.isReadOnly) {
     });
   }
 
+
   // 3. LOAD DEPENDENCIES - Chains dropdown fields and safely binds values to the UI form controls
   
  private loadProductsAndTemplates(siteId: number, prodId: number, templateId: number, ticket: any, isReadOnly: boolean = false): void {
@@ -295,8 +454,34 @@ if (this.isReadOnly) {
             this.products = fetchedProducts;
             this.templates = fetchedTemplates;
 
-            this.form.get('masterSiteId')?.disable({ emitEvent: false });
+            if (this.isEditMode) {
 
+              const selectedSite =
+                this.masterSites.find(site =>
+                  Number(
+                    site.masterSiteId ??
+                    site.id ??
+                    site.Id
+                  ) === Number(siteId)
+                );
+
+              if (selectedSite) {
+                // Display selected site name in autocomplete
+                this.masterSiteSearchControl.setValue(
+                  selectedSite,
+                  { emitEvent: false }
+                );
+              }
+
+              // Lock both the form value and autocomplete input
+              this.form.get('masterSiteId')?.disable({
+                emitEvent: false
+              });
+
+              this.masterSiteSearchControl.disable({
+                emitEvent: false
+              });
+            }
             this.form.patchValue({
               productId: prodId,
               templateId: templateId,
@@ -307,6 +492,16 @@ if (this.isReadOnly) {
               issueType: ticket.issueType || ticket.IssueType || ''
             }, { emitEvent: false });
 
+            const selectedTemplate = this.templates.find(
+              template => Number(template.templateId) === Number(templateId)
+            );
+            this.templateSearchControl.setValue(selectedTemplate || '', { emitEvent: false });
+
+            const selectedProduct = this.products.find(
+              product => this.getProductId(product) === Number(prodId)
+            );
+            this.productSearchControl.setValue(selectedProduct || '', { emitEvent: false });
+
             this.form.get('masterSiteId')?.setValue(siteId, { emitEvent: false, onlySelf: true });
 
             // =========================================================================
@@ -314,12 +509,16 @@ if (this.isReadOnly) {
             // =========================================================================
             if (isReadOnly) {
               this.form.get('productId')?.disable({ emitEvent: false });
+              this.productSearchControl.disable({ emitEvent: false });
               this.form.get('templateId')?.disable({ emitEvent: false });
+              this.templateSearchControl.disable({ emitEvent: false });
               this.form.get('description')?.disable({ emitEvent: false });
               this.form.get('severity')?.disable({ emitEvent: false });
             } else {
               this.form.get('productId')?.enable({ emitEvent: false });
+              this.productSearchControl.enable({ emitEvent: false });
               this.form.get('templateId')?.enable({ emitEvent: false });
+              this.templateSearchControl.enable({ emitEvent: false });
               this.form.get('description')?.enable({ emitEvent: false });
               this.form.get('severity')?.enable({ emitEvent: false });
             }
@@ -482,22 +681,36 @@ if (this.isReadOnly) {
     this.cdr.detectChanges();
   }
 
-  loadInitialSiteList(): void {
-    const role = this.currentUser?.role;
-    if (role === 'SuperAdmin' || role === 'SupportEngineer') {
-      this.masterSiteService.getSites({ pageNumber: 1, pageSize: 1000 }).subscribe(res => {
-        this.masterSites = (res.data || []).filter((site: any) => site.isActive); 
-        this.cdr.detectChanges();
-      });
-    } else if (this.currentUser?.masterSiteId) {
-      this.masterSiteService.getSiteViewDetails(this.currentUser.masterSiteId).subscribe(res => {
-        this.masterSites = [res];
-        this.form.get('masterSiteId')?.setValue(this.currentUser.masterSiteId);
-        this.loadProductsForSite(this.currentUser.masterSiteId);
-        this.cdr.detectChanges();
-      });
-    }
+ loadInitialSiteList(): void {
+
+  const role = this.currentUser?.role;
+
+  if (
+    role === this.ROLES.SUPER_ADMIN ||
+    role === this.ROLES.MANAGER ||
+    role === this.ROLES.SUPPORT_ENGINEER
+  ) {
+    // For these roles, Master Sites will be loaded through autocomplete search.
+    this.masterSites = [];
   }
+  else if (this.currentUser?.masterSiteId) {
+
+    this.masterSiteService
+      .getSiteViewDetails(this.currentUser.masterSiteId)
+      .subscribe(res => {
+
+        this.masterSites = [res];
+
+        this.form
+          .get('masterSiteId')
+          ?.setValue(this.currentUser.masterSiteId);
+
+        this.loadProductsForSite(this.currentUser.masterSiteId);
+
+        this.cdr.detectChanges();
+      });
+  }
+}
   onSiteChange(siteId: number): void {
     // 1. Reset everything to null first to clear out previous selections
     this.form.patchValue({ 
@@ -509,6 +722,8 @@ if (this.isReadOnly) {
       priority: '', 
       tatHours: 0 
     }, { emitEvent: false });
+    this.productSearchControl.setValue('', { emitEvent: false });
+    this.templateSearchControl.setValue('', { emitEvent: false });
 
     // 2. Completely empty out your component's template and product arrays
     this.products = [];
@@ -518,30 +733,114 @@ if (this.isReadOnly) {
     this.loadProductsForSite(siteId);
   }
 
-   private loadProductsForSite(siteId: number): void {
-    this.siteProductService.getProductsViewDetails(siteId).subscribe({
-      next: (res: any) => {
-        this.products = Array.isArray(res) ? res : (res.data || res.items || []);
 
-        if (this.products && this.products.length === 1) {
-          const firstItem = this.products[0];
-          
-          // 🟢 FIXED: Force it to pick 'productId' (e.g. 26) instead of the row 'Id' (e.g. 39)
-          const firstProdId = firstItem?.productId || firstItem?.ProductId;
+  private setupMasterSiteSearch(): void {
 
-          if (firstProdId) {
-            this.form.get('productId')?.setValue(firstProdId);
-            this.onProductChange(firstProdId);
-          }
-        }
-        this.cdr.detectChanges();
-      }
-    });
+  const role = this.currentUser?.role;
+
+  if (
+    role !== this.ROLES.SUPER_ADMIN &&
+    role !== this.ROLES.MANAGER &&
+    role !== this.ROLES.SUPPORT_ENGINEER
+  ) {
+    return;
   }
+
+  this.masterSiteSearchSubscription =
+    this.masterSiteSearchControl.valueChanges
+      .pipe(
+        startWith(''),
+        debounceTime(300),
+        distinctUntilChanged(),
+
+        switchMap((value: any) => {
+
+          const searchText =
+            typeof value === 'string'
+              ? value.trim()
+              : '';
+
+          return this.masterSiteService.getSites({
+            pageNumber: 1,
+            pageSize: 200,
+            name: searchText || undefined,
+            isActive: true
+          }).pipe(
+            catchError((error: any) => {
+
+              console.error(
+                'Master Site search failed:',
+                error
+              );
+
+              this.masterSites = [];
+
+              return of(null);
+            })
+          );
+        })
+      )
+      .subscribe({
+        next: (response: any) => {
+
+          if (!response) {
+            return;
+          }
+
+          const sites =
+            response?.data ||
+            response?.items ||
+            [];
+
+          this.masterSites = sites.filter(
+            (site: any) => site.isActive === true
+          );
+
+          this.cdr.detectChanges();
+        }
+      });
+}
+  private loadProductsForSite(siteId: number): void {
+  this.siteProductService.getProductsViewDetails(siteId).subscribe({
+    next: (res: any) => {
+
+      const fetchedProducts = Array.isArray(res)
+        ? res
+        : (res?.data || res?.items || []);
+
+      // Show only active products
+      this.products = fetchedProducts.filter(
+        (product: any) =>
+          product.isActive === true ||
+          product.IsActive === true
+      );
+
+      if (this.products.length === 1) {
+        const firstItem = this.products[0];
+
+        const firstProdId =
+          this.getProductId(firstItem);
+
+        if (firstProdId) {
+          this.productSearchControl.setValue(firstItem, { emitEvent: false });
+          this.form.get('productId')?.setValue(firstProdId, { emitEvent: false });
+          this.onProductChange(firstProdId);
+        }
+      }
+
+      this.cdr.detectChanges();
+    }
+  });
+}
 
 
 
 onProductChange(productId: number): void {
+  const selectedProduct = this.products.find(product => this.getProductId(product) === Number(productId));
+  if (selectedProduct) {
+    this.productSearchControl.setValue(selectedProduct, { emitEvent: false });
+  }
+
   this.form.patchValue({
     templateId: null,
     issueType: '',
@@ -550,6 +849,7 @@ onProductChange(productId: number): void {
     priority: '',
     tatHours: 0
   });
+  this.templateSearchControl.setValue('', { emitEvent: false });
 
   this.templateService
     .getTemplateViewByProduct(productId)

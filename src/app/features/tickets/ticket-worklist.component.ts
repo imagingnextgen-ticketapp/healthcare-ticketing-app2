@@ -3,11 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule, FormControl } from '@angular/forms';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MasterSiteService } from '../../core/services/mastersite.service';
+
 
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { Router } from '@angular/router';
-import { debounceTime, distinctUntilChanged, Subscription, Observable, startWith, map } from 'rxjs';
+import { debounceTime, distinctUntilChanged,  catchError,
+  of,Subscription,switchMap, Observable, startWith, map } from 'rxjs';
 
 import { TicketService } from '../../core/services/ticket.service';
 import { UserService } from '../../core/services/user.service';
@@ -20,12 +23,15 @@ import { TicketCreateComponent } from './ticket-create.component';
 import { TicketCloseDialogComponent } from './ticket-close.component';
 import { SolutionViewDialogComponent } from './solution-view.dialog.component';
 import { MatIcon, MatIconModule } from '@angular/material/icon';
+import type { MatTooltip } from '@angular/material/tooltip';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MatButtonModule } from '@angular/material/button';
 import { TicketResponseDto } from '../../core/models/ticket.model';
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
+import { TicketAddProgressNoteDialogComponent } from './ticket-add-progress-note.dialog.component';
+import { TicketProgressNotesDialogComponent } from './ticket-progress-notes.dialog.component';
 @Component({
   selector: 'app-assign-ticket-dialog',
   standalone: true,
@@ -76,9 +82,26 @@ export class AssignTicketDialog {
   templateUrl: './ticket-worklist.component.html',
   styleUrls: ['./ticket-worklist.component.scss']
 })
-export class TicketWorklistComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  displayedColumns: string[] = ['ticketId', 'issueType', 'description', 'createdDate', 'productName', 'siteName', 'reOpenCount', 'createdBy', 'assignedTo', 'status', 'closedDate', 'tatHours', 'severity', 'actualTatHours', 'actions'];
+export class TicketWorklistComponent implements OnInit, OnDestroy {
+  ///@ViewChild(MatPaginator) paginator!: MatPaginator;
+  displayedColumns: string[] = [
+  'actions',
+  'ticketId',
+  'issueType',
+  'description',
+  'createdDate',
+  'productName',
+  'siteName',
+  'reOpenCount',
+  'createdBy',
+  'assignedTo',
+  'status',
+  'closedBy',
+  'closedDate',
+  'tatHours',
+  'severity',
+  'actualTatHours'
+];
   
   dataSource = new MatTableDataSource<any>([]);
   pageSizeOptions = [10, 25, 50, 100];
@@ -90,9 +113,11 @@ export class TicketWorklistComponent implements OnInit, AfterViewInit, OnDestroy
    // 2. ADD COMPONENT PROPERTIES FOR THE RESPONSIVE DATEPICKER
   maxDate = new Date();
   //isMobile$: Observable<boolean>;
-  totalRecords = 0; pageSize = 10; pageNumber = 1; currentTabIndex = 0; allEngineers: any[] = [];
+  totalRecords = 0; pageSize = 10; pageNumber = 1; currentTabIndex = 0; sites: any[] = [];allEngineers: any[] = [];allUsers: any[] = [];
+  private descriptionTooltipTimer: ReturnType<typeof setTimeout> | undefined;
+  
 
-  readonly ROLES = { SUPER_ADMIN: 'SuperAdmin', SUPPORT_ENGINEER: 'SupportEngineer', HOSPITAL_ADMIN: 'HospitalAdmin', HOSPITAL_USER: 'HospitalUser' };
+  readonly ROLES = { SUPER_ADMIN: 'SuperAdmin', SUPPORT_ENGINEER: 'SupportEngineer', HOSPITAL_ADMIN: 'HospitalAdmin', HOSPITAL_USER: 'HospitalUser', MANAGER:'Manager' };
   statusOptions = [{label: 'Open', value: 1}, {label: 'Assigned', value: 2}, {label: 'InProgress', value: 3}, {label: 'Closed', value: 4}, {label: 'Reopened', value: 5}];
 
   constructor(
@@ -100,10 +125,12 @@ export class TicketWorklistComponent implements OnInit, AfterViewInit, OnDestroy
     private ticketService: TicketService, 
     private userService: UserService,
     private attachmentService: TicketAttachmentService, 
+    private masterSiteService: MasterSiteService,
     private auth: AuthService, 
     private dialog: MatDialog, 
     private cdr: ChangeDetectorRef, 
     private snackBar: MatSnackBar,
+     private router: Router
     //private breakpointObserver: BreakpointObserver
   ) {
   /*  this.isMobile$ = this.breakpointObserver
@@ -120,19 +147,47 @@ export class TicketWorklistComponent implements OnInit, AfterViewInit, OnDestroy
     this.initFilterForm();
     this.setupAutoSearch();
     this.loadEngineers();
-   this.refresh();
+    this.loadUsers();
+  setTimeout(() => {
+  this.loadSites();
+  this.refresh();
+});
   }
 
-  ngAfterViewInit() { this.dataSource.paginator = this.paginator; }
-  ngOnDestroy() { this.filterSubscription?.unsubscribe(); }
+  //ngAfterViewInit() { this.dataSource.paginator = this.paginator; }
+  ngOnDestroy() {
+    this.filterSubscription?.unsubscribe();
+    if (this.descriptionTooltipTimer) {
+      clearTimeout(this.descriptionTooltipTimer);
+    }
+  }
 
-  initFilterForm() { this.filterForm = this.fb.group({ ticketId: [null], status: [null], createdDate: [null], resolveDate: [null] }); }
+  showDescriptionTooltip(tooltip: MatTooltip): void {
+    if (this.descriptionTooltipTimer) {
+      clearTimeout(this.descriptionTooltipTimer);
+    }
+
+    tooltip.show();
+    this.descriptionTooltipTimer = setTimeout(() => {
+      tooltip.hide();
+      this.descriptionTooltipTimer = undefined;
+    }, 2500);
+  }
+
+  initFilterForm() { this.filterForm = this.fb.group({ ticketId: [null], status: [null], createdDate: [null], resolveDate: [null] , masterSiteId: [null],  createdByUserId: [null],closedByUserId: [null],assignedToUserId: [null],}); }
 
   setupAutoSearch() { 
     this.filterSubscription = this.filterForm.valueChanges.pipe(debounceTime(500), distinctUntilChanged()).subscribe(() => { this.pageNumber = 1; this.refresh(); }); 
   }
+  
+  loadEngineers(): void {
+  this.userService.getEngineers().subscribe({
+    next: (users: any) => {
+      this.allEngineers = users || [];
+    }
+  });
+}
 
-  loadEngineers() { this.userService.getEngineers().subscribe(users => this.allEngineers = users || []); }
 
   refresh(isManual: boolean = false) {
   // 🟢 1. AUTO-LOAD TOGGLE: Turn on the spinner and disable the button instantly
@@ -154,13 +209,25 @@ export class TicketWorklistComponent implements OnInit, AfterViewInit, OnDestroy
     const d = new Date(formValues.resolveDate);
     formValues.resolveDate = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
   }
+  
 
-  const params = { pageNumber: this.pageNumber, pageSize: this.pageSize, ...formValues };
+  const params: any = {
+  pageNumber: this.pageNumber,
+  pageSize: this.pageSize,
+  ...formValues
+};
+
+// HospitalUser & HospitalAdmin
+if (this.currentUser.role === 'HospitalUser' || this.currentUser.role === 'HospitalAdmin'
+) {
+  params.masterSiteId = this.currentUser.masterSiteId;
+}
 
   this.ticketService.getWorklist(params).subscribe({
     next: (res: any) => {
       this.dataSource.data = res.data || [];
       this.totalRecords = res.totalRecords || 0;
+      this.cdr.detectChanges();
 
       // Introduce a brief 200ms visual buffer so the reload animation is clearly visible
       setTimeout(() => {
@@ -186,6 +253,23 @@ export class TicketWorklistComponent implements OnInit, AfterViewInit, OnDestroy
     }
   });
 }
+loadSites(): void {
+  this.masterSiteService
+    .getSites({ pageNumber: 1, pageSize: 500 })
+    .subscribe({
+      next: (res: any) => {
+
+        this.sites = (res.data || []).filter(
+          (x: any) => x.isActive
+        );
+
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Failed to load hospitals', err);
+      }
+    });
+}
 
 
 
@@ -194,6 +278,88 @@ export class TicketWorklistComponent implements OnInit, AfterViewInit, OnDestroy
     this.pageNumber = 1;
     this.refresh();
   }
+
+//load users 
+loadUsers(): void {
+  this.userService.getActiveUsers().subscribe({
+    next: (users: any) => {
+      this.allUsers = users || [];
+      this.cdr.detectChanges();
+    },
+    error: (err) => {
+      console.error('Failed to load users:', err);
+      this.allUsers = [];
+    }
+  });
+}
+
+  //add progress buttons
+
+openProgressNotes(ticket: TicketResponseDto): void {
+  if (!ticket?.ticketId) {
+    return;
+  }
+
+  this.dialog.open(TicketProgressNotesDialogComponent, {
+    width: '650px',
+    maxWidth: '95vw',
+    maxHeight: '90vh',
+    data: { ticketId: ticket.ticketId }
+  });
+}
+
+
+canViewProgressNotes(ticket: TicketResponseDto): boolean {
+  if (!ticket || !this.currentUser) {
+    return false;
+  }
+
+  const status = this.getNormalizedStatus(ticket);
+
+  return status !== TicketStatus.Open;
+}
+
+
+canAddProgressNote(ticket: TicketResponseDto): boolean {
+  if (!ticket || !this.currentUser) {
+    return false;
+  }
+
+  const status = this.getNormalizedStatus(ticket);
+
+  if (
+    status !== TicketStatus.Assigned &&
+    status !== TicketStatus.InProgress &&
+    status !== TicketStatus.Reopened
+  ) {
+    return false;
+  }
+
+  const currentUserId =
+    this.currentUser.userId ??
+    this.currentUser.UserId;
+
+  const assignedToUserId =
+    ticket.assignedToUserId ??
+    (ticket as any).AssignedToUserId;
+
+  const role = this.currentUser.role;
+
+  if (
+    role === this.ROLES.SUPER_ADMIN ||
+    role === this.ROLES.MANAGER
+  ) {
+    return true;
+  }
+
+  if (role === this.ROLES.SUPPORT_ENGINEER) {
+    return Number(currentUserId) === Number(assignedToUserId);
+  }
+
+  return false;
+}
+
+  ///
    // =====================================================
   // 🟢 FIXED LOOKUP HELPER (Handles Numbers and Strings)
   // =====================================================
@@ -248,7 +414,7 @@ onTabChange(index: number) {
     // 5. Clear the freshly mounted form controls safely without side-effects
     if (this.filterForm) {
       this.filterForm.patchValue(
-        { ticketId: null, status: null, createdDate: null, resolveDate: null },
+        { ticketId: null, status: null, createdDate: null, resolveDate: null, masterSiteId: null,createdByUserId: null,closedByUserId:null },
         { emitEvent: false }
       );
     }
@@ -450,7 +616,7 @@ viewResolutionNotes(ticket: TicketResponseDto): void {
     });
   }
 
-   canEditTicket(ticket: any): boolean {
+ canEditTicket(ticket: any): boolean {
   if (!ticket || !this.currentUser) {
     return false;
   }
@@ -476,22 +642,13 @@ viewResolutionNotes(ticket: TicketResponseDto): void {
     ticket.assignedToUserId ||
     ticket.AssignedToUserId;
 
-  const rawStatus =
-    String(ticket.status || ticket.Status || '')
-      .trim()
-      .toLowerCase();
+  const status = this.getNormalizedStatus(ticket);
 
-  // Open, Assigned, Reopened only
   const isEditableStatus =
-    rawStatus === 'open' ||
-    rawStatus === 'assigned' ||
-    rawStatus === 'reopened' ||
-    rawStatus === '1' ||
-    rawStatus === '2' ||
-    rawStatus === '5' ||
-    ticket.status === 1 ||
-    ticket.status === 2 ||
-    ticket.status === 5;
+    status === TicketStatus.Open ||
+    status === TicketStatus.Assigned ||
+    status === TicketStatus.InProgress ||
+    status === TicketStatus.Reopened;
 
   if (!isEditableStatus) {
     return false;
@@ -502,6 +659,11 @@ viewResolutionNotes(ticket: TicketResponseDto): void {
     userRole === 'superadmin' ||
     userRole === 'super admin'
   ) {
+    return true;
+  }
+
+  // Manager
+  if (userRole === 'manager') {
     return true;
   }
 
@@ -569,42 +731,56 @@ private getNormalizedStatus(ticket: any): number {
   }
 }
 
-
 // --- GUARDS ---
-  canAssign(ticket: any): boolean {
+
+canAssign(ticket: any): boolean {
   if (!ticket || !this.currentUser) {
     return false;
   }
 
   const status = this.getNormalizedStatus(ticket);
 
-  // Never allow assignment on closed tickets
+  // Closed tickets cannot be assigned
   if (status === 4 || ticket.closedDate) {
     return false;
   }
 
+  const currentUserId =
+    this.currentUser.userId ??
+    this.currentUser.UserId;
+
+  const assignedToUserId =
+    ticket.assignedToUserId ??
+    ticket.AssignedToUserId;
+
   const isSuperAdmin =
     this.currentUser.role === this.ROLES.SUPER_ADMIN;
+
+  const isManager =
+    this.currentUser.role === this.ROLES.MANAGER;
 
   const isSupportEng =
     this.currentUser.role === this.ROLES.SUPPORT_ENGINEER;
 
-  const isAssignedToMe =
-    Number(ticket.assignedToUserId) === Number(this.currentUser.userId);
-
-  if (isSuperAdmin) {
+  // Manager and SuperAdmin can assign any non-closed ticket
+  if (isSuperAdmin || isManager) {
     return true;
   }
 
+  // Support Engineer:
+  // Unassigned ticket -> hide "Assign to Engineer"
+  // Own ticket -> show "Assign to Engineer"
+  // Another user's ticket -> hide "Assign to Engineer"
   if (isSupportEng) {
-    return !isAssignedToMe;
+    if (assignedToUserId == null) {
+      return false;
+    }
+
+    return Number(assignedToUserId) === Number(currentUserId);
   }
 
   return false;
 }
-
-/// 🛠️ START WORK: Shows only for status 2 (Assigned/Open)
-
 
 canStartWork(ticket: any): boolean {
   console.log(
@@ -637,6 +813,7 @@ canStartWork(ticket: any): boolean {
 
   const isSuperAdmin = this.currentUser.role === this.ROLES.SUPER_ADMIN;
   const isSupportEng = this.currentUser.role === this.ROLES.SUPPORT_ENGINEER;
+  const isManager=this.currentUser.role===this.ROLES.MANAGER;
 
   const currentUserId = this.currentUser.userId || this.currentUser.UserId;
   const assignedUserId = ticket.assignedToUserId || ticket.AssignedToUserId;
@@ -645,7 +822,7 @@ canStartWork(ticket: any): boolean {
     Number(currentUserId) === Number(assignedUserId);
 
   // 🟢 Super Admin: Open, Assigned, Reopened
-  if (isSuperAdmin) {
+  if (isSuperAdmin || isManager) {
     return status === 1 || status === 2 || status === 5;
   }
 
@@ -655,6 +832,19 @@ canStartWork(ticket: any): boolean {
   }
 
   return false;
+}
+
+formatTat(hours: number): string {
+  const totalMinutes = Math.round(hours * 60);
+
+  if (totalMinutes < 60) {
+    return `${totalMinutes} min`;
+  }
+
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
 // 🔒 2. CLOSE TICKET BUTTON (Direct Inline Icon Button)
@@ -669,7 +859,8 @@ canClose(ticket: any): boolean {
   const isHospitalAdmin = this.currentUser.role === this.ROLES.HOSPITAL_ADMIN;
   const isHospitalUser  = this.currentUser.role === this.ROLES.HOSPITAL_USER;
   const isSuperAdmin    = this.currentUser.role === this.ROLES.SUPER_ADMIN;
-  const isSupportEng    = this.currentUser.role === this.ROLES.SUPPORT_ENGINEER;
+  const isSupportEng    = this.currentUser.role === this.ROLES.SUPPORT_ENGINEER && ticket.assignedToUserId === this.currentUser.userId;
+  const isManager=this.currentUser.role===this.ROLES.MANAGER;
   // 3. Status checks mapped directly to your TicketStatus Enum parameters
   const isClosed = ticket.status === 4 || ticket.status === 'Closed';
   const isInProgress = ticket.status === 3 || 
@@ -684,7 +875,7 @@ canClose(ticket: any): boolean {
 
   // 5. Role Rule for SuperAdmin & Support Engineer:
   // They can ONLY close the ticket if the status is strictly InProgress (Status 3)
-  if (isSuperAdmin || isSupportEng) {
+  if (isSuperAdmin || isSupportEng ||isManager) {
     return isInProgress;
   }
 
@@ -696,12 +887,18 @@ canClose(ticket: any): boolean {
 canReopen(ticket: any): boolean {
   if (!ticket) return false;
 
-  // Track both number and string variations coming from the backend data grid rows
-  const isClosed = ticket.status === 4 || 
-                   ticket.status === '4' || 
-                   String(ticket.status).trim().toLowerCase() === 'closed';
+  const isSupportEng    = this.currentUser.role === this.ROLES.SUPPORT_ENGINEER;
 
-  // 🟢 FIX: Removed the role-based guard clause so it is exposed to all users
+  // Track both number and string variations coming from the backend data grid rows
+  let isClosed = (ticket.status === 4 || 
+                   ticket.status === '4' || 
+                   String(ticket.status).trim().toLowerCase() === 'closed');
+
+  if(isSupportEng)
+  {
+    isClosed =  ticket.assignedToUserId === this.currentUser.userId && isClosed;
+  }
+  
   return isClosed;
 }
 
@@ -738,8 +935,70 @@ canReopen(ticket: any): boolean {
   //   });
   // }
 
+  canViewTicketHistory(): boolean {
+
+  if (!this.currentUser) {
+    return false;
+  }
+
+  return (
+    this.currentUser.role === this.ROLES.SUPER_ADMIN ||
+    this.currentUser.role === this.ROLES.MANAGER ||
+    this.currentUser.role === this.ROLES.SUPPORT_ENGINEER
+  );
+}
+
+openAddProgressNote(
+  ticket: TicketResponseDto
+): void {
+
+  if (!ticket?.ticketId) {
+    return;
+  }
+
+  const dialogRef = this.dialog.open(
+    TicketAddProgressNoteDialogComponent,
+    {
+      width: '600px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      data: {
+        ticketId: ticket.ticketId
+      }
+    }
+  );
+
+  dialogRef.afterClosed().subscribe(
+    (result) => {
+
+      if (result === true) {
+        // Progress note saved successfully.
+        // Worklist does not need to refresh.
+      }
+
+    }
+  );
+}
+
+
+openTicketHistory(
+  ticket: TicketResponseDto
+): void {
+
+  this.router.navigate(
+    ['/history'],
+    {
+      queryParams: {
+        ticketId: ticket.ticketId
+      }
+    }
+  );
+}
+
 
 } // 🛑 THIS MUST BE THE ABSOLUTE LAST CHARACTER IN YOUR FILE
+
+
 
 
 

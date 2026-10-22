@@ -3,7 +3,7 @@ import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-import { Ticket, TicketResponseDto, UpdateTicketDto } from '../models/ticket.model';
+import { Ticket, TicketProgressNoteDto, TicketResponseDto, UpdateTicketDto } from '../models/ticket.model';
 import { TicketHistoryDto, TicketHistoryFilterDto } from '../models/tickethistory.model';
 import { PagedResponse } from '../models/generic-response.model';
 
@@ -56,30 +56,82 @@ export class TicketService {
 
   // ✅ WORKLIST: [HttpGet("worklist")]
   getWorklist(filter: any): Observable<PagedResponse<TicketResponseDto>> {
-    let params = new HttpParams()
-      .set('pageNumber', filter.pageNumber?.toString() || '1')
-      .set('pageSize', filter.pageSize?.toString() || '25');
+  let params = new HttpParams()
+    .set('pageNumber', filter.pageNumber?.toString() || '1')
+    .set('pageSize', filter.pageSize?.toString() || '25');
 
-    if (filter.ticketId) params = params.set('ticketId', filter.ticketId.toString());
-    if (filter.status != null) params = params.set('status', filter.status.toString());
-    if (filter.assignedToUserId) params = params.set('assignedToUserId', filter.assignedToUserId.toString());
-    
-    // 1. Format Created Date
-    if (filter.createdDate) {
-      const cDate = new Date(filter.createdDate);
-      const cStr = cDate.getFullYear() + '-' + ('0' + (cDate.getMonth() + 1)).slice(-2) + '-' + ('0' + cDate.getDate()).slice(-2);
-      params = params.set('createdDate', cStr);
-    }
-
-    // 2. Add and Format Resolve Date
-    if (filter.resolveDate) {
-      const rDate = new Date(filter.resolveDate);
-      const rStr = rDate.getFullYear() + '-' + ('0' + (rDate.getMonth() + 1)).slice(-2) + '-' + ('0' + rDate.getDate()).slice(-2);
-      params = params.set('resolveDate', rStr); 
-    }
-
-    return this.http.get<PagedResponse<TicketResponseDto>>(`${this.apiUrl}/worklist`, { params });
+  if (filter.ticketId) {
+    params = params.set('ticketId', filter.ticketId.toString());
   }
+
+  if (filter.status != null) {
+    params = params.set('status', filter.status.toString());
+  }
+
+  // Assigned Engineer
+  if (filter.assignedToUserId) {
+    params = params.set(
+      'assignedToUserId',
+      filter.assignedToUserId.toString()
+    );
+  }
+
+  // Requested By / Created By
+  if (filter.createdByUserId) {
+    params = params.set(
+      'createdByUserId',
+      filter.createdByUserId.toString()
+    );
+  }
+
+  // Closed By
+  if (filter.closedByUserId) {
+    params = params.set(
+      'closedByUserId',
+      filter.closedByUserId.toString()
+    );
+  }
+
+  if (filter.masterSiteId != null) {
+    params = params.set(
+      'masterSiteId',
+      filter.masterSiteId.toString()
+    );
+  }
+
+  // Created Date
+  if (filter.createdDate) {
+    const cDate = new Date(filter.createdDate);
+
+    const cStr =
+      cDate.getFullYear() +
+      '-' +
+      ('0' + (cDate.getMonth() + 1)).slice(-2) +
+      '-' +
+      ('0' + cDate.getDate()).slice(-2);
+
+    params = params.set('createdDate', cStr);
+  }
+
+  // Resolve Date
+  if (filter.resolveDate) {
+    const rDate = new Date(filter.resolveDate);
+
+    const rStr =
+      rDate.getFullYear() +
+      '-' +
+      ('0' + (rDate.getMonth() + 1)).slice(-2) +
+      '-' +
+      ('0' + rDate.getDate()).slice(-2);
+
+    params = params.set('resolveDate', rStr);
+  }
+
+  return this.http.get<PagedResponse<TicketResponseDto>>(
+    `${this.apiUrl}/worklist`,
+    { params }
+  );
+}
 
   // ✅ GET BY ID: Useful for Reopen/Details view
   getTicketById(id: number): Observable<TicketResponseDto> {
@@ -120,6 +172,29 @@ export class TicketService {
   return this.http.get<any>(`${this.apiUrl}/history`, { params });
 }
 
+  exportTicketHistory(filter: TicketHistoryFilterDto): Observable<Blob> {
+    const formatLocalDate = (date: Date | string | undefined): string | undefined => {
+      if (!date) return undefined;
+      const value = new Date(date);
+      if (isNaN(value.getTime())) return undefined;
+      return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+    };
+
+    let params = new HttpParams();
+    if (filter.ticketId) params = params.set('ticketId', filter.ticketId.toString());
+    if (filter.actionByUserId) params = params.set('actionByUserId', filter.actionByUserId.toString());
+
+    const fromDate = formatLocalDate(filter.fromDate);
+    const toDate = formatLocalDate(filter.toDate);
+    if (fromDate) params = params.set('fromDate', `${fromDate}T00:00:00`);
+    if (toDate) params = params.set('toDate', `${toDate}T23:59:59`);
+
+    return this.http.get(`${this.apiUrl}/history/export`, {
+      params,
+      responseType: 'blob'
+    });
+  }
+
 
   // ✅ ESCALATE: [HttpPost("escalate")]
   escalateTickets(): Observable<{ message: string }> {
@@ -133,4 +208,16 @@ export class TicketService {
     };
     return this.http.put<any>(`${this.apiUrl}/update`, dto, httpOptions);
   }
+
+  addProgressNote(dto: {
+  ticketId: number;
+  note: string;
+}): Observable<any> {
+  return this.http.post( `${this.apiUrl}/progress-notes`,dto );
+}
+getProgressNotes(
+  ticketId: number): Observable<TicketProgressNoteDto[]> {
+  return this.http.get<TicketProgressNoteDto[]>(
+    `${this.apiUrl}/${ticketId}/progress-notes`);
+}
 }
