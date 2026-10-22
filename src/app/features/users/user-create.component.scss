@@ -175,6 +175,14 @@ mat-dialog-actions {
   width: 100%;
 }
 
+::ng-deep .mapping-search-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+}
+
 @media (max-width: 580px) {
   .form-grid {
     grid-template-columns: 1fr;
