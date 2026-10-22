@@ -6,6 +6,7 @@ import { MatSnackBar } from "@angular/material/snack-bar";
 import { CommonModule } from "@angular/common";
 import { MaterialModules } from "../../../shared/material.collection";
 import { FormControl, FormsModule } from "@angular/forms";
+import { UserDto } from "../../../core/models/usersite.model";
 
 @Component({
   selector: 'app-site-usersite-mapping',
@@ -130,38 +131,24 @@ export class UserSiteMappingComponent implements OnInit {
   }
 
   loadAllAvailableUsers(): void {
-    this.isLoading = true;
-    this.availableUsers = []; // Clear previous selection pools
-    this.fetchUserPage(1);
-  }
+  this.isLoading = true;
+  this.availableUsers = [];
 
-  private fetchUserPage(pageNumber: number): void {
-    this.userService.getUsers({ pageNumber, pageSize: 50 }).subscribe({
-      next: (res: any) => {
-        const filteredUsers = (res.data || []).filter((user: any) =>
-          ![
-            'superadmin',
-            'supportengineer',
-            'manager',
-            'systemuser'
-          ].includes(user.roleName?.replace(/\s/g, '').toLowerCase())
-        );
-
-        this.availableUsers = [...this.availableUsers, ...filteredUsers];
-        
-        if (res.pageNumber < res.totalPages) {
-          this.fetchUserPage(pageNumber + 1);
-        } else {
-          this.isLoading = false;
-          this.cdr.detectChanges(); 
-        }
-      },
-      error: () => { 
-        this.isLoading = false; 
-        this.cdr.detectChanges(); 
-      }
-    });
-  }
+  this.userSiteService.getActiveHospitalUsersForSiteMapping().subscribe({
+    next: (users: UserDto[]) => {
+      this.availableUsers = users ?? [];
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    },
+    error: (error: any) => {
+      console.error('Failed to load active hospital users:', error);
+      this.availableUsers = [];
+      this.isLoading = false;
+      this.showSnackBar('Failed to load eligible hospital users');
+      this.cdr.detectChanges();
+    }
+  });
+}
 
   onSiteChange(): void {
     if (this.selectedSiteId) {

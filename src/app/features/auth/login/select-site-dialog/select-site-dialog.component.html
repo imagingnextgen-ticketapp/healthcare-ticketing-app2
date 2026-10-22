@@ -7,12 +7,24 @@
         Please select the hospital you want to work with.
     </p>
 
+    <label class="site-search-label" for="site-search">Search hospitals</label>
+    <input
+        id="site-search"
+        class="site-search"
+        type="search"
+        [(ngModel)]="siteSearchTerm"
+        placeholder="Search by hospital name"
+        aria-label="Search hospitals by name"
+        autocomplete="off">
+
+    <div class="site-list" role="region" aria-label="Hospital options">
     <mat-radio-group
         [(ngModel)]="selectedSiteId"
-        class="site-radio-group">
+        class="site-radio-group"
+        aria-label="Select a hospital">
 
         <mat-radio-button
-            *ngFor="let site of data.sites"
+            *ngFor="let site of filteredSites"
             [value]="site.siteId"
             class="site-radio">
 
@@ -21,6 +33,10 @@
         </mat-radio-button>
 
     </mat-radio-group>
+    <p *ngIf="filteredSites.length === 0" class="no-sites-message" role="status">
+        No hospitals match your search.
+    </p>
+    </div>
 
 </mat-dialog-content>
 

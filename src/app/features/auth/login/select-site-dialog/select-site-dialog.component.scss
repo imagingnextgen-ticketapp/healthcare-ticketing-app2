@@ -5,6 +5,37 @@
   line-height: 1.5;
 }
 
+.site-search-label {
+  display: block;
+  margin-bottom: 6px;
+  color: #555;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.site-search {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid #bdbdbd;
+  border-radius: 6px;
+  color: #222;
+  font: inherit;
+}
+
+.site-search:focus {
+  border-color: #008542;
+  outline: 2px solid rgba(0, 133, 66, 0.18);
+}
+
+.site-list {
+  max-height: min(45vh, 360px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .site-radio-group {
   display: flex;
   flex-direction: column;
@@ -14,13 +45,20 @@
   margin-bottom: 14px;
 }
 
+.no-sites-message {
+  margin: 12px 0;
+  color: #666;
+  font-size: 14px;
+}
+
 .site-name {
   font-size: 15px;
 }
 
 mat-dialog-content {
   min-width: 420px;
-  overflow-x: hidden;
+  max-height: none;
+  overflow: hidden;
 }
 
 mat-dialog-actions {
@@ -100,6 +138,10 @@ mat-dialog-actions {
     padding: 16px;
   }
 
+  .site-list {
+    max-height: min(35vh, 280px);
+  }
+
   .dialog-text {
     font-size: 13px;
     line-height: 1.5;
@@ -124,5 +166,11 @@ mat-dialog-actions {
   .cancel-btn {
     flex: 1;
     min-width: auto;
+  }
+}
+
+@media (max-height: 700px) {
+  .site-list {
+    max-height: 30vh;
   }
 }

@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { UserSiteViewDto } from '../models/user.model';
 import { PagedResponse } from '../models/generic-response.model';
+import { UserDto } from '../models/usersite.model';
 
 
 @Injectable({
@@ -39,4 +40,11 @@ export class UserSiteService {
   deactivate(dto: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/deactivate`, dto);
   }
+
+getActiveHospitalUsersForSiteMapping(): Observable<UserDto[]> {
+  return this.http.get<UserDto[]>(
+    `${this.apiUrl}/active-hospital-users`
+  );
 }
+}
+
