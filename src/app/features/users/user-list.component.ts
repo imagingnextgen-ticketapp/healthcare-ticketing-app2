@@ -105,7 +105,9 @@ export class UserListComponent implements OnInit {
       next: (sites: UserSiteDetailDto[]) => {
         if (sites && sites.length > 0) {
           this.dialog.open(UserSitesDialogComponent, {
-            width: '700px',
+            width: 'min(700px, 95vw)',
+            maxWidth: '95vw',
+            maxHeight: '90vh',
             data: {
               userName: user.userName,
               sites: sites
