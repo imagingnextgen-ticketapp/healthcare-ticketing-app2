@@ -10,7 +10,11 @@
       <!-- 2. From Date -->
       <mat-form-field appearance="outline">
         <mat-label>From Date</mat-label>
-        <input matInput [matDatepicker]="fp" [(ngModel)]="filter.fromDate">
+        <input
+          matInput
+          [matDatepicker]="fp"
+          [(ngModel)]="filter.fromDate"
+          [max]="filter.toDate || maxDate">
         <mat-datepicker-toggle matSuffix [for]="fp"></mat-datepicker-toggle>
         <mat-datepicker #fp></mat-datepicker>
       </mat-form-field>
@@ -18,7 +22,12 @@
       <!-- 3. To Date -->
       <mat-form-field appearance="outline">
         <mat-label>To Date</mat-label>
-        <input matInput [matDatepicker]="tp" [(ngModel)]="filter.toDate">
+        <input
+          matInput
+          [matDatepicker]="tp"
+          [(ngModel)]="filter.toDate"
+          [min]="filter.fromDate"
+          [max]="maxDate">
         <mat-datepicker-toggle matSuffix [for]="tp"></mat-datepicker-toggle>
         <mat-datepicker #tp></mat-datepicker>
       </mat-form-field>

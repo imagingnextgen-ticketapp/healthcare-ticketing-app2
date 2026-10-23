@@ -11,6 +11,7 @@ import { SiteProductService } from '../../core/services/site-product.service';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { ActivatedRoute } from '@angular/router';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 
 @Component({
@@ -76,6 +77,7 @@ export class MisReportComponent implements OnInit {
   isLoading = false;
   isHospitalAdmin = false;
   isHospitalUser = false;
+  readonly maxDate = new Date();
 
   get allHospitalsLabel(): string {
     return 'All Hospitals';
@@ -112,7 +114,8 @@ export class MisReportComponent implements OnInit {
     private siteproductService: SiteProductService,
     private authService: AuthService,
     private userService: UserService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private snackBar: MatSnackBar
   ) {}
 
 ngOnInit(): void {
@@ -466,6 +469,10 @@ displayRequestedUserName = (userId: any): string => {
   };
 
   loadReportData(): void {
+    if (!this.isDateRangeValid()) {
+      return;
+    }
+
     this.isLoading = true;
     this.cdr.detectChanges();
 console.log('MIS FILTER SENT:', this.filter);
@@ -532,8 +539,57 @@ console.log('MIS FILTER SENT:', this.filter);
   };
 
   applyFilters(): void {
+    if (!this.isDateRangeValid()) {
+      return;
+    }
+
     this.filter = { ...this.filter, pageNumber: 1 };
     this.loadReportData();
+  }
+
+  private isDateRangeValid(): boolean {
+    const fromDate = this.toLocalDate(this.filter.fromDate);
+    const toDate = this.toLocalDate(this.filter.toDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if ((this.filter.fromDate && !fromDate) || (this.filter.toDate && !toDate)) {
+      this.snackBar.open('Enter valid From and To dates.', 'Close', { duration: 3000 });
+      return false;
+    }
+
+    if ((fromDate && fromDate > today) || (toDate && toDate > today)) {
+      this.snackBar.open('Future dates cannot be used in the report filters.', 'Close', { duration: 3000 });
+      return false;
+    }
+
+    if (fromDate && toDate && fromDate > toDate) {
+      this.snackBar.open('From Date must be on or before To Date.', 'Close', { duration: 3000 });
+      return false;
+    }
+
+    return true;
+  }
+
+  private toLocalDate(value: Date | string | undefined): Date | undefined {
+    if (!value) {
+      return undefined;
+    }
+
+    let date: Date;
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      const [year, month, day] = value.split('-').map(Number);
+      date = new Date(year, month - 1, day);
+    } else {
+      date = new Date(value);
+    }
+
+    if (Number.isNaN(date.getTime())) {
+      return undefined;
+    }
+
+    date.setHours(0, 0, 0, 0);
+    return date;
   }
 
   /**
@@ -653,6 +709,10 @@ getSeverityClass = (s: any): string => {
   return map[s] || 'low';
 };
   handleExport(): void {
+    if (!this.isDateRangeValid()) {
+      return;
+    }
+
     this.misService.exportConsolidated(this.filter).subscribe((blob: Blob) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');

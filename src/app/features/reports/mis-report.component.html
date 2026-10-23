@@ -369,6 +369,7 @@
               matInput
               [matDatepicker]="fp"
               [(ngModel)]="filter.fromDate"
+              [max]="filter.toDate || maxDate"
               (dateChange)="applyFilters()">
 
             <mat-datepicker-toggle
@@ -392,6 +393,8 @@
               matInput
               [matDatepicker]="tp"
               [(ngModel)]="filter.toDate"
+              [min]="filter.fromDate"
+              [max]="maxDate"
               (dateChange)="applyFilters()">
 
             <mat-datepicker-toggle
