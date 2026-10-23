@@ -148,21 +148,50 @@
   </mat-autocomplete>
 </mat-form-field>
 
-<!-- 1. Created Date Field -->
-
-<mat-form-field appearance="outline" style="width: 100%;">
-  <mat-label>Created Date</mat-label>
-  <input matInput [matDatepicker]="c" formControlName="createdDate" [max]="maxDate" />
-  <mat-datepicker-toggle matSuffix [for]="c"></mat-datepicker-toggle>
-  <mat-datepicker #c></mat-datepicker>
+<mat-form-field appearance="outline">
+  <mat-label>Created From</mat-label>
+  <input
+    matInput
+    [matDatepicker]="createdFromPicker"
+    formControlName="createdFromDate"
+    [max]="filterForm.get('createdToDate')?.value || maxDate" />
+  <mat-datepicker-toggle matSuffix [for]="createdFromPicker"></mat-datepicker-toggle>
+  <mat-datepicker #createdFromPicker></mat-datepicker>
 </mat-form-field>
 
-<!-- 2. Resolve Date Field -->
-<mat-form-field appearance="outline" style="width: 100%;">
-  <mat-label>Resolve Date</mat-label>
-  <input matInput [matDatepicker]="r" formControlName="resolveDate" [max]="maxDate" />
-  <mat-datepicker-toggle matSuffix [for]="r"></mat-datepicker-toggle>
-  <mat-datepicker #r></mat-datepicker>
+<mat-form-field appearance="outline">
+  <mat-label>Created To</mat-label>
+  <input
+    matInput
+    [matDatepicker]="createdToPicker"
+    formControlName="createdToDate"
+    [min]="filterForm.get('createdFromDate')?.value"
+    [max]="maxDate" />
+  <mat-datepicker-toggle matSuffix [for]="createdToPicker"></mat-datepicker-toggle>
+  <mat-datepicker #createdToPicker></mat-datepicker>
+</mat-form-field>
+
+<mat-form-field appearance="outline">
+  <mat-label>Resolve From</mat-label>
+  <input
+    matInput
+    [matDatepicker]="resolveFromPicker"
+    formControlName="resolveFromDate"
+    [max]="filterForm.get('resolveToDate')?.value || maxDate" />
+  <mat-datepicker-toggle matSuffix [for]="resolveFromPicker"></mat-datepicker-toggle>
+  <mat-datepicker #resolveFromPicker></mat-datepicker>
+</mat-form-field>
+
+<mat-form-field appearance="outline">
+  <mat-label>Resolve To</mat-label>
+  <input
+    matInput
+    [matDatepicker]="resolveToPicker"
+    formControlName="resolveToDate"
+    [min]="filterForm.get('resolveFromDate')?.value"
+    [max]="maxDate" />
+  <mat-datepicker-toggle matSuffix [for]="resolveToPicker"></mat-datepicker-toggle>
+  <mat-datepicker #resolveToPicker></mat-datepicker>
 </mat-form-field>
 
 

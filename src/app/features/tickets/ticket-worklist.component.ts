@@ -110,6 +110,8 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
   currentUser: any;
   filterForm!: FormGroup;
   filterSubscription: Subscription | null | undefined;
+  private worklistRequest?: Subscription;
+  private loadingReleaseTimer?: ReturnType<typeof setTimeout>;
    // 2. ADD COMPONENT PROPERTIES FOR THE RESPONSIVE DATEPICKER
   maxDate = new Date();
   //isMobile$: Observable<boolean>;
@@ -187,6 +189,10 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
   //ngAfterViewInit() { this.dataSource.paginator = this.paginator; }
   ngOnDestroy() {
     this.filterSubscription?.unsubscribe();
+    this.worklistRequest?.unsubscribe();
+    if (this.loadingReleaseTimer) {
+      clearTimeout(this.loadingReleaseTimer);
+    }
     if (this.descriptionTooltipTimer) {
       clearTimeout(this.descriptionTooltipTimer);
     }
@@ -204,7 +210,20 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
     }, 2500);
   }
 
-  initFilterForm() { this.filterForm = this.fb.group({ ticketId: [null], status: [null], createdDate: [null], resolveDate: [null] , masterSiteId: [null],  createdByUserId: [null],closedByUserId: [null],assignedToUserId: [null],}); }
+  initFilterForm() {
+    this.filterForm = this.fb.group({
+      ticketId: [null],
+      status: [null],
+      createdFromDate: [null],
+      createdToDate: [null],
+      resolveFromDate: [null],
+      resolveToDate: [null],
+      masterSiteId: [null],
+      createdByUserId: [null],
+      closedByUserId: [null],
+      assignedToUserId: [null]
+    });
+  }
 
   setupAutoSearch() { 
     this.filterSubscription = this.filterForm.valueChanges.pipe(debounceTime(500), distinctUntilChanged()).subscribe(() => { this.pageNumber = 1; this.refresh(); }); 
@@ -220,9 +239,14 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
 
 
   refresh(isManual: boolean = false) {
-  // 🟢 1. AUTO-LOAD TOGGLE: Turn on the spinner and disable the button instantly
+  this.worklistRequest?.unsubscribe();
+  if (this.loadingReleaseTimer) {
+    clearTimeout(this.loadingReleaseTimer);
+    this.loadingReleaseTimer = undefined;
+  }
+
   this.loading = true;
-  this.cdr.detectChanges(); // Sync template layout states immediately
+  this.cdr.detectChanges();
 
   const formValues = { ...this.filterForm.value };
 
@@ -230,14 +254,14 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
     formValues.assignedToUserId = this.currentUser.userId;
   }
 
-  if (formValues.createdDate) {
-    const d = new Date(formValues.createdDate);
-    formValues.createdDate = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
-  }
-  
-  if (formValues.resolveDate) {
-    const d = new Date(formValues.resolveDate);
-    formValues.resolveDate = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  for (const field of ['createdFromDate', 'createdToDate', 'resolveFromDate', 'resolveToDate']) {
+    const value = formValues[field];
+    if (value) {
+      const date = new Date(value);
+      formValues[field] = date.getFullYear() + '-' +
+        ('0' + (date.getMonth() + 1)).slice(-2) + '-' +
+        ('0' + date.getDate()).slice(-2);
+    }
   }
   
 
@@ -247,19 +271,17 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
   ...formValues
 };
 
-  this.ticketService.getWorklist(params).subscribe({
+  this.worklistRequest = this.ticketService.getWorklist(params).subscribe({
     next: (res: any) => {
       this.dataSource.data = res.data || [];
       this.totalRecords = res.totalRecords || 0;
       this.cdr.detectChanges();
 
-      // Introduce a brief 200ms visual buffer so the reload animation is clearly visible
-      setTimeout(() => {
-        // 🟢 2. AUTO-LOAD RELEASE: Turn off loading since data successfully arrived
+      this.loadingReleaseTimer = setTimeout(() => {
         this.loading = false; 
         this.cdr.detectChanges();
+        this.loadingReleaseTimer = undefined;
         
-        // Show success alert only on manual button interaction clicks
         if (isManual) {
           this.snackBar.open('Worklist layout synchronized successfully.', 'Dismiss', { 
             duration: 2000
@@ -271,7 +293,6 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
       console.error('Error fetching worklist:', err);
       this.snackBar.open('Failed to load tickets', 'Close', { duration: 3000 });
       
-      // 🟢 3. SAFETY RELEASE: Turn off loading so the button unlocks if the backend fails
       this.loading = false;
       this.cdr.detectChanges();
     }
@@ -461,7 +482,18 @@ onTabChange(index: number) {
     // 5. Clear the freshly mounted form controls safely without side-effects
     if (this.filterForm) {
       this.filterForm.patchValue(
-        { ticketId: null, status: null, createdDate: null, resolveDate: null, masterSiteId: null,createdByUserId: null,closedByUserId:null },
+        {
+          ticketId: null,
+          status: null,
+          createdFromDate: null,
+          createdToDate: null,
+          resolveFromDate: null,
+          resolveToDate: null,
+          masterSiteId: null,
+          createdByUserId: null,
+          closedByUserId: null,
+          assignedToUserId: null
+        },
         { emitEvent: false }
       );
       this.siteSearchControl.setValue(this.allSitesOption, { emitEvent: false });

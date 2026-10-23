@@ -127,6 +127,26 @@ export class TicketService {
     params = params.set('resolveDate', rStr);
   }
 
+  const dateRangeFields = [
+    'createdFromDate',
+    'createdToDate',
+    'resolveFromDate',
+    'resolveToDate'
+  ] as const;
+
+  for (const field of dateRangeFields) {
+    if (filter[field]) {
+      const date = new Date(filter[field]);
+      const dateString =
+        date.getFullYear() +
+        '-' +
+        ('0' + (date.getMonth() + 1)).slice(-2) +
+        '-' +
+        ('0' + date.getDate()).slice(-2);
+      params = params.set(field, dateString);
+    }
+  }
+
   return this.http.get<PagedResponse<TicketResponseDto>>(
     `${this.apiUrl}/worklist`,
     { params }
