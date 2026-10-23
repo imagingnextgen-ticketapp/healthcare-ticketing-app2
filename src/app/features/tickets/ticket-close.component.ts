@@ -35,6 +35,9 @@ import { MaterialModules } from '../../shared/material.collection';
             <mat-error *ngIf="closeForm.get('solutionComment')?.hasError('required')">
               Resolution remarks are strictly required to close a ticket.
             </mat-error>
+            <mat-error *ngIf="closeForm.get('solutionComment')?.hasError('minlength')">
+              Enter at least 5 non-whitespace characters.
+            </mat-error>
           </mat-form-field>
         </mat-dialog-content>
 
@@ -68,12 +71,20 @@ export class TicketCloseDialogComponent implements OnInit {
 
   submitClose(): void {
     if (this.closeForm.invalid || this.loading) return;
+
+    const comment = String(this.closeForm.value.solutionComment ?? '').trim();
+    if (comment.length < 5) {
+      this.closeForm.get('solutionComment')?.setErrors({ minlength: true });
+      this.closeForm.get('solutionComment')?.markAsTouched();
+      return;
+    }
+
     this.loading = true;
 
     const dto = {
       ticketId: this.data.ticketId,
       status: 4, // 4 = Status Closed enum mapping
-      comment: this.closeForm.value.solutionComment
+      comment
     };
 
     this.ticketService.updateStatus(dto).subscribe({

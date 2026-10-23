@@ -535,6 +535,30 @@
 
       </ng-container>
       
+      <!-- Ticket description -->
+      <ng-container matColumnDef="description">
+        <th mat-header-cell *matHeaderCellDef>Description</th>
+        <td
+          mat-cell
+          *matCellDef="let row"
+          [matTooltip]="row.description || '-'"
+          class="mis-long-text-cell">
+          <span class="mis-long-text-ellipsis">{{ row.description || '-' }}</span>
+        </td>
+      </ng-container>
+
+      <!-- Resolution comments -->
+      <ng-container matColumnDef="resolutionComments">
+        <th mat-header-cell *matHeaderCellDef>Resolution Comments</th>
+        <td
+          mat-cell
+          *matCellDef="let row"
+          [matTooltip]="row.resolutionComments || '-'"
+          class="mis-long-text-cell">
+          <span class="mis-long-text-ellipsis">{{ row.resolutionComments || '-' }}</span>
+        </td>
+      </ng-container>
+
 <!-- Requested By -->
 <ng-container matColumnDef="requestedBy">
 

@@ -38,6 +38,8 @@ export class MisReportComponent implements OnInit {
   'closedDate',
   'actualTatHours',
   'isSlaBreached',
+  'description',
+  'resolutionComments',
   //'isEscalated',
   
    

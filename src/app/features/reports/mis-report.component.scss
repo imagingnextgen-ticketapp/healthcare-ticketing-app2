@@ -8,6 +8,26 @@ $brand: #008a4c;
 $brand-light: rgba(0, 138, 76, 0.08);
 $border: #e2e8f0;
 
+.mis-long-text-cell {
+  width: 220px;
+  max-width: 220px;
+}
+
+.mis-long-text-ellipsis {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .mis-long-text-cell {
+    width: 150px;
+    max-width: 150px;
+  }
+}
+
 /* --- Global Overrides --- */
 ::ng-deep {
   .fuji-dropdown-panel {
@@ -508,4 +528,3 @@ $border: #e2e8f0;
     overflow-x: auto;
   }
 }
-

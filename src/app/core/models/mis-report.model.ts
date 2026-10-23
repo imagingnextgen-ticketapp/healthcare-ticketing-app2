@@ -45,6 +45,8 @@ export interface MisReportDto {
   hospitalName: string;
   productName: string;
   issueType: string;
+  description: string;
+  resolutionComments: string;
   requestedBy:string;
   assignedTo: string;
   closedBy: string;

@@ -547,8 +547,21 @@ viewResolutionNotes(ticket: TicketResponseDto): void {
 
 
   handleAction(ticket: any, action: string) {
+    if (action === 'start') {
+      const assignedUserId = ticket?.assignedToUserId ?? ticket?.AssignedToUserId;
+      if (assignedUserId == null) {
+        this.snackBar.open('Assign the ticket to an engineer before starting work.', 'Close', { duration: 3000 });
+        return;
+      }
+      const currentUserId = this.currentUser?.userId ?? this.currentUser?.UserId;
+      if (Number(assignedUserId) !== Number(currentUserId)) {
+        this.snackBar.open('Assign the ticket to yourself before starting work.', 'Close', { duration: 3000 });
+        return;
+      }
+    }
+
     const nextStatus = action === 'start' ? 3 : 4;
-    const dto = { ticketId: ticket.ticketId, status: nextStatus, comment: action === 'start' ? "Work Started" : "Ticket Closed" };
+    const dto = { ticketId: ticket.ticketId, status: nextStatus };
     this.ticketService.updateStatus(dto).subscribe(() => this.refresh());
   }
 
@@ -831,14 +844,6 @@ canAssign(ticket: any): boolean {
 }
 
 canStartWork(ticket: any): boolean {
-  console.log(
-  'Ticket:',
-  ticket.ticketId,
-  'Status:',
-  ticket.status,
-  'Type:',
-  typeof ticket.status
-);
   if (!ticket || !this.currentUser || !this.ROLES) return false;
 
   // Normalize status INSIDE same method (no helper)
@@ -861,15 +866,17 @@ canStartWork(ticket: any): boolean {
 
   const isSuperAdmin = this.currentUser.role === this.ROLES.SUPER_ADMIN;
   const isSupportEng = this.currentUser.role === this.ROLES.SUPPORT_ENGINEER;
-  const isManager=this.currentUser.role===this.ROLES.MANAGER;
+  const isManager = this.currentUser.role === this.ROLES.MANAGER;
 
   const currentUserId = this.currentUser.userId || this.currentUser.UserId;
-  const assignedUserId = ticket.assignedToUserId || ticket.AssignedToUserId;
+  const assignedUserId = ticket.assignedToUserId ?? ticket.AssignedToUserId;
 
-  const isAssignedToMe =
+  // A user can only start work on a ticket assigned to themselves.
+  const isAssignedToMe = assignedUserId != null &&
     Number(currentUserId) === Number(assignedUserId);
+  if (!isAssignedToMe) return false;
 
-  // 🟢 Super Admin: Open, Assigned, Reopened
+  // Super Admin and Manager can start eligible tickets assigned to themselves.
   if (isSuperAdmin || isManager) {
     return status === 1 || status === 2 || status === 5;
   }
@@ -1045,5 +1052,3 @@ openTicketHistory(
 
 
 } // 🛑 THIS MUST BE THE ABSOLUTE LAST CHARACTER IN YOUR FILE
-
-

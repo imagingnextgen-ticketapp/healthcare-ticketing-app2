@@ -37,7 +37,7 @@ export class TicketService {
   }
 
   // ✅ STATUS UPDATE: [HttpPut("status")]
-  updateStatus(dto: { ticketId: number, status: number, comment: string }): Observable<any> {
+  updateStatus(dto: { ticketId: number, status: number, comment?: string }): Observable<any> {
     return this.http.put(`${this.apiUrl}/status`, {
       ticketId: dto.ticketId,
       status: dto.status,
