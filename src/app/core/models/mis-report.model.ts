@@ -61,5 +61,5 @@ export interface MisReportDto {
   targetSlaHours: number;
   actualTatHours: number;
   isEscalated: boolean;
-  isSlaBreached: boolean;
+  isSlaBreached: boolean | null;
 }

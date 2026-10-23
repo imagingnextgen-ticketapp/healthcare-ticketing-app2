@@ -668,7 +668,7 @@
   </th>
 
   <td mat-cell *matCellDef="let row">
-    {{ row.isSlaBreached ? 'Yes' : 'No' }}
+    {{ row.isSlaBreached === null ? 'N/A' : row.isSlaBreached ? 'Yes' : 'No' }}
   </td>
 <!-- Escalated -->
 <!-- <ng-container matColumnDef="isEscalated">
