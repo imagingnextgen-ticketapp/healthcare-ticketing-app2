@@ -33,6 +33,14 @@ export class UserSiteService {
   return this.http.post<any>(`${this.apiUrl}/assign`, dto);
 }
 
+  getActiveSiteIdsForUser(userId: number): Observable<number[]> {
+    return this.http.get<number[]>(`${this.apiUrl}/user/${userId}/sites`);
+  }
+
+  assignSitesToUser(userId: number, masterSiteIds: number[]): Observable<any> {
+    return this.http.post(`${this.apiUrl}/user/${userId}/sites`, { masterSiteIds });
+  }
+
   activate(dto: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/activate`, dto);
   }
@@ -47,4 +55,3 @@ getActiveHospitalUsersForSiteMapping(): Observable<UserDto[]> {
   );
 }
 }
-

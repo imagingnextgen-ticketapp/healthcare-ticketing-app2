@@ -147,6 +147,10 @@ export class TicketHistoryComponent implements OnInit {
     this.loadHistory();
   }
 
+  isFirstHistoryRowForTicket(ticketId: number, rowIndex: number): boolean {
+    return this.historyLogs.findIndex(row => row.ticketId === ticketId) === rowIndex;
+  }
+
   exportHistory(): void {
     if (!this.isDateRangeValid()) {
       return;

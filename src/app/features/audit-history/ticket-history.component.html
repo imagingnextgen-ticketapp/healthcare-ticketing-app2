@@ -109,9 +109,9 @@
 
       <ng-container matColumnDef="progressNotes">
         <th mat-header-cell *matHeaderCellDef>Progress Notes</th>
-        <td mat-cell *matCellDef="let r">
+        <td mat-cell *matCellDef="let r; let rowIndex = index">
           <button
-            *ngIf="r.hasProgressNotes"
+            *ngIf="r.hasProgressNotes && isFirstHistoryRowForTicket(r.ticketId, rowIndex)"
             mat-stroked-button
             type="button"
             (click)="openProgressNotes(r.ticketId)"

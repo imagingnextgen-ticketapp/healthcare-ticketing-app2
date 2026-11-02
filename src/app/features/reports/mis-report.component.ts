@@ -51,7 +51,7 @@ export class MisReportComponent implements OnInit {
   private dashboardNavigation = false;
   masterSites: any[] = [];
   filteredMasterSites: any[] = [];
-  siteSearchText = '';
+  siteSearchText: string | any = '';
   products: any[] = [];
   filteredProducts: any[] = [];
   productSearchText = '';
@@ -515,8 +515,10 @@ console.log('MIS FILTER SENT:', this.filter);
   /**
    * 🔎 SITE SEARCH: Filters hospital dropdown options by typed text
    */
-  filterSites(searchText: string): void {
-    const term = (searchText || '').trim().toLowerCase();
+  filterSites(searchText: any): void {
+    const term = typeof searchText === 'string'
+      ? searchText.trim().toLowerCase()
+      : '';
 
     this.filteredMasterSites = !term
       ? [...this.masterSites]
@@ -528,18 +530,48 @@ console.log('MIS FILTER SENT:', this.filter);
   /**
    * ✅ SITE SELECTED: Fired when a hospital is picked from the autocomplete panel
    */
-  onSiteSelected(siteId: any): void {
-    this.siteSearchText = siteId === null || siteId === undefined
-      ? this.allHospitalsLabel
-      : this.displaySiteName(Number(siteId));
+  onSiteSelected(site: any): void {
+    if (site === null || site === undefined) {
+      this.siteSearchText = this.allHospitalsLabel;
+      this.filter = { ...this.filter, masterSiteId: undefined };
+      this.onSiteChange(null);
+      return;
+    }
+
+    const siteId = Number(
+      typeof site === 'object'
+        ? site.masterSiteId ?? site.id ?? site.Id
+        : site
+    );
+    if (!Number.isInteger(siteId) || siteId <= 0) {
+      return;
+    }
+
+    const selectedSite = this.masterSites.find(
+      (item: any) => Number(item.masterSiteId ?? item.id ?? item.Id) === siteId
+    );
+    this.siteSearchText = selectedSite || site;
     this.filter = { ...this.filter, masterSiteId: siteId };
     this.onSiteChange(siteId);
   }
 
-  displaySiteName = (siteId: any): string => {
-    if (siteId === null || siteId === undefined) return '';
-    const site = this.masterSites.find((s: any) => s.masterSiteId === siteId);
-    return site ? (site.name || site.hospitalName || '') : '';
+  displaySiteName = (value: any): string => {
+    if (value === null || value === undefined) return this.allHospitalsLabel;
+    if (typeof value === 'object') {
+      return value.name || value.siteName || value.hospitalName || '';
+    }
+
+    const siteId = Number(value);
+    if (Number.isInteger(siteId)) {
+      const site = this.masterSites.find(
+        (item: any) => Number(item.masterSiteId ?? item.id ?? item.Id) === siteId
+      );
+      if (site) {
+        return site.name || site.siteName || site.hospitalName || '';
+      }
+    }
+
+    return typeof value === 'string' ? value : '';
   };
 
   applyFilters(): void {
