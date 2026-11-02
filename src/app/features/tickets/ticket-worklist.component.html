@@ -77,52 +77,68 @@
 <!-- Requested By -->
 <mat-form-field appearance="outline">
   <mat-label>Requested By</mat-label>
-
-  <mat-select formControlName="createdByUserId">
-    <mat-option [value]="null">
-      All Requesters
-    </mat-option>
-
-    <mat-option
-      *ngFor="let user of allUsers"
-      [value]="user.userId">
+  <input
+    matInput
+    [formControl]="requesterSearchControl"
+    [matAutocomplete]="requesterAutocomplete"
+    (input)="clearUserSelectionWhileSearching('createdByUserId', requesterSearchControl)"
+    placeholder="Search requesters">
+  <mat-autocomplete
+    #requesterAutocomplete="matAutocomplete"
+    [displayWith]="displayUserName"
+    (optionSelected)="selectUserFilter('createdByUserId', $event.option.value)">
+    <mat-option [value]="null">All Requesters</mat-option>
+    <mat-option *ngFor="let user of filteredRequesters" [value]="user">
       {{ user.userName }}
     </mat-option>
-  </mat-select>
+    <mat-option *ngIf="filteredRequesters.length === 0" disabled>
+      No requesters match your search
+    </mat-option>
+  </mat-autocomplete>
 </mat-form-field>
 <!-- Assigned To -->
 <mat-form-field appearance="outline">
   <mat-label>Assigned To</mat-label>
-
-  <mat-select formControlName="assignedToUserId">
-
-    <mat-option [value]="null">
-      All Engineers
-    </mat-option>
-
-    <mat-option
-      *ngFor="let engineer of allEngineers"
-      [value]="engineer.userId">
+  <input
+    matInput
+    [formControl]="assignedToSearchControl"
+    [matAutocomplete]="assignedToAutocomplete"
+    (input)="clearUserSelectionWhileSearching('assignedToUserId', assignedToSearchControl)"
+    placeholder="Search engineers">
+  <mat-autocomplete
+    #assignedToAutocomplete="matAutocomplete"
+    [displayWith]="displayUserName"
+    (optionSelected)="selectUserFilter('assignedToUserId', $event.option.value)">
+    <mat-option [value]="null">All Engineers</mat-option>
+    <mat-option *ngFor="let engineer of filteredEngineers" [value]="engineer">
       {{ engineer.userName }}
     </mat-option>
-
-  </mat-select>
+    <mat-option *ngIf="filteredEngineers.length === 0" disabled>
+      No engineers match your search
+    </mat-option>
+  </mat-autocomplete>
 </mat-form-field>
 <!-- Closed By -->
 <mat-form-field appearance="outline">
   <mat-label>Closed By</mat-label>
-
-  <mat-select formControlName="closedByUserId">
-    <mat-option [value]="null">
-      All Users
-    </mat-option>
-
-    <mat-option
-      *ngFor="let user of allUsers"
-      [value]="user.userId">
+  <input
+    matInput
+    [formControl]="closedBySearchControl"
+    [matAutocomplete]="closedByAutocomplete"
+    (input)="clearUserSelectionWhileSearching('closedByUserId', closedBySearchControl)"
+    placeholder="Search users">
+  <mat-autocomplete
+    #closedByAutocomplete="matAutocomplete"
+    [displayWith]="displayUserName"
+    (optionSelected)="selectUserFilter('closedByUserId', $event.option.value)">
+    <mat-option [value]="null">All Users</mat-option>
+    <mat-option *ngFor="let user of filteredClosedByUsers" [value]="user">
       {{ user.userName }}
     </mat-option>
-  </mat-select>
+    <mat-option *ngIf="filteredClosedByUsers.length === 0" disabled>
+      No users match your search
+    </mat-option>
+  </mat-autocomplete>
 </mat-form-field>
 
 <!-- Hospital Filter -->
@@ -365,7 +381,7 @@
         <th mat-header-cell *matHeaderCellDef>Created</th>
 
         <td mat-cell *matCellDef="let e">
-          {{ e.createdDate | date: 'dd-MMM-yy' }}
+          {{ e.createdDate | localDateTime }}
         </td>
       </ng-container>
 
@@ -374,7 +390,7 @@
         <th mat-header-cell *matHeaderCellDef>Closed</th>
 
         <td mat-cell *matCellDef="let e">
-          {{ (e.closedDate | date: 'dd-MMM-yy') || '-' }}
+          {{ e.closedDate ? (e.closedDate | localDateTime) : '-' }}
         </td>
       </ng-container>
 

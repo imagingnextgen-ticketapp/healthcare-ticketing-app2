@@ -518,8 +518,7 @@ $border: #e2e8f0;
 
   .table-container {
     overflow-x: auto;
-    overflow-y: auto;
-    max-height: 55vh;
+    overflow-y: visible;
     -webkit-overflow-scrolling: touch;
     table { min-width: 700px; }
   }

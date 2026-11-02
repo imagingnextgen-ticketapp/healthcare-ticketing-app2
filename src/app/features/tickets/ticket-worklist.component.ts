@@ -117,6 +117,9 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
   //isMobile$: Observable<boolean>;
   totalRecords = 0; pageSize = 10; pageNumber = 1; currentTabIndex = 0; sites: any[] = [];allEngineers: any[] = [];allUsers: any[] = [];
   siteSearchControl = new FormControl<any>('');
+  requesterSearchControl = new FormControl<any>('');
+  assignedToSearchControl = new FormControl<any>('');
+  closedBySearchControl = new FormControl<any>('');
   readonly allSitesOption = { masterSiteId: null, name: 'All Hospitals' };
   private descriptionTooltipTimer: ReturnType<typeof setTimeout> | undefined;
   
@@ -168,12 +171,38 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
     return site?.name || '';
   }
 
+  displayUserName(user: any): string {
+    return user?.userName || '';
+  }
+
   get filteredSites(): any[] {
     const value = this.siteSearchControl.value;
     const query = typeof value === 'string' ? value.trim().toLowerCase() : '';
     return query
       ? this.sites.filter(site => site.name.toLowerCase().includes(query))
       : this.sites;
+  }
+
+  get filteredRequesters(): any[] {
+    return this.filterUsers(this.allUsers, this.requesterSearchControl.value);
+  }
+
+  get filteredEngineers(): any[] {
+    return this.filterUsers(this.allEngineers, this.assignedToSearchControl.value);
+  }
+
+  get filteredClosedByUsers(): any[] {
+    return this.filterUsers(this.allUsers, this.closedBySearchControl.value);
+  }
+
+  private filterUsers(users: any[], searchValue: any): any[] {
+    const query = typeof searchValue === 'string'
+      ? searchValue.trim().toLowerCase()
+      : '';
+
+    return query
+      ? users.filter(user => user.userName?.toLowerCase().includes(query))
+      : users;
   }
 
   clearSiteSelectionWhileSearching(): void {
@@ -184,6 +213,22 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
 
   selectSiteFilter(site: any): void {
     this.filterForm.get('masterSiteId')?.setValue(site?.masterSiteId ?? null);
+  }
+
+  clearUserSelectionWhileSearching(
+    filterName: 'createdByUserId' | 'assignedToUserId' | 'closedByUserId',
+    searchControl: FormControl
+  ): void {
+    if (typeof searchControl.value === 'string') {
+      this.filterForm.get(filterName)?.setValue(null);
+    }
+  }
+
+  selectUserFilter(
+    filterName: 'createdByUserId' | 'assignedToUserId' | 'closedByUserId',
+    user: any
+  ): void {
+    this.filterForm.get(filterName)?.setValue(user?.userId ?? null);
   }
 
   //ngAfterViewInit() { this.dataSource.paginator = this.paginator; }
@@ -343,6 +388,9 @@ loadSites(): void {
   resetFilters(): void {
     this.filterForm.reset();
     this.siteSearchControl.setValue(this.allSitesOption, { emitEvent: false });
+    this.requesterSearchControl.setValue('', { emitEvent: false });
+    this.assignedToSearchControl.setValue('', { emitEvent: false });
+    this.closedBySearchControl.setValue('', { emitEvent: false });
     this.pageNumber = 1;
     this.refresh();
   }
