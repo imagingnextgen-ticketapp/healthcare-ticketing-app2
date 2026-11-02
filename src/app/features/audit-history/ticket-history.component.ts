@@ -9,11 +9,13 @@ import { TicketHistoryDto } from '../../core/models/tickethistory.model';
 import { TicketHistoryFilterDto } from '../../core/models/tickethistory.model';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { TicketProgressNotesDialogComponent } from '../tickets/ticket-progress-notes.dialog.component';
 
 @Component({
   selector: 'app-ticket-history',
   standalone: true,
-  imports: [CommonModule, FormsModule, ...MaterialModules],
+  imports: [CommonModule, FormsModule, ...MaterialModules, MatDialogModule],
   providers: [provideNativeDateAdapter()],
   templateUrl: './ticket-history.component.html',
   styleUrls: ['./ticket-history.component.scss']
@@ -42,7 +44,8 @@ export class TicketHistoryComponent implements OnInit {
     private userService: UserService, 
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog
   ) {}
 
  ngOnInit(): void {
@@ -176,6 +179,19 @@ export class TicketHistoryComponent implements OnInit {
         this.cdr.detectChanges();
         this.snackBar.open('Failed to export audit history.', 'Close', { duration: 3000 });
       }
+    });
+  }
+
+  openProgressNotes(ticketId: number): void {
+    if (!ticketId) {
+      return;
+    }
+
+    this.dialog.open(TicketProgressNotesDialogComponent, {
+      width: '650px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      data: { ticketId }
     });
   }
 

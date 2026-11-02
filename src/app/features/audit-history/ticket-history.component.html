@@ -107,8 +107,23 @@
         <td mat-cell *matCellDef="let r">{{r.comment || 'N/A'}}</td>
       </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="['date', 'id', 'action', 'user', 'old', 'new', 'comment']"></tr>
-      <tr mat-row *matRowDef="let row; columns: ['date', 'id', 'action', 'user', 'old', 'new', 'comment'];"></tr>
+      <ng-container matColumnDef="progressNotes">
+        <th mat-header-cell *matHeaderCellDef>Progress Notes</th>
+        <td mat-cell *matCellDef="let r">
+          <button
+            *ngIf="r.hasProgressNotes"
+            mat-stroked-button
+            type="button"
+            (click)="openProgressNotes(r.ticketId)"
+            [attr.aria-label]="'View progress notes for ticket ' + r.ticketId">
+            <mat-icon style="color: #008542">notes</mat-icon>
+            View Notes
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="['date', 'id', 'action', 'user', 'old', 'new', 'comment', 'progressNotes']"></tr>
+      <tr mat-row *matRowDef="let row; columns: ['date', 'id', 'action', 'user', 'old', 'new', 'comment', 'progressNotes'];"></tr>
     </table>
 
     <mat-paginator 

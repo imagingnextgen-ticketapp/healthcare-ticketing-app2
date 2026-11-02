@@ -41,6 +41,7 @@ export interface MisFilterDto {
 }
 
 export interface MisReportDto {
+  hasProgressNotes?: boolean;
   ticketNumber: string;
   hospitalName: string;
   productName: string;

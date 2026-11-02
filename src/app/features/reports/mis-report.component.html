@@ -476,6 +476,22 @@
 
       </ng-container>
 
+      <ng-container matColumnDef="progressNotes">
+        <th mat-header-cell *matHeaderCellDef>Progress Notes</th>
+        <td mat-cell *matCellDef="let row">
+          <button
+            *ngIf="row.hasProgressNotes"
+            mat-button
+            type="button"
+            class="progress-notes-button"
+            (click)="openProgressNotes(row.ticketNumber)"
+            [attr.aria-label]="'View progress notes for ticket ' + row.ticketNumber">
+            <mat-icon>notes</mat-icon>
+            View Notes
+          </button>
+        </td>
+      </ng-container>
+
 
       <!-- Hospital -->
       <ng-container matColumnDef="hospitalName">

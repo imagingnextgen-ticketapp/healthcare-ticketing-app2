@@ -12,12 +12,14 @@ import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { ActivatedRoute } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { TicketProgressNotesDialogComponent } from '../tickets/ticket-progress-notes.dialog.component';
 
 
 @Component({
   selector: 'app-mis-report',
   standalone: true,
-  imports: [CommonModule, MaterialModules, FormsModule],
+  imports: [CommonModule, MaterialModules, FormsModule, MatDialogModule],
   providers: [provideNativeDateAdapter()],
   templateUrl: './mis-report.component.html',
   styleUrls: ['./mis-report.component.scss'],
@@ -41,6 +43,7 @@ export class MisReportComponent implements OnInit {
   'isSlaBreached',
   'description',
   'resolutionComments',
+  'progressNotes',
   //'isEscalated',
   
    
@@ -115,7 +118,8 @@ export class MisReportComponent implements OnInit {
     private authService: AuthService,
     private userService: UserService,
     private cdr: ChangeDetectorRef,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog
   ) {}
 
 ngOnInit(): void {
@@ -720,6 +724,20 @@ getSeverityClass = (s: any): string => {
       a.download = `FUJI_Report_${new Date().getTime()}.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
+    });
+  }
+
+  openProgressNotes(ticketNumber: string): void {
+    const ticketId = Number(ticketNumber);
+    if (!Number.isInteger(ticketId) || ticketId <= 0) {
+      return;
+    }
+
+    this.dialog.open(TicketProgressNotesDialogComponent, {
+      width: '650px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      data: { ticketId }
     });
   }
 

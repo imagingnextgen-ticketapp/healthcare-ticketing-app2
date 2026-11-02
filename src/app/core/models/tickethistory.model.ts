@@ -21,6 +21,7 @@ export interface TicketHistory {
 export interface TicketHistoryDto {
   actionType?: string;
   ticketId: number;
+  hasProgressNotes?: boolean;
   oldValue?: string;
   newValue?: string;
   comment?: string;
@@ -38,4 +39,3 @@ export interface TicketHistoryFilterDto {
   pageNumber?: number;
   pageSize?: number;
 }
-
