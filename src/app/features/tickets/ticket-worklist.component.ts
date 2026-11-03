@@ -122,10 +122,12 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
   closedBySearchControl = new FormControl<any>('');
   readonly allSitesOption = { masterSiteId: null, name: 'All Hospitals' };
   private descriptionTooltipTimer: ReturnType<typeof setTimeout> | undefined;
+  statusSearchText = '';
   
 
   readonly ROLES = { SUPER_ADMIN: 'SuperAdmin', SUPPORT_ENGINEER: 'SupportEngineer', HOSPITAL_ADMIN: 'HospitalAdmin', HOSPITAL_USER: 'HospitalUser', MANAGER:'Manager' };
   statusOptions = [{label: 'Open', value: 1}, {label: 'Assigned', value: 2}, {label: 'InProgress', value: 3}, {label: 'Closed', value: 4}, {label: 'Reopened', value: 5}];
+  filteredStatusOptions = [...this.statusOptions];
 
   constructor(
     private fb: FormBuilder, 
@@ -268,6 +270,24 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
       closedByUserId: [null],
       assignedToUserId: [null]
     });
+  }
+
+  filterStatuses(searchText: string): void {
+    const term = (searchText || '').trim().toLowerCase();
+    this.filteredStatusOptions = !term
+      ? [...this.statusOptions]
+      : this.statusOptions.filter(status => status.label.toLowerCase().includes(term));
+  }
+
+  selectStatusFilter(statusValue: number | null): void {
+    this.filterForm.patchValue({ status: statusValue });
+    if (statusValue === null) {
+      this.statusSearchText = '';
+      this.filteredStatusOptions = [...this.statusOptions];
+      return;
+    }
+
+    this.statusSearchText = this.statusOptions.find(status => status.value === statusValue)?.label ?? '';
   }
 
   setupAutoSearch() { 
@@ -544,6 +564,8 @@ onTabChange(index: number) {
         },
         { emitEvent: false }
       );
+      this.statusSearchText = '';
+      this.filteredStatusOptions = [...this.statusOptions];
       this.siteSearchControl.setValue(this.allSitesOption, { emitEvent: false });
     }
 

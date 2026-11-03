@@ -65,26 +65,24 @@
      
       <mat-form-field appearance="outline">
   <mat-label>Status</mat-label>
-
-  <mat-select formControlName="status">
-    <mat-option [value]="null">
-      <mat-checkbox
-        [checked]="!filterForm.get('status')?.value"
-        [disableRipple]="true"
-        class="status-filter-checkbox">
-        All Statuses
-      </mat-checkbox>
+  <input
+    matInput
+    type="text"
+    placeholder="Type to search..."
+    autocomplete="off"
+    [(ngModel)]="statusSearchText"
+    [ngModelOptions]="{ standalone: true }"
+    [matAutocomplete]="statusAuto"
+    (input)="filterStatuses(statusSearchText)">
+  <mat-autocomplete
+    #statusAuto="matAutocomplete"
+    panelClass="fuji-dropdown-panel"
+    (optionSelected)="selectStatusFilter($event.option.value)">
+    <mat-option *ngIf="!statusSearchText" [value]="null">-- All Status --</mat-option>
+    <mat-option *ngFor="let status of filteredStatusOptions" [value]="status.value">
+      {{ status.label }}
     </mat-option>
-
-    <mat-option *ngFor="let s of statusOptions" [value]="s.value">
-      <mat-checkbox
-        [checked]="filterForm.get('status')?.value === s.value"
-        [disableRipple]="true"
-        class="status-filter-checkbox">
-        {{ s.label }}
-      </mat-checkbox>
-    </mat-option>
-  </mat-select>
+  </mat-autocomplete>
 </mat-form-field>
 <!-- Requested By -->
 <mat-form-field appearance="outline">

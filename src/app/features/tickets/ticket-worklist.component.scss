@@ -230,6 +230,17 @@ $border: #e2e8f0;
 
   .status-filter-checkbox {
     pointer-events: none;
+    width: 100%;
+  }
+
+  .status-filter-select {
+    --mdc-outlined-text-field-focus-outline-color: #008a4c;
+    --mdc-outlined-text-field-focus-label-text-color: #008a4c;
+  }
+
+  ::ng-deep .status-filter-select.mat-mdc-form-field-invalid {
+    --mdc-outlined-text-field-error-outline-color: #008a4c;
+    --mdc-outlined-text-field-error-label-text-color: #008a4c;
   }
   
   &[data-status="Closed"] { background-color: #eceff1; color: #37474f; }
