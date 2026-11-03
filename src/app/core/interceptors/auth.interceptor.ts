@@ -7,9 +7,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   // 🟢 FIXED: Define an array of all endpoints that do NOT need a token
   const anonymousEndpoints = [
     '/login',
+    '/verify-otp',
+    '/resend-otp',
     '/forgot-password',
     '/reset-password'
   ];
+  
 
   // 🟢 FIXED: Check if the current request matches any of the anonymous endpoints
   const isAnonymousRoute = anonymousEndpoints.some(url => req.url.includes(url));

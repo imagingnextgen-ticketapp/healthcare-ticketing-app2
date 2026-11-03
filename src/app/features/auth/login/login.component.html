@@ -41,7 +41,21 @@
         <p>Sign in to your support account</p>
       </div>
 
-      <form [formGroup]="form" (ngSubmit)="submit()" class="login-form">
+      <app-otp-verification
+        *ngIf="otpStep"
+        [(challengeId)]="challengeId"
+        [maskedEmail]="maskedEmail"
+        (verified)="onOtpVerified()"
+        (forcedReset)="onForcedReset($event)"
+        (back)="backToLogin()">
+      </app-otp-verification>
+
+      <form
+        *ngIf="!otpStep"
+        [formGroup]="form"
+        (ngSubmit)="submit()"
+        class="login-form"
+      >
 
         <div class="field-group">
           <label class="field-label">Username</label>

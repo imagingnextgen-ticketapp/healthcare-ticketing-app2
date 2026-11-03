@@ -291,7 +291,7 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
   }
 
   this.loading = true;
-  this.cdr.detectChanges();
+  this.cdr.markForCheck();
 
   const formValues = { ...this.filterForm.value };
 
@@ -320,11 +320,11 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
     next: (res: any) => {
       this.dataSource.data = res.data || [];
       this.totalRecords = res.totalRecords || 0;
-      this.cdr.detectChanges();
+      this.cdr.markForCheck();
 
       this.loadingReleaseTimer = setTimeout(() => {
         this.loading = false; 
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
         this.loadingReleaseTimer = undefined;
         
         if (isManual) {
@@ -339,7 +339,7 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
       this.snackBar.open('Failed to load tickets', 'Close', { duration: 3000 });
       
       this.loading = false;
-      this.cdr.detectChanges();
+      this.cdr.markForCheck();
     }
   });
 }
@@ -359,7 +359,7 @@ loadSites(): void {
           name: this.currentUser.masterSiteName || 'Assigned Hospital'
         }]
         : [];
-    this.cdr.detectChanges();
+    this.cdr.markForCheck();
     return;
   }
 
@@ -375,7 +375,7 @@ loadSites(): void {
           name: site.name ?? site.siteName ?? ''
         }));
 
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       },
       error: (err) => {
         console.error('Failed to load hospitals', err);
@@ -400,7 +400,7 @@ loadUsers(): void {
   this.userService.getActiveUsers().subscribe({
     next: (users: any) => {
       this.allUsers = users || [];
-      this.cdr.detectChanges();
+      this.cdr.markForCheck();
     },
     error: (err) => {
       console.error('Failed to load users:', err);
@@ -520,7 +520,7 @@ onTabChange(index: number) {
   this.pageNumber = 1;
 
   // 3. Force Angular to swap the active tab view panel in the DOM first
-  this.cdr.detectChanges();
+  this.cdr.markForCheck();
 
   // 4. 🟢 THE PERMANENT ARCHITECTURAL FIX: Use a double-frame delay (setTimeout).
   // This completely yields execution until Angular finishes rendering the template,
@@ -547,7 +547,7 @@ onTabChange(index: number) {
       this.siteSearchControl.setValue(this.allSitesOption, { emitEvent: false });
     }
 
-    this.cdr.detectChanges();
+    this.cdr.markForCheck();
 
     // 6. Automatically fetch the data. The newly rendered table is now ready to receive it!
     this.refresh();
@@ -694,7 +694,7 @@ viewResolutionNotes(ticket: TicketResponseDto): void {
     // 2. Clear state and start loading for this specific row item
     this.isMenuLoadingMap[ticketId] = true;
     this.menuTicketFilesMap[ticketId] = [];
-    this.cdr.detectChanges();
+    this.cdr.markForCheck();
 
     this.attachmentService.getAttachmentsByTicket(ticketId).subscribe({
       next: (files: any[]) => {
@@ -707,7 +707,7 @@ viewResolutionNotes(ticket: TicketResponseDto): void {
         // Update row-isolated variables for the popup menu
         this.menuTicketFilesMap[ticketId] = processedFiles;
         this.isMenuLoadingMap[ticketId] = false;
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       },
       error: (err) => {
         console.error('Failed to load attachments:', err);
@@ -716,7 +716,7 @@ viewResolutionNotes(ticket: TicketResponseDto): void {
 
         // Reset row-isolated variables
         this.isMenuLoadingMap[ticketId] = false;
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       }
     });
   }

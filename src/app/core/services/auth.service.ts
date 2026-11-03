@@ -16,15 +16,17 @@ export class AuthService {
 
   // 🔐 LOGIN: Captures MasterSiteId for the Ticket Form
   login(credentials: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/login`, credentials).pipe(
-      tap(res => { 
-        if (res?.token) {
-          this.setSession(res); 
-        }
-      }),
-      catchError((err) => this.handleError(err))
-    );
-  }
+  return this.http.post<any>(`${this.apiUrl}/login`, credentials).pipe(
+    tap(res => {
+      if (res?.token) {
+        this.setSession(res);
+      }
+    }),
+    catchError(err => this.handleError(err))
+  );
+}
+
+
   selectSite(dto: any): Observable<any> {
   return this.http.post<any>(`${this.apiUrl}/select-site`, dto).pipe(
     tap(res => {
@@ -114,4 +116,28 @@ public setSession(res: any): void {
 
     return throwError(() => new Error(msg));
   }
+
+  verifyOtp(dto: { challengeId: string; otp: string }): Observable<any> {
+  return this.http.post<any>(`${this.apiUrl}/verify-otp`, dto).pipe(
+    tap(res => {
+      if (res?.success && res?.loginResponse?.token) {
+        this.setSession(res.loginResponse);
+      }
+    }),
+    catchError(err => this.handleError(err))
+  );
+}
+
+// Request a new OTP
+resendMfaOtp(dto: { challengeId: string }): Observable<any> {
+  return this.http.post<any>(`${this.apiUrl}/resend-mfa`, dto).pipe(
+    catchError(err => this.handleError(err))
+  );
+}
+forcedResetPassword(dto: ResetPasswordDto): Observable<any> {
+  return this.http.post(`${this.apiUrl}/forced-reset-password`, dto).pipe(
+    catchError(err => this.handleError(err))
+  );
+}
+
 }

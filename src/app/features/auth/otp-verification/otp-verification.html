@@ -1,0 +1,123 @@
+<div class="auth-page">
+  <div class="auth-card">
+
+    <div class="auth-card-brand">
+      <div class="brand-icon-box">
+        <mat-icon>verified_user</mat-icon>
+      </div>
+
+      <h2>Verify Your Email</h2>
+
+      <p>
+        Enter the 6-digit verification code sent to your registered email address.
+      </p>
+      @if (maskedEmail) {
+        <p><strong>{{ maskedEmail }}</strong></p>
+      }
+    </div>
+
+    <form
+      [formGroup]="otpForm"
+      (ngSubmit)="verifyOtp()"
+      class="auth-form"
+    >
+
+      @if (errorMessage()) {
+        <div class="alert-msg alert-error">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ errorMessage() }}</span>
+        </div>
+      }
+
+      @if (successMessage()) {
+        <div class="alert-msg alert-success">
+          <mat-icon>check_circle_outline</mat-icon>
+          <span>{{ successMessage() }}</span>
+        </div>
+      }
+
+      <div class="field-group">
+        <label class="field-label">Verification Code</label>
+
+        <div class="field-wrapper">
+          <mat-icon class="field-prefix-icon">password</mat-icon>
+
+          <input
+            type="text"
+            formControlName="otp"
+            placeholder="Enter 6-digit OTP"
+            class="auth-input"
+            maxlength="6"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            (input)="onOtpInput()"
+          >
+        </div>
+
+        @if (
+          otpForm.controls.otp.hasError('required') &&
+          otpForm.controls.otp.touched
+        ) {
+          <small class="field-error">OTP is required.</small>
+        }
+
+        @if (
+          otpForm.controls.otp.hasError('pattern') &&
+          otpForm.controls.otp.touched
+        ) {
+          <small class="field-error">
+            Please enter a valid 6-digit OTP.
+          </small>
+        }
+      </div>
+
+      <button
+        type="submit"
+        class="submit-btn"
+        [disabled]="otpForm.invalid || isLoading() || isResending()"
+      >
+        @if (!isLoading()) {
+          <span>Verify OTP</span>
+        } @else {
+          <span class="loading-row">
+            <mat-spinner diameter="20"></mat-spinner>
+            Verifying...
+          </span>
+        }
+      </button>
+
+      <div class="resend-section">
+        <span>Didn't receive the code?</span>
+
+        <button
+          type="button"
+          class="resend-btn"
+          (click)="resendOtp()"
+          [disabled]="
+            isResending() ||
+            isLoading() ||
+            resendCountdown() > 0
+          "
+        >
+          @if (isResending()) {
+            Sending...
+          } @else if (resendCountdown() > 0) {
+            Resend OTP in {{ resendCountdown() }}s
+          } @else {
+            Resend OTP
+          }
+        </button>
+      </div>
+
+      <button
+        type="button"
+        class="back-btn"
+        (click)="goBack()"
+        [disabled]="isLoading() || isResending()"
+      >
+        Back to Login
+      </button>
+
+    </form>
+  </div>
+</div>
