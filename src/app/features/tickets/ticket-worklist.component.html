@@ -67,10 +67,22 @@
   <mat-label>Status</mat-label>
 
   <mat-select formControlName="status">
-    <mat-option [value]="null">All Statuses</mat-option>
+    <mat-option [value]="null">
+      <mat-checkbox
+        [checked]="!filterForm.get('status')?.value"
+        [disableRipple]="true"
+        class="status-filter-checkbox">
+        All Statuses
+      </mat-checkbox>
+    </mat-option>
 
     <mat-option *ngFor="let s of statusOptions" [value]="s.value">
-      {{ s.label }}
+      <mat-checkbox
+        [checked]="filterForm.get('status')?.value === s.value"
+        [disableRipple]="true"
+        class="status-filter-checkbox">
+        {{ s.label }}
+      </mat-checkbox>
     </mat-option>
   </mat-select>
 </mat-form-field>
@@ -278,8 +290,15 @@
       <ng-container matColumnDef="issueType">
         <th mat-header-cell *matHeaderCellDef>Type</th>
 
-        <td mat-cell *matCellDef="let e">
-          {{ e.issueType }}
+        <td
+          mat-cell
+          *matCellDef="let e"
+          class="truncate issue-type-cell"
+          [matTooltip]="e.issueType || '-'"
+          matTooltipTouchGestures="on"
+          #issueTypeTooltip="matTooltip"
+          (click)="e.issueType?.length > 30 && showDescriptionTooltip(issueTypeTooltip)">
+          {{ e.issueType || '-' }}
         </td>
       </ng-container>
 

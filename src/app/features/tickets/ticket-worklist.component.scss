@@ -227,6 +227,10 @@ $border: #e2e8f0;
     background-color: #e8f5e9; 
     color: #1b5e20; 
   }
+
+  .status-filter-checkbox {
+    pointer-events: none;
+  }
   
   &[data-status="Closed"] { background-color: #eceff1; color: #37474f; }
   &[data-status="Reopened"] { background-color: #f3e5f5; color: #4a148c; }
@@ -343,13 +347,11 @@ $border: #e2e8f0;
   /* Ensure table scrolls on tablet too */
   .table-container {
     overflow-x: auto;
+    overflow-y: auto;
+    touch-action: pan-x pan-y;
     -webkit-overflow-scrolling: touch;
 
     .fuji-table { min-width: 900px; }
-    .truncate {
-        touch-action: auto !important;
-        pointer-events: none !important;
-      }
   }
 }
 
@@ -360,16 +362,6 @@ $border: #e2e8f0;
 
   .table-container .fuji-table {
     min-width: 800px;
-    .truncate {
-      touch-action: auto !important;
-      pointer-events: none !important;
-    }
-  }
-}
-
-@media (max-width: 768px) {
-  .table-container .fuji-table .description-cell {
-    pointer-events: auto !important;
   }
 }
 

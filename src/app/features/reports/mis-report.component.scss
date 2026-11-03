@@ -11,6 +11,8 @@ $border: #e2e8f0;
 .mis-long-text-cell {
   width: 220px;
   max-width: 220px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .mis-long-text-ellipsis {
@@ -518,7 +520,9 @@ $border: #e2e8f0;
 
   .table-container {
     overflow-x: auto;
-    overflow-y: visible;
+    overflow-y: auto;
+    max-height: 65vh;
+    touch-action: pan-x pan-y;
     -webkit-overflow-scrolling: touch;
     table { min-width: 700px; }
   }

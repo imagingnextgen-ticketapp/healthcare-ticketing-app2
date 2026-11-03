@@ -14,6 +14,7 @@ import { ActivatedRoute } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { TicketProgressNotesDialogComponent } from '../tickets/ticket-progress-notes.dialog.component';
+import type { MatTooltip } from '@angular/material/tooltip';
 
 
 @Component({
@@ -26,6 +27,8 @@ import { TicketProgressNotesDialogComponent } from '../tickets/ticket-progress-n
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MisReportComponent implements OnInit {
+  private tooltipTimer: ReturnType<typeof setTimeout> | undefined;
+
   dataSource: MisReportDto[] = [];
   displayedColumns: string[] = [
   'ticketId',
@@ -121,6 +124,24 @@ export class MisReportComponent implements OnInit {
     private snackBar: MatSnackBar,
     private dialog: MatDialog
   ) {}
+
+  ngOnDestroy(): void {
+    if (this.tooltipTimer) {
+      clearTimeout(this.tooltipTimer);
+    }
+  }
+
+  showMobileTooltip(tooltip: MatTooltip): void {
+    if (this.tooltipTimer) {
+      clearTimeout(this.tooltipTimer);
+    }
+
+    tooltip.show();
+    this.tooltipTimer = setTimeout(() => {
+      tooltip.hide();
+      this.tooltipTimer = undefined;
+    }, 2500);
+  }
 
 ngOnInit(): void {
 
