@@ -77,6 +77,50 @@
       </mat-select>
     </mat-form-field>
 
+    <mat-form-field appearance="outline" *ngIf="isHospitalAdmin">
+      <mat-label>Hospital Sites</mat-label>
+      <input
+        #siteSearchInput
+        matInput
+        [formControl]="siteSearchControl"
+        [matAutocomplete]="siteAutocomplete"
+        [placeholder]="form.get('masterSiteIds')?.value?.length ? form.get('masterSiteIds')?.value.length + ' sites selected — search to add more' : 'Search assigned sites'"
+        autocomplete="off">
+      <button
+        mat-icon-button
+        matSuffix
+        type="button"
+        aria-label="Clear selected sites"
+        matTooltip="Clear selected sites"
+        [disabled]="!form.get('masterSiteIds')?.value?.length"
+        (click)="clearSelectedSites(); $event.stopPropagation()">
+        <mat-icon>close</mat-icon>
+      </button>
+      <mat-autocomplete
+        #siteAutocomplete="matAutocomplete"
+        (optionSelected)="toggleSite($event.option.value, siteSearchInput)">
+        <mat-option *ngFor="let site of filteredAssignedSites" [value]="site">
+          <span class="mapping-search-option" [class.selected]="isSiteSelected(site.masterSiteId)">
+            <span>{{ site.name }}</span>
+            <mat-icon>{{ isSiteSelected(site.masterSiteId) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+          </span>
+        </mat-option>
+        <mat-option *ngIf="siteSearchControl.value && filteredAssignedSites.length === 0" disabled>
+          No matching assigned sites
+        </mat-option>
+      </mat-autocomplete>
+      <mat-hint *ngIf="isLoadingUserSites">Loading current site assignments...</mat-hint>
+      <mat-hint *ngIf="!isLoadingUserSites && selectedSiteNames.length">
+        Selected: {{ selectedSiteNames.join(', ') }}
+      </mat-hint>
+      <mat-error *ngIf="userSitesLoadFailed">
+        Current assignments could not be loaded; close and reopen this dialog.
+      </mat-error>
+      <mat-error *ngIf="form.get('masterSiteIds')?.hasError('required')">
+        Select at least one site for this user
+      </mat-error>
+    </mat-form-field>
+
     <mat-form-field appearance="outline" *ngIf="!isEdit">
       <mat-label>Password</mat-label>
       <input matInput type="password" formControlName="password">
@@ -92,7 +136,7 @@
 
 <mat-dialog-actions align="end">
   <button mat-button mat-dialog-close>Cancel</button>
-  <button mat-raised-button class="save-btn" (click)="onSubmit()" [disabled]="form.invalid">
+  <button mat-raised-button class="save-btn" (click)="onSubmit()" [disabled]="form.invalid || isLoadingUserSites || userSitesLoadFailed">
     Save
   </button>
 </mat-dialog-actions>

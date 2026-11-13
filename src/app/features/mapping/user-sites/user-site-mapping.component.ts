@@ -23,13 +23,21 @@ export class UserSiteMappingComponent implements OnInit {
   
   selectedSiteId: number | null = null;
   selectedUserIds: number[] = [];
+  selectedUserForSites: UserDto | null = null;
+  assignedSiteIdsForUser = new Set<number>();
+  selectedAdditionalSiteIds = new Set<number>();
+  isLoadingUserSites = false;
+  isSavingUserSites = false;
   assignedUserIds = new Set<number>();
   isLoading = false;
   isLoadingAssignedUsers = false;
   assignedUsersLookupFailed = false;
   siteSearchControl = new FormControl<string | any>('');
   userSearchControl = new FormControl({ value: '', disabled: true });
+  userForSitesSearchControl = new FormControl<string | UserDto>('');
+  userSitesSearchControl = new FormControl('');
   private assignedUsersRequestId = 0;
+  private userSitesRequestId = 0;
 
   // ⚡ Pagination State Tracking for the Data Grid
   totalRecords = 0;
@@ -52,14 +60,32 @@ export class UserSiteMappingComponent implements OnInit {
   }
 
   loadSites(): void {
-    this.masterSiteService.getSites({ pageNumber: 1, pageSize: 100 }).subscribe({
-      next: (res) => {
-        // Filter active sites natively
-        this.sites = (res.data || []).filter((site: any) => site.isActive);
-        this.cdr.detectChanges();
-      },
-      error: () => this.showSnackBar('Failed to load sites')
-    });
+    const pageSize = 100;
+    const loadPage = (pageNumber: number, loadedSites: any[]): void => {
+      this.masterSiteService.getSites({
+        pageNumber,
+        pageSize,
+        isActive: true
+      }).subscribe({
+        next: response => {
+          const pageSites = response.data || [];
+          const allSites = [...loadedSites, ...pageSites];
+          if (allSites.length < (response.totalRecords || 0) && pageSites.length > 0) {
+            loadPage(pageNumber + 1, allSites);
+            return;
+          }
+
+          this.sites = allSites.filter((site: any) => site.isActive);
+          this.cdr.detectChanges();
+        },
+        error: error => {
+          console.error('Failed to load sites:', error);
+          this.showSnackBar('Failed to load sites');
+        }
+      });
+    };
+
+    loadPage(1, []);
   }
 
   get filteredSites(): any[] {
@@ -102,6 +128,106 @@ export class UserSiteMappingComponent implements OnInit {
     const value = this.userSearchControl.value;
     const query = typeof value === 'string' ? value.trim().toLowerCase() : '';
     return this.availableUsers.filter(user => !query || user.userName?.toLowerCase().includes(query));
+  }
+
+  get filteredUsersForSiteAssignment(): UserDto[] {
+    const value = this.userForSitesSearchControl.value;
+    const query = typeof value === 'string' ? value.trim().toLowerCase() : '';
+    return this.availableUsers.filter(user =>
+      !query || user.userName?.toLowerCase().includes(query));
+  }
+
+  get filteredSitesForUserAssignment(): any[] {
+    const query = (this.userSitesSearchControl.value || '').trim().toLowerCase();
+    return this.sites.filter(site =>
+      !query || (site.name || site.siteName || '').toLowerCase().includes(query));
+  }
+
+  displayUser(user: string | UserDto | null): string {
+    return typeof user === 'string' ? user : user?.userName || '';
+  }
+
+  onUserSearchInputForSites(): void {
+    if (typeof this.userForSitesSearchControl.value !== 'string') return;
+
+    this.userSitesRequestId++;
+    this.selectedUserForSites = null;
+    this.assignedSiteIdsForUser.clear();
+    this.selectedAdditionalSiteIds.clear();
+  }
+
+  onUserSelectedForSites(user: UserDto): void {
+    const requestId = ++this.userSitesRequestId;
+    this.selectedUserForSites = user;
+    this.assignedSiteIdsForUser.clear();
+    this.selectedAdditionalSiteIds.clear();
+    this.isLoadingUserSites = true;
+
+    this.userSiteService.getActiveSiteIdsForUser(user.userId).subscribe({
+      next: siteIds => {
+        if (requestId !== this.userSitesRequestId) return;
+        this.assignedSiteIdsForUser = new Set(siteIds.map(Number));
+        this.isLoadingUserSites = false;
+        this.cdr.detectChanges();
+      },
+      error: error => {
+        if (requestId !== this.userSitesRequestId) return;
+        console.error('Failed to load user site assignments:', error);
+        this.selectedUserForSites = null;
+        this.userForSitesSearchControl.setValue('', { emitEvent: false });
+        this.isLoadingUserSites = false;
+        this.showSnackBar("Could not load this user's current site assignments");
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  isSiteAssignedToUser(siteId: number): boolean {
+    return this.assignedSiteIdsForUser.has(Number(siteId));
+  }
+
+  isAdditionalSiteSelected(siteId: number): boolean {
+    return this.selectedAdditionalSiteIds.has(Number(siteId));
+  }
+
+  toggleSiteForUser(siteId: number, selected: boolean): void {
+    if (this.isSiteAssignedToUser(siteId)) return;
+
+    if (selected) {
+      this.selectedAdditionalSiteIds.add(Number(siteId));
+    } else {
+      this.selectedAdditionalSiteIds.delete(Number(siteId));
+    }
+  }
+
+  assignSitesToSelectedUser(): void {
+    if (!this.selectedUserForSites ||
+        this.isLoadingUserSites ||
+        this.isSavingUserSites ||
+        this.selectedAdditionalSiteIds.size === 0) {
+      return;
+    }
+
+    const user = this.selectedUserForSites;
+    this.isSavingUserSites = true;
+    this.userSiteService.assignSitesToUser(
+      user.userId,
+      Array.from(this.selectedAdditionalSiteIds)
+    ).subscribe({
+      next: response => {
+      this.showSnackBar(response?.message || 'Sites assigned successfully');
+        this.selectedAdditionalSiteIds.clear();
+        this.isSavingUserSites = false;
+      this.onUserSelectedForSites(user);
+      this.cdr.detectChanges();
+      },
+      error: error => {
+        console.error('Failed to assign sites to user:', error);
+        this.isSavingUserSites = false;
+        this.showSnackBar(error.error?.message || 'Failed to assign sites');
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   isUserAssigned(userId: number): boolean {

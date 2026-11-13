@@ -41,10 +41,13 @@ export interface MisFilterDto {
 }
 
 export interface MisReportDto {
+  hasProgressNotes?: boolean;
   ticketNumber: string;
   hospitalName: string;
   productName: string;
   issueType: string;
+  description: string;
+  resolutionComments: string;
   requestedBy:string;
   assignedTo: string;
   closedBy: string;
@@ -59,5 +62,5 @@ export interface MisReportDto {
   targetSlaHours: number;
   actualTatHours: number;
   isEscalated: boolean;
-  isSlaBreached: boolean;
+  isSlaBreached: boolean | null;
 }

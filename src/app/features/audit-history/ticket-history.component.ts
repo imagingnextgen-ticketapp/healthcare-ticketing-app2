@@ -9,11 +9,13 @@ import { TicketHistoryDto } from '../../core/models/tickethistory.model';
 import { TicketHistoryFilterDto } from '../../core/models/tickethistory.model';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { TicketProgressNotesDialogComponent } from '../tickets/ticket-progress-notes.dialog.component';
 
 @Component({
   selector: 'app-ticket-history',
   standalone: true,
-  imports: [CommonModule, FormsModule, ...MaterialModules],
+  imports: [CommonModule, FormsModule, ...MaterialModules, MatDialogModule],
   providers: [provideNativeDateAdapter()],
   templateUrl: './ticket-history.component.html',
   styleUrls: ['./ticket-history.component.scss']
@@ -26,6 +28,7 @@ export class TicketHistoryComponent implements OnInit {
   totalRecords = 0;
   isLoading = false;
   isExporting = false;
+  readonly maxDate = new Date();
 
   filter = {
   ticketId: undefined as number | undefined,
@@ -41,7 +44,8 @@ export class TicketHistoryComponent implements OnInit {
     private userService: UserService, 
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog
   ) {}
 
  ngOnInit(): void {
@@ -83,6 +87,10 @@ export class TicketHistoryComponent implements OnInit {
    * Main execution method for fetching history records
    */
   loadHistory(): void {
+    if (!this.isDateRangeValid()) {
+      return;
+    }
+
     this.isLoading = true;
     this.cdr.detectChanges();
 
@@ -139,7 +147,15 @@ export class TicketHistoryComponent implements OnInit {
     this.loadHistory();
   }
 
+  isFirstHistoryRowForTicket(ticketId: number, rowIndex: number): boolean {
+    return this.historyLogs.findIndex(row => row.ticketId === ticketId) === rowIndex;
+  }
+
   exportHistory(): void {
+    if (!this.isDateRangeValid()) {
+      return;
+    }
+
     const exportFilter: TicketHistoryFilterDto = {
       ticketId: this.filter.ticketId,
       fromDate: this.filter.fromDate,
@@ -167,6 +183,19 @@ export class TicketHistoryComponent implements OnInit {
         this.cdr.detectChanges();
         this.snackBar.open('Failed to export audit history.', 'Close', { duration: 3000 });
       }
+    });
+  }
+
+  openProgressNotes(ticketId: number): void {
+    if (!ticketId) {
+      return;
+    }
+
+    this.dialog.open(TicketProgressNotesDialogComponent, {
+      width: '650px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      data: { ticketId }
     });
   }
 
@@ -198,5 +227,50 @@ export class TicketHistoryComponent implements OnInit {
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}T00:00:00.000Z`;
+  }
+
+  private isDateRangeValid(): boolean {
+    const fromDate = this.toLocalDate(this.filter.fromDate);
+    const toDate = this.toLocalDate(this.filter.toDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if ((this.filter.fromDate && !fromDate) || (this.filter.toDate && !toDate)) {
+      this.snackBar.open('Enter valid From and To dates.', 'Close', { duration: 3000 });
+      return false;
+    }
+
+    if ((fromDate && fromDate > today) || (toDate && toDate > today)) {
+      this.snackBar.open('Future dates cannot be used in the history filters.', 'Close', { duration: 3000 });
+      return false;
+    }
+
+    if (fromDate && toDate && fromDate > toDate) {
+      this.snackBar.open('From Date must be on or before To Date.', 'Close', { duration: 3000 });
+      return false;
+    }
+
+    return true;
+  }
+
+  private toLocalDate(value: Date | string | undefined): Date | undefined {
+    if (!value) {
+      return undefined;
+    }
+
+    let date: Date;
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      const [year, month, day] = value.split('-').map(Number);
+      date = new Date(year, month - 1, day);
+    } else {
+      date = new Date(value);
+    }
+
+    if (Number.isNaN(date.getTime())) {
+      return undefined;
+    }
+
+    date.setHours(0, 0, 0, 0);
+    return date;
   }
 }

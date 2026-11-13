@@ -54,13 +54,13 @@
             [displayWith]="displaySiteName"
             (optionSelected)="onSiteSelected($event.option.value)">
 
-            <mat-option *ngIf="!siteSearchText" [value]="null">
-              - All Hospitals -
+            <mat-option [value]="null">
+              - {{ allHospitalsLabel }} -
             </mat-option>
 
             <mat-option
               *ngFor="let s of filteredMasterSites"
-              [value]="s.masterSiteId">
+              [value]="s">
 
               {{ s.name || s.hospitalName }}
 
@@ -369,6 +369,7 @@
               matInput
               [matDatepicker]="fp"
               [(ngModel)]="filter.fromDate"
+              [max]="filter.toDate || maxDate"
               (dateChange)="applyFilters()">
 
             <mat-datepicker-toggle
@@ -392,6 +393,8 @@
               matInput
               [matDatepicker]="tp"
               [(ngModel)]="filter.toDate"
+              [min]="filter.fromDate"
+              [max]="maxDate"
               (dateChange)="applyFilters()">
 
             <mat-datepicker-toggle
@@ -473,6 +476,22 @@
 
       </ng-container>
 
+      <ng-container matColumnDef="progressNotes">
+        <th mat-header-cell *matHeaderCellDef>Progress Notes</th>
+        <td mat-cell *matCellDef="let row">
+          <button
+            *ngIf="row.hasProgressNotes"
+            mat-button
+            type="button"
+            class="progress-notes-button"
+            (click)="openProgressNotes(row.ticketNumber)"
+            [attr.aria-label]="'View progress notes for ticket ' + row.ticketNumber">
+            <mat-icon>notes</mat-icon>
+            View Notes
+          </button>
+        </td>
+      </ng-container>
+
 
       <!-- Hospital -->
       <ng-container matColumnDef="hospitalName">
@@ -527,14 +546,49 @@
 
         <td
           mat-cell
-          *matCellDef="let row">
+          *matCellDef="let row"
+          [matTooltip]="row.issueType || '-'"
+          matTooltipTouchGestures="on"
+          #issueTypeTooltip="matTooltip"
+          (click)="showMobileTooltip(issueTypeTooltip)"
+          class="mis-long-text-cell">
 
-          {{ row.issueType }}
+          <span class="mis-long-text-ellipsis">{{ row.issueType || '-' }}</span>
 
         </td>
 
       </ng-container>
       
+      <!-- Ticket description -->
+      <ng-container matColumnDef="description">
+        <th mat-header-cell *matHeaderCellDef>Description</th>
+        <td
+          mat-cell
+          *matCellDef="let row"
+          [matTooltip]="row.description || '-'"
+          matTooltipTouchGestures="on"
+          #descriptionTooltip="matTooltip"
+          (click)="showMobileTooltip(descriptionTooltip)"
+          class="mis-long-text-cell">
+          <span class="mis-long-text-ellipsis">{{ row.description || '-' }}</span>
+        </td>
+      </ng-container>
+
+      <!-- Resolution comments -->
+      <ng-container matColumnDef="resolutionComments">
+        <th mat-header-cell *matHeaderCellDef>Resolution Comments</th>
+        <td
+          mat-cell
+          *matCellDef="let row"
+          [matTooltip]="row.resolutionComments || '-'"
+          matTooltipTouchGestures="on"
+          #resolutionTooltip="matTooltip"
+          (click)="showMobileTooltip(resolutionTooltip)"
+          class="mis-long-text-cell">
+          <span class="mis-long-text-ellipsis">{{ row.resolutionComments || '-' }}</span>
+        </td>
+      </ng-container>
+
 <!-- Requested By -->
 <ng-container matColumnDef="requestedBy">
 
@@ -641,7 +695,7 @@
   </th>
 
   <td mat-cell *matCellDef="let row">
-    {{ row.isSlaBreached ? 'Yes' : 'No' }}
+    {{ row.isSlaBreached === null ? 'N/A' : row.isSlaBreached ? 'Yes' : 'No' }}
   </td>
 <!-- Escalated -->
 <!-- <ng-container matColumnDef="isEscalated">
@@ -744,4 +798,3 @@
   </div>
 
 </div>
-

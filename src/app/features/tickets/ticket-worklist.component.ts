@@ -110,15 +110,24 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
   currentUser: any;
   filterForm!: FormGroup;
   filterSubscription: Subscription | null | undefined;
+  private worklistRequest?: Subscription;
+  private loadingReleaseTimer?: ReturnType<typeof setTimeout>;
    // 2. ADD COMPONENT PROPERTIES FOR THE RESPONSIVE DATEPICKER
   maxDate = new Date();
   //isMobile$: Observable<boolean>;
   totalRecords = 0; pageSize = 10; pageNumber = 1; currentTabIndex = 0; sites: any[] = [];allEngineers: any[] = [];allUsers: any[] = [];
+  siteSearchControl = new FormControl<any>('');
+  requesterSearchControl = new FormControl<any>('');
+  assignedToSearchControl = new FormControl<any>('');
+  closedBySearchControl = new FormControl<any>('');
+  readonly allSitesOption = { masterSiteId: null, name: 'All Hospitals' };
   private descriptionTooltipTimer: ReturnType<typeof setTimeout> | undefined;
+  statusSearchText = '';
   
 
   readonly ROLES = { SUPER_ADMIN: 'SuperAdmin', SUPPORT_ENGINEER: 'SupportEngineer', HOSPITAL_ADMIN: 'HospitalAdmin', HOSPITAL_USER: 'HospitalUser', MANAGER:'Manager' };
   statusOptions = [{label: 'Open', value: 1}, {label: 'Assigned', value: 2}, {label: 'InProgress', value: 3}, {label: 'Closed', value: 4}, {label: 'Reopened', value: 5}];
+  filteredStatusOptions = [...this.statusOptions];
 
   constructor(
     private fb: FormBuilder, 
@@ -144,6 +153,7 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.currentUser = this.auth.getUser();
+    this.siteSearchControl.setValue(this.allSitesOption, { emitEvent: false });
     this.initFilterForm();
     this.setupAutoSearch();
     this.loadEngineers();
@@ -154,9 +164,82 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
 });
   }
 
+  get isHospitalUser(): boolean {
+    return this.currentUser?.role === this.ROLES.HOSPITAL_ADMIN
+      || this.currentUser?.role === this.ROLES.HOSPITAL_USER;
+  }
+
+  displaySite(site: any): string {
+    return site?.name || '';
+  }
+
+  displayUserName(user: any): string {
+    return user?.userName || '';
+  }
+
+  get filteredSites(): any[] {
+    const value = this.siteSearchControl.value;
+    const query = typeof value === 'string' ? value.trim().toLowerCase() : '';
+    return query
+      ? this.sites.filter(site => site.name.toLowerCase().includes(query))
+      : this.sites;
+  }
+
+  get filteredRequesters(): any[] {
+    return this.filterUsers(this.allUsers, this.requesterSearchControl.value);
+  }
+
+  get filteredEngineers(): any[] {
+    return this.filterUsers(this.allEngineers, this.assignedToSearchControl.value);
+  }
+
+  get filteredClosedByUsers(): any[] {
+    return this.filterUsers(this.allUsers, this.closedBySearchControl.value);
+  }
+
+  private filterUsers(users: any[], searchValue: any): any[] {
+    const query = typeof searchValue === 'string'
+      ? searchValue.trim().toLowerCase()
+      : '';
+
+    return query
+      ? users.filter(user => user.userName?.toLowerCase().includes(query))
+      : users;
+  }
+
+  clearSiteSelectionWhileSearching(): void {
+    if (typeof this.siteSearchControl.value === 'string') {
+      this.filterForm.get('masterSiteId')?.setValue(null);
+    }
+  }
+
+  selectSiteFilter(site: any): void {
+    this.filterForm.get('masterSiteId')?.setValue(site?.masterSiteId ?? null);
+  }
+
+  clearUserSelectionWhileSearching(
+    filterName: 'createdByUserId' | 'assignedToUserId' | 'closedByUserId',
+    searchControl: FormControl
+  ): void {
+    if (typeof searchControl.value === 'string') {
+      this.filterForm.get(filterName)?.setValue(null);
+    }
+  }
+
+  selectUserFilter(
+    filterName: 'createdByUserId' | 'assignedToUserId' | 'closedByUserId',
+    user: any
+  ): void {
+    this.filterForm.get(filterName)?.setValue(user?.userId ?? null);
+  }
+
   //ngAfterViewInit() { this.dataSource.paginator = this.paginator; }
   ngOnDestroy() {
     this.filterSubscription?.unsubscribe();
+    this.worklistRequest?.unsubscribe();
+    if (this.loadingReleaseTimer) {
+      clearTimeout(this.loadingReleaseTimer);
+    }
     if (this.descriptionTooltipTimer) {
       clearTimeout(this.descriptionTooltipTimer);
     }
@@ -174,7 +257,38 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
     }, 2500);
   }
 
-  initFilterForm() { this.filterForm = this.fb.group({ ticketId: [null], status: [null], createdDate: [null], resolveDate: [null] , masterSiteId: [null],  createdByUserId: [null],closedByUserId: [null],assignedToUserId: [null],}); }
+  initFilterForm() {
+    this.filterForm = this.fb.group({
+      ticketId: [null],
+      status: [null],
+      createdFromDate: [null],
+      createdToDate: [null],
+      resolveFromDate: [null],
+      resolveToDate: [null],
+      masterSiteId: [null],
+      createdByUserId: [null],
+      closedByUserId: [null],
+      assignedToUserId: [null]
+    });
+  }
+
+  filterStatuses(searchText: string): void {
+    const term = (searchText || '').trim().toLowerCase();
+    this.filteredStatusOptions = !term
+      ? [...this.statusOptions]
+      : this.statusOptions.filter(status => status.label.toLowerCase().includes(term));
+  }
+
+  selectStatusFilter(statusValue: number | null): void {
+    this.filterForm.patchValue({ status: statusValue });
+    if (statusValue === null) {
+      this.statusSearchText = '';
+      this.filteredStatusOptions = [...this.statusOptions];
+      return;
+    }
+
+    this.statusSearchText = this.statusOptions.find(status => status.value === statusValue)?.label ?? '';
+  }
 
   setupAutoSearch() { 
     this.filterSubscription = this.filterForm.valueChanges.pipe(debounceTime(500), distinctUntilChanged()).subscribe(() => { this.pageNumber = 1; this.refresh(); }); 
@@ -190,9 +304,14 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
 
 
   refresh(isManual: boolean = false) {
-  // 🟢 1. AUTO-LOAD TOGGLE: Turn on the spinner and disable the button instantly
+  this.worklistRequest?.unsubscribe();
+  if (this.loadingReleaseTimer) {
+    clearTimeout(this.loadingReleaseTimer);
+    this.loadingReleaseTimer = undefined;
+  }
+
   this.loading = true;
-  this.cdr.detectChanges(); // Sync template layout states immediately
+  this.cdr.markForCheck();
 
   const formValues = { ...this.filterForm.value };
 
@@ -200,14 +319,14 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
     formValues.assignedToUserId = this.currentUser.userId;
   }
 
-  if (formValues.createdDate) {
-    const d = new Date(formValues.createdDate);
-    formValues.createdDate = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
-  }
-  
-  if (formValues.resolveDate) {
-    const d = new Date(formValues.resolveDate);
-    formValues.resolveDate = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  for (const field of ['createdFromDate', 'createdToDate', 'resolveFromDate', 'resolveToDate']) {
+    const value = formValues[field];
+    if (value) {
+      const date = new Date(value);
+      formValues[field] = date.getFullYear() + '-' +
+        ('0' + (date.getMonth() + 1)).slice(-2) + '-' +
+        ('0' + date.getDate()).slice(-2);
+    }
   }
   
 
@@ -217,25 +336,17 @@ export class TicketWorklistComponent implements OnInit, OnDestroy {
   ...formValues
 };
 
-// HospitalUser & HospitalAdmin
-if (this.currentUser.role === 'HospitalUser' || this.currentUser.role === 'HospitalAdmin'
-) {
-  params.masterSiteId = this.currentUser.masterSiteId;
-}
-
-  this.ticketService.getWorklist(params).subscribe({
+  this.worklistRequest = this.ticketService.getWorklist(params).subscribe({
     next: (res: any) => {
       this.dataSource.data = res.data || [];
       this.totalRecords = res.totalRecords || 0;
-      this.cdr.detectChanges();
+      this.cdr.markForCheck();
 
-      // Introduce a brief 200ms visual buffer so the reload animation is clearly visible
-      setTimeout(() => {
-        // 🟢 2. AUTO-LOAD RELEASE: Turn off loading since data successfully arrived
+      this.loadingReleaseTimer = setTimeout(() => {
         this.loading = false; 
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
+        this.loadingReleaseTimer = undefined;
         
-        // Show success alert only on manual button interaction clicks
         if (isManual) {
           this.snackBar.open('Worklist layout synchronized successfully.', 'Dismiss', { 
             duration: 2000
@@ -247,13 +358,31 @@ if (this.currentUser.role === 'HospitalUser' || this.currentUser.role === 'Hospi
       console.error('Error fetching worklist:', err);
       this.snackBar.open('Failed to load tickets', 'Close', { duration: 3000 });
       
-      // 🟢 3. SAFETY RELEASE: Turn off loading so the button unlocks if the backend fails
       this.loading = false;
-      this.cdr.detectChanges();
+      this.cdr.markForCheck();
     }
   });
 }
 loadSites(): void {
+  if (this.isHospitalUser) {
+    const assignedSites = (this.currentUser?.sites || [])
+      .map((site: any) => ({
+        masterSiteId: Number(site.siteId ?? site.masterSiteId),
+        name: site.siteName ?? site.name ?? ''
+      }))
+      .filter((site: any) => Number.isInteger(site.masterSiteId) && site.masterSiteId > 0 && site.name);
+    this.sites = assignedSites.length
+      ? assignedSites
+      : this.currentUser?.masterSiteId
+        ? [{
+          masterSiteId: Number(this.currentUser.masterSiteId),
+          name: this.currentUser.masterSiteName || 'Assigned Hospital'
+        }]
+        : [];
+    this.cdr.markForCheck();
+    return;
+  }
+
   this.masterSiteService
     .getSites({ pageNumber: 1, pageSize: 500 })
     .subscribe({
@@ -261,9 +390,12 @@ loadSites(): void {
 
         this.sites = (res.data || []).filter(
           (x: any) => x.isActive
-        );
+        ).map((site: any) => ({
+          ...site,
+          name: site.name ?? site.siteName ?? ''
+        }));
 
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       },
       error: (err) => {
         console.error('Failed to load hospitals', err);
@@ -275,6 +407,10 @@ loadSites(): void {
 
   resetFilters(): void {
     this.filterForm.reset();
+    this.siteSearchControl.setValue(this.allSitesOption, { emitEvent: false });
+    this.requesterSearchControl.setValue('', { emitEvent: false });
+    this.assignedToSearchControl.setValue('', { emitEvent: false });
+    this.closedBySearchControl.setValue('', { emitEvent: false });
     this.pageNumber = 1;
     this.refresh();
   }
@@ -284,7 +420,7 @@ loadUsers(): void {
   this.userService.getActiveUsers().subscribe({
     next: (users: any) => {
       this.allUsers = users || [];
-      this.cdr.detectChanges();
+      this.cdr.markForCheck();
     },
     error: (err) => {
       console.error('Failed to load users:', err);
@@ -404,7 +540,7 @@ onTabChange(index: number) {
   this.pageNumber = 1;
 
   // 3. Force Angular to swap the active tab view panel in the DOM first
-  this.cdr.detectChanges();
+  this.cdr.markForCheck();
 
   // 4. 🟢 THE PERMANENT ARCHITECTURAL FIX: Use a double-frame delay (setTimeout).
   // This completely yields execution until Angular finishes rendering the template,
@@ -414,12 +550,26 @@ onTabChange(index: number) {
     // 5. Clear the freshly mounted form controls safely without side-effects
     if (this.filterForm) {
       this.filterForm.patchValue(
-        { ticketId: null, status: null, createdDate: null, resolveDate: null, masterSiteId: null,createdByUserId: null,closedByUserId:null },
+        {
+          ticketId: null,
+          status: null,
+          createdFromDate: null,
+          createdToDate: null,
+          resolveFromDate: null,
+          resolveToDate: null,
+          masterSiteId: null,
+          createdByUserId: null,
+          closedByUserId: null,
+          assignedToUserId: null
+        },
         { emitEvent: false }
       );
+      this.statusSearchText = '';
+      this.filteredStatusOptions = [...this.statusOptions];
+      this.siteSearchControl.setValue(this.allSitesOption, { emitEvent: false });
     }
 
-    this.cdr.detectChanges();
+    this.cdr.markForCheck();
 
     // 6. Automatically fetch the data. The newly rendered table is now ready to receive it!
     this.refresh();
@@ -499,8 +649,21 @@ viewResolutionNotes(ticket: TicketResponseDto): void {
 
 
   handleAction(ticket: any, action: string) {
+    if (action === 'start') {
+      const assignedUserId = ticket?.assignedToUserId ?? ticket?.AssignedToUserId;
+      if (assignedUserId == null) {
+        this.snackBar.open('Assign the ticket to an engineer before starting work.', 'Close', { duration: 3000 });
+        return;
+      }
+      const currentUserId = this.currentUser?.userId ?? this.currentUser?.UserId;
+      if (Number(assignedUserId) !== Number(currentUserId)) {
+        this.snackBar.open('Assign the ticket to yourself before starting work.', 'Close', { duration: 3000 });
+        return;
+      }
+    }
+
     const nextStatus = action === 'start' ? 3 : 4;
-    const dto = { ticketId: ticket.ticketId, status: nextStatus, comment: action === 'start' ? "Work Started" : "Ticket Closed" };
+    const dto = { ticketId: ticket.ticketId, status: nextStatus };
     this.ticketService.updateStatus(dto).subscribe(() => this.refresh());
   }
 
@@ -553,7 +716,7 @@ viewResolutionNotes(ticket: TicketResponseDto): void {
     // 2. Clear state and start loading for this specific row item
     this.isMenuLoadingMap[ticketId] = true;
     this.menuTicketFilesMap[ticketId] = [];
-    this.cdr.detectChanges();
+    this.cdr.markForCheck();
 
     this.attachmentService.getAttachmentsByTicket(ticketId).subscribe({
       next: (files: any[]) => {
@@ -566,7 +729,7 @@ viewResolutionNotes(ticket: TicketResponseDto): void {
         // Update row-isolated variables for the popup menu
         this.menuTicketFilesMap[ticketId] = processedFiles;
         this.isMenuLoadingMap[ticketId] = false;
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       },
       error: (err) => {
         console.error('Failed to load attachments:', err);
@@ -575,7 +738,7 @@ viewResolutionNotes(ticket: TicketResponseDto): void {
 
         // Reset row-isolated variables
         this.isMenuLoadingMap[ticketId] = false;
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       }
     });
   }
@@ -783,14 +946,6 @@ canAssign(ticket: any): boolean {
 }
 
 canStartWork(ticket: any): boolean {
-  console.log(
-  'Ticket:',
-  ticket.ticketId,
-  'Status:',
-  ticket.status,
-  'Type:',
-  typeof ticket.status
-);
   if (!ticket || !this.currentUser || !this.ROLES) return false;
 
   // Normalize status INSIDE same method (no helper)
@@ -813,15 +968,17 @@ canStartWork(ticket: any): boolean {
 
   const isSuperAdmin = this.currentUser.role === this.ROLES.SUPER_ADMIN;
   const isSupportEng = this.currentUser.role === this.ROLES.SUPPORT_ENGINEER;
-  const isManager=this.currentUser.role===this.ROLES.MANAGER;
+  const isManager = this.currentUser.role === this.ROLES.MANAGER;
 
   const currentUserId = this.currentUser.userId || this.currentUser.UserId;
-  const assignedUserId = ticket.assignedToUserId || ticket.AssignedToUserId;
+  const assignedUserId = ticket.assignedToUserId ?? ticket.AssignedToUserId;
 
-  const isAssignedToMe =
+  // A user can only start work on a ticket assigned to themselves.
+  const isAssignedToMe = assignedUserId != null &&
     Number(currentUserId) === Number(assignedUserId);
+  if (!isAssignedToMe) return false;
 
-  // 🟢 Super Admin: Open, Assigned, Reopened
+  // Super Admin and Manager can start eligible tickets assigned to themselves.
   if (isSuperAdmin || isManager) {
     return status === 1 || status === 2 || status === 5;
   }
@@ -997,9 +1154,3 @@ openTicketHistory(
 
 
 } // 🛑 THIS MUST BE THE ABSOLUTE LAST CHARACTER IN YOUR FILE
-
-
-
-
-
-

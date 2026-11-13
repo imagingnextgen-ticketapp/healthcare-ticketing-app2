@@ -9,8 +9,7 @@
           <h1>Service Desk Operations</h1>
 
           <p>
-            FUJIFILM |
-            {{ currentUser?.masterSiteName || 'Operations Center' }}
+            FUJIFILM | Service Operations
           </p>
         </div>
       </div>
@@ -66,110 +65,159 @@
      
       <mat-form-field appearance="outline">
   <mat-label>Status</mat-label>
-
-  <mat-select formControlName="status">
-    <mat-option [value]="null">All Statuses</mat-option>
-
-    <mat-option *ngFor="let s of statusOptions" [value]="s.value">
-      {{ s.label }}
+  <input
+    matInput
+    type="text"
+    placeholder="Type to search..."
+    autocomplete="off"
+    [(ngModel)]="statusSearchText"
+    [ngModelOptions]="{ standalone: true }"
+    [matAutocomplete]="statusAuto"
+    (input)="filterStatuses(statusSearchText)">
+  <mat-autocomplete
+    #statusAuto="matAutocomplete"
+    panelClass="fuji-dropdown-panel"
+    (optionSelected)="selectStatusFilter($event.option.value)">
+    <mat-option *ngIf="!statusSearchText" [value]="null">-- All Status --</mat-option>
+    <mat-option *ngFor="let status of filteredStatusOptions" [value]="status.value">
+      {{ status.label }}
     </mat-option>
-  </mat-select>
+  </mat-autocomplete>
 </mat-form-field>
 <!-- Requested By -->
 <mat-form-field appearance="outline">
   <mat-label>Requested By</mat-label>
-
-  <mat-select formControlName="createdByUserId">
-    <mat-option [value]="null">
-      All Requesters
-    </mat-option>
-
-    <mat-option
-      *ngFor="let user of allUsers"
-      [value]="user.userId">
+  <input
+    matInput
+    [formControl]="requesterSearchControl"
+    [matAutocomplete]="requesterAutocomplete"
+    (input)="clearUserSelectionWhileSearching('createdByUserId', requesterSearchControl)"
+    placeholder="Search requesters">
+  <mat-autocomplete
+    #requesterAutocomplete="matAutocomplete"
+    [displayWith]="displayUserName"
+    (optionSelected)="selectUserFilter('createdByUserId', $event.option.value)">
+    <mat-option [value]="null">All Requesters</mat-option>
+    <mat-option *ngFor="let user of filteredRequesters" [value]="user">
       {{ user.userName }}
     </mat-option>
-  </mat-select>
+    <mat-option *ngIf="filteredRequesters.length === 0" disabled>
+      No requesters match your search
+    </mat-option>
+  </mat-autocomplete>
 </mat-form-field>
 <!-- Assigned To -->
 <mat-form-field appearance="outline">
   <mat-label>Assigned To</mat-label>
-
-  <mat-select formControlName="assignedToUserId">
-
-    <mat-option [value]="null">
-      All Engineers
-    </mat-option>
-
-    <mat-option
-      *ngFor="let engineer of allEngineers"
-      [value]="engineer.userId">
+  <input
+    matInput
+    [formControl]="assignedToSearchControl"
+    [matAutocomplete]="assignedToAutocomplete"
+    (input)="clearUserSelectionWhileSearching('assignedToUserId', assignedToSearchControl)"
+    placeholder="Search engineers">
+  <mat-autocomplete
+    #assignedToAutocomplete="matAutocomplete"
+    [displayWith]="displayUserName"
+    (optionSelected)="selectUserFilter('assignedToUserId', $event.option.value)">
+    <mat-option [value]="null">All Engineers</mat-option>
+    <mat-option *ngFor="let engineer of filteredEngineers" [value]="engineer">
       {{ engineer.userName }}
     </mat-option>
-
-  </mat-select>
+    <mat-option *ngIf="filteredEngineers.length === 0" disabled>
+      No engineers match your search
+    </mat-option>
+  </mat-autocomplete>
 </mat-form-field>
 <!-- Closed By -->
 <mat-form-field appearance="outline">
   <mat-label>Closed By</mat-label>
-
-  <mat-select formControlName="closedByUserId">
-    <mat-option [value]="null">
-      All Users
-    </mat-option>
-
-    <mat-option
-      *ngFor="let user of allUsers"
-      [value]="user.userId">
+  <input
+    matInput
+    [formControl]="closedBySearchControl"
+    [matAutocomplete]="closedByAutocomplete"
+    (input)="clearUserSelectionWhileSearching('closedByUserId', closedBySearchControl)"
+    placeholder="Search users">
+  <mat-autocomplete
+    #closedByAutocomplete="matAutocomplete"
+    [displayWith]="displayUserName"
+    (optionSelected)="selectUserFilter('closedByUserId', $event.option.value)">
+    <mat-option [value]="null">All Users</mat-option>
+    <mat-option *ngFor="let user of filteredClosedByUsers" [value]="user">
       {{ user.userName }}
     </mat-option>
-  </mat-select>
+    <mat-option *ngIf="filteredClosedByUsers.length === 0" disabled>
+      No users match your search
+    </mat-option>
+  </mat-autocomplete>
 </mat-form-field>
 
 <!-- Hospital Filter -->
-<mat-form-field
-    appearance="outline"
-    *ngIf="currentUser?.role === ROLES.SUPER_ADMIN
-        || currentUser?.role === ROLES.SUPPORT_ENGINEER
-        || currentUser?.role === ROLES.MANAGER">
-
-    <mat-label>Hospital</mat-label>
-
-    <mat-select
-    formControlName="masterSiteId"
-    panelClass="hospital-select-panel">
-
-        <mat-option [value]="null">
-            All Hospitals
-        </mat-option>
-
-        <mat-option
-            *ngFor="let site of sites"
-            [value]="site.masterSiteId">
-
-            {{ site.name }}
-
-        </mat-option>
-
-    </mat-select>
-
+<mat-form-field appearance="outline">
+  <mat-label>Hospital/Site</mat-label>
+  <input
+    matInput
+    [formControl]="siteSearchControl"
+    [matAutocomplete]="siteAutocomplete"
+    (input)="clearSiteSelectionWhileSearching()"
+    placeholder="Search hospitals">
+  <mat-autocomplete
+    #siteAutocomplete="matAutocomplete"
+    [displayWith]="displaySite"
+    (optionSelected)="selectSiteFilter($event.option.value)">
+    <mat-option [value]="allSitesOption">{{ allSitesOption.name }}</mat-option>
+    <mat-option *ngFor="let site of filteredSites" [value]="site">
+      {{ site.name }}
+    </mat-option>
+    <mat-option *ngIf="filteredSites.length === 0" disabled>
+      No assigned hospitals match your search
+    </mat-option>
+  </mat-autocomplete>
 </mat-form-field>
 
-<!-- 1. Created Date Field -->
-
-<mat-form-field appearance="outline" style="width: 100%;">
-  <mat-label>Created Date</mat-label>
-  <input matInput [matDatepicker]="c" formControlName="createdDate" [max]="maxDate" />
-  <mat-datepicker-toggle matSuffix [for]="c"></mat-datepicker-toggle>
-  <mat-datepicker #c></mat-datepicker>
+<mat-form-field appearance="outline">
+  <mat-label>Created From</mat-label>
+  <input
+    matInput
+    [matDatepicker]="createdFromPicker"
+    formControlName="createdFromDate"
+    [max]="filterForm.get('createdToDate')?.value || maxDate" />
+  <mat-datepicker-toggle matSuffix [for]="createdFromPicker"></mat-datepicker-toggle>
+  <mat-datepicker #createdFromPicker></mat-datepicker>
 </mat-form-field>
 
-<!-- 2. Resolve Date Field -->
-<mat-form-field appearance="outline" style="width: 100%;">
-  <mat-label>Resolve Date</mat-label>
-  <input matInput [matDatepicker]="r" formControlName="resolveDate" [max]="maxDate" />
-  <mat-datepicker-toggle matSuffix [for]="r"></mat-datepicker-toggle>
-  <mat-datepicker #r></mat-datepicker>
+<mat-form-field appearance="outline">
+  <mat-label>Created To</mat-label>
+  <input
+    matInput
+    [matDatepicker]="createdToPicker"
+    formControlName="createdToDate"
+    [min]="filterForm.get('createdFromDate')?.value"
+    [max]="maxDate" />
+  <mat-datepicker-toggle matSuffix [for]="createdToPicker"></mat-datepicker-toggle>
+  <mat-datepicker #createdToPicker></mat-datepicker>
+</mat-form-field>
+
+<mat-form-field appearance="outline">
+  <mat-label>Resolve From</mat-label>
+  <input
+    matInput
+    [matDatepicker]="resolveFromPicker"
+    formControlName="resolveFromDate"
+    [max]="filterForm.get('resolveToDate')?.value || maxDate" />
+  <mat-datepicker-toggle matSuffix [for]="resolveFromPicker"></mat-datepicker-toggle>
+  <mat-datepicker #resolveFromPicker></mat-datepicker>
+</mat-form-field>
+
+<mat-form-field appearance="outline">
+  <mat-label>Resolve To</mat-label>
+  <input
+    matInput
+    [matDatepicker]="resolveToPicker"
+    formControlName="resolveToDate"
+    [min]="filterForm.get('resolveFromDate')?.value"
+    [max]="maxDate" />
+  <mat-datepicker-toggle matSuffix [for]="resolveToPicker"></mat-datepicker-toggle>
+  <mat-datepicker #resolveToPicker></mat-datepicker>
 </mat-form-field>
 
 
@@ -240,8 +288,15 @@
       <ng-container matColumnDef="issueType">
         <th mat-header-cell *matHeaderCellDef>Type</th>
 
-        <td mat-cell *matCellDef="let e">
-          {{ e.issueType }}
+        <td
+          mat-cell
+          *matCellDef="let e"
+          class="truncate issue-type-cell"
+          [matTooltip]="e.issueType || '-'"
+          matTooltipTouchGestures="on"
+          #issueTypeTooltip="matTooltip"
+          (click)="e.issueType?.length > 30 && showDescriptionTooltip(issueTypeTooltip)">
+          {{ e.issueType || '-' }}
         </td>
       </ng-container>
 
@@ -343,7 +398,7 @@
         <th mat-header-cell *matHeaderCellDef>Created</th>
 
         <td mat-cell *matCellDef="let e">
-          {{ e.createdDate | date: 'dd-MMM-yy' }}
+          {{ e.createdDate | localDateTime }}
         </td>
       </ng-container>
 
@@ -352,7 +407,7 @@
         <th mat-header-cell *matHeaderCellDef>Closed</th>
 
         <td mat-cell *matCellDef="let e">
-          {{ (e.closedDate | date: 'dd-MMM-yy') || '-' }}
+          {{ e.closedDate ? (e.closedDate | localDateTime) : '-' }}
         </td>
       </ng-container>
 
@@ -590,5 +645,3 @@
     </ng-container>
   </ng-template>
 </mat-menu>
-
-

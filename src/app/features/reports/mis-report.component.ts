@@ -11,18 +11,24 @@ import { SiteProductService } from '../../core/services/site-product.service';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { ActivatedRoute } from '@angular/router';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { TicketProgressNotesDialogComponent } from '../tickets/ticket-progress-notes.dialog.component';
+import type { MatTooltip } from '@angular/material/tooltip';
 
 
 @Component({
   selector: 'app-mis-report',
   standalone: true,
-  imports: [CommonModule, MaterialModules, FormsModule],
+  imports: [CommonModule, MaterialModules, FormsModule, MatDialogModule],
   providers: [provideNativeDateAdapter()],
   templateUrl: './mis-report.component.html',
   styleUrls: ['./mis-report.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MisReportComponent implements OnInit {
+  private tooltipTimer: ReturnType<typeof setTimeout> | undefined;
+
   dataSource: MisReportDto[] = [];
   displayedColumns: string[] = [
   'ticketId',
@@ -38,6 +44,9 @@ export class MisReportComponent implements OnInit {
   'closedDate',
   'actualTatHours',
   'isSlaBreached',
+  'description',
+  'resolutionComments',
+  'progressNotes',
   //'isEscalated',
   
    
@@ -45,7 +54,7 @@ export class MisReportComponent implements OnInit {
   private dashboardNavigation = false;
   masterSites: any[] = [];
   filteredMasterSites: any[] = [];
-  siteSearchText = '';
+  siteSearchText: string | any = '';
   products: any[] = [];
   filteredProducts: any[] = [];
   productSearchText = '';
@@ -73,6 +82,12 @@ export class MisReportComponent implements OnInit {
   totalRecords = 0;
   isLoading = false;
   isHospitalAdmin = false;
+  isHospitalUser = false;
+  readonly maxDate = new Date();
+
+  get allHospitalsLabel(): string {
+    return 'All Hospitals';
+  }
 
  filter: MisFilterDto = {
   pageNumber: 1,
@@ -105,8 +120,28 @@ export class MisReportComponent implements OnInit {
     private siteproductService: SiteProductService,
     private authService: AuthService,
     private userService: UserService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog
   ) {}
+
+  ngOnDestroy(): void {
+    if (this.tooltipTimer) {
+      clearTimeout(this.tooltipTimer);
+    }
+  }
+
+  showMobileTooltip(tooltip: MatTooltip): void {
+    if (this.tooltipTimer) {
+      clearTimeout(this.tooltipTimer);
+    }
+
+    tooltip.show();
+    this.tooltipTimer = setTimeout(() => {
+      tooltip.hide();
+      this.tooltipTimer = undefined;
+    }, 2500);
+  }
 
 ngOnInit(): void {
 
@@ -148,25 +183,26 @@ ngOnInit(): void {
     const user = this.authService.getUser();
     if (user) {
       const userRole = (user.role || '').toLowerCase();
-      const assignedSiteId = user.masterSiteId;
       this.isHospitalAdmin = userRole === 'hospitaladmin';
+      this.isHospitalUser = userRole === 'hospitaluser';
 
-      if (this.isHospitalAdmin && assignedSiteId) {
-        this.isLoading = true;
-        this.cdr.detectChanges();
-        this.masterSiteService.getSiteViewDetails(Number(assignedSiteId)).subscribe({
-          next: (res: any) => {
-            this.masterSites = [res]; 
-            this.filteredMasterSites = [...this.masterSites];
-            this.siteSearchText = res.name || res.hospitalName || '';
-            this.filter = { ...this.filter, masterSiteId: Number(assignedSiteId) };
-            this.onSiteChange(this.filter.masterSiteId); 
-          },
-          error: () => {
-            this.isLoading = false;
-            this.cdr.detectChanges();
-          }
-        });
+      if (this.isHospitalAdmin || this.isHospitalUser) {
+        this.masterSites = (user.sites || [])
+          .map((site: any) => ({
+            masterSiteId: Number(site.siteId ?? site.masterSiteId),
+            name: site.siteName ?? site.name ?? ''
+          }))
+          .filter((site: any) => Number.isInteger(site.masterSiteId) && site.masterSiteId > 0 && site.name);
+        if (!this.masterSites.length && user.masterSiteId) {
+          this.masterSites = [{
+            masterSiteId: Number(user.masterSiteId),
+            name: user.masterSiteName || 'Assigned Hospital'
+          }];
+        }
+        this.filteredMasterSites = [...this.masterSites];
+        this.siteSearchText = this.allHospitalsLabel;
+        this.filter = { ...this.filter, masterSiteId: undefined };
+        this.onSiteChange(null);
       } else {
         this.loadAllSites();
       }
@@ -458,6 +494,10 @@ displayRequestedUserName = (userId: any): string => {
   };
 
   loadReportData(): void {
+    if (!this.isDateRangeValid()) {
+      return;
+    }
+
     this.isLoading = true;
     this.cdr.detectChanges();
 console.log('MIS FILTER SENT:', this.filter);
@@ -496,8 +536,10 @@ console.log('MIS FILTER SENT:', this.filter);
   /**
    * 🔎 SITE SEARCH: Filters hospital dropdown options by typed text
    */
-  filterSites(searchText: string): void {
-    const term = (searchText || '').trim().toLowerCase();
+  filterSites(searchText: any): void {
+    const term = typeof searchText === 'string'
+      ? searchText.trim().toLowerCase()
+      : '';
 
     this.filteredMasterSites = !term
       ? [...this.masterSites]
@@ -509,20 +551,102 @@ console.log('MIS FILTER SENT:', this.filter);
   /**
    * ✅ SITE SELECTED: Fired when a hospital is picked from the autocomplete panel
    */
-  onSiteSelected(siteId: any): void {
+  onSiteSelected(site: any): void {
+    if (site === null || site === undefined) {
+      this.siteSearchText = this.allHospitalsLabel;
+      this.filter = { ...this.filter, masterSiteId: undefined };
+      this.onSiteChange(null);
+      return;
+    }
+
+    const siteId = Number(
+      typeof site === 'object'
+        ? site.masterSiteId ?? site.id ?? site.Id
+        : site
+    );
+    if (!Number.isInteger(siteId) || siteId <= 0) {
+      return;
+    }
+
+    const selectedSite = this.masterSites.find(
+      (item: any) => Number(item.masterSiteId ?? item.id ?? item.Id) === siteId
+    );
+    this.siteSearchText = selectedSite || site;
     this.filter = { ...this.filter, masterSiteId: siteId };
     this.onSiteChange(siteId);
   }
 
-  displaySiteName = (siteId: any): string => {
-    if (siteId === null || siteId === undefined) return '';
-    const site = this.masterSites.find((s: any) => s.masterSiteId === siteId);
-    return site ? (site.name || site.hospitalName || '') : '';
+  displaySiteName = (value: any): string => {
+    if (value === null || value === undefined) return this.allHospitalsLabel;
+    if (typeof value === 'object') {
+      return value.name || value.siteName || value.hospitalName || '';
+    }
+
+    const siteId = Number(value);
+    if (Number.isInteger(siteId)) {
+      const site = this.masterSites.find(
+        (item: any) => Number(item.masterSiteId ?? item.id ?? item.Id) === siteId
+      );
+      if (site) {
+        return site.name || site.siteName || site.hospitalName || '';
+      }
+    }
+
+    return typeof value === 'string' ? value : '';
   };
 
   applyFilters(): void {
+    if (!this.isDateRangeValid()) {
+      return;
+    }
+
     this.filter = { ...this.filter, pageNumber: 1 };
     this.loadReportData();
+  }
+
+  private isDateRangeValid(): boolean {
+    const fromDate = this.toLocalDate(this.filter.fromDate);
+    const toDate = this.toLocalDate(this.filter.toDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if ((this.filter.fromDate && !fromDate) || (this.filter.toDate && !toDate)) {
+      this.snackBar.open('Enter valid From and To dates.', 'Close', { duration: 3000 });
+      return false;
+    }
+
+    if ((fromDate && fromDate > today) || (toDate && toDate > today)) {
+      this.snackBar.open('Future dates cannot be used in the report filters.', 'Close', { duration: 3000 });
+      return false;
+    }
+
+    if (fromDate && toDate && fromDate > toDate) {
+      this.snackBar.open('From Date must be on or before To Date.', 'Close', { duration: 3000 });
+      return false;
+    }
+
+    return true;
+  }
+
+  private toLocalDate(value: Date | string | undefined): Date | undefined {
+    if (!value) {
+      return undefined;
+    }
+
+    let date: Date;
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      const [year, month, day] = value.split('-').map(Number);
+      date = new Date(year, month - 1, day);
+    } else {
+      date = new Date(value);
+    }
+
+    if (Number.isNaN(date.getTime())) {
+      return undefined;
+    }
+
+    date.setHours(0, 0, 0, 0);
+    return date;
   }
 
   /**
@@ -531,16 +655,12 @@ console.log('MIS FILTER SENT:', this.filter);
 
  resetFilters(): void {
   const user = this.authService.getUser();
-  const assignedSiteId = user?.masterSiteId;
-
   this.filter = {
     pageNumber: 1,
     pageSize: 10,
     tatOperator: 'gt',
 
-    masterSiteId: this.isHospitalAdmin
-      ? Number(assignedSiteId)
-      : undefined,
+    masterSiteId: undefined,
 
     productId: undefined,
     templateId: undefined,
@@ -555,9 +675,7 @@ console.log('MIS FILTER SENT:', this.filter);
   };
 
   // Hospital filter
-  this.siteSearchText = this.isHospitalAdmin
-    ? this.displaySiteName(Number(assignedSiteId))
-    : '';
+  this.siteSearchText = this.allHospitalsLabel;
 
   this.filteredMasterSites = this.masterSites.map(s => ({ ...s }));
 
@@ -576,7 +694,7 @@ console.log('MIS FILTER SENT:', this.filter);
   this.filteredStatuses = this.statuses.map(s => ({ ...s }));
 
   // Reset dependent filters/data
-  if (this.isHospitalAdmin) {
+  if (this.isHospitalAdmin || this.isHospitalUser) {
     this.templates = [];
     this.filteredTemplates = [];
     this.filteredProducts = this.products.map(s => ({ ...s }));
@@ -648,6 +766,10 @@ getSeverityClass = (s: any): string => {
   return map[s] || 'low';
 };
   handleExport(): void {
+    if (!this.isDateRangeValid()) {
+      return;
+    }
+
     this.misService.exportConsolidated(this.filter).subscribe((blob: Blob) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -655,6 +777,20 @@ getSeverityClass = (s: any): string => {
       a.download = `FUJI_Report_${new Date().getTime()}.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
+    });
+  }
+
+  openProgressNotes(ticketNumber: string): void {
+    const ticketId = Number(ticketNumber);
+    if (!Number.isInteger(ticketId) || ticketId <= 0) {
+      return;
+    }
+
+    this.dialog.open(TicketProgressNotesDialogComponent, {
+      width: '650px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      data: { ticketId }
     });
   }
 

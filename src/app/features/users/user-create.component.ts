@@ -20,7 +20,12 @@ import { ChangeDetectorRef } from '@angular/core';
 export class UserCreateComponent implements OnInit {
   form!: FormGroup;
   isEdit = false;
+  isHospitalAdmin = false;
+  isLoadingUserSites = false;
+  userSitesLoadFailed = false;
   roles: any[] = []; 
+  assignedSites: { masterSiteId: number; name: string }[] = [];
+  siteSearchControl = new FormControl<string | any>('');
  instantMatcher: ErrorStateMatcher = {
     isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
       return !!(control && control.invalid);
@@ -39,7 +44,29 @@ export class UserCreateComponent implements OnInit {
 
 ngOnInit(): void {
   this.isEdit = !!this.data;
+  const currentUser = this.authService.getUser();
+  this.isHospitalAdmin = currentUser?.role?.toLowerCase() === 'hospitaladmin';
+  if (this.isHospitalAdmin) {
+    this.assignedSites = (currentUser?.sites || [])
+      .map((site: any) => ({
+        masterSiteId: Number(site.siteId ?? site.masterSiteId),
+        name: site.siteName ?? site.name ?? ''
+      }))
+      .filter((site: { masterSiteId: number; name: string }) =>
+        Number.isInteger(site.masterSiteId) && site.masterSiteId > 0 && !!site.name
+      );
+  }
   this.initForm();
+  if (this.isHospitalAdmin) {
+    this.form.get('masterSiteIds')?.setValidators(Validators.required);
+    this.form.get('masterSiteIds')?.updateValueAndValidity({ emitEvent: false });
+    if (this.isEdit && this.data?.userId) {
+      this.loadUserSiteAssignments(Number(this.data.userId));
+    }
+    if (!this.isEdit && this.assignedSites.length === 0) {
+      this.showSnackbar('No assigned hospital sites are available for user creation.');
+    }
+  }
   
   // 🔥 CRITICAL LIFECYCLE SYNC: Load the lookup list first, then resolve selections
   this.loadAndFilterRoles();
@@ -48,6 +75,8 @@ ngOnInit(): void {
 private initForm(): void {
   // Extract primitive ID safely matching both "User" and "UserResponseDto" shapes
   const initialRoleId = this.data?.roleId ?? null;
+  const initialSiteIds = this.data?.masterSiteIds ??
+    (this.data?.masterSiteId != null ? [this.data.masterSiteId] : []);
 
   this.form = this.fb.group({
     userId: [this.data?.userId || 0],
@@ -60,9 +89,72 @@ private initForm(): void {
     
     // Set the initial value normally, keeping the form field fully interactive
     roleId: [initialRoleId, Validators.required],
+    masterSiteId: [initialSiteIds[0] ?? null],
+    masterSiteIds: [initialSiteIds.map((siteId: number) => Number(siteId))],
     
     isActive: [{ value: this.isEdit ? (this.data?.isActive ?? false) : true, disabled: true }]
   });
+}
+
+private loadUserSiteAssignments(userId: number): void {
+  this.isLoadingUserSites = true;
+  this.userService.getUserSites(userId).subscribe({
+    next: (userSites: any[]) => {
+      const allowedSiteIds = new Set(this.assignedSites.map(site => site.masterSiteId));
+      const selectedSiteIds = (userSites || [])
+        .map(site => Number(site.masterSiteId ?? site.MasterSiteId))
+        .filter(siteId => Number.isInteger(siteId) && allowedSiteIds.has(siteId));
+
+      this.form.patchValue({
+        masterSiteIds: [...new Set(selectedSiteIds)],
+        masterSiteId: selectedSiteIds[0] ?? null
+      });
+      this.isLoadingUserSites = false;
+      this.cdr.detectChanges();
+    },
+    error: () => {
+      this.isLoadingUserSites = false;
+      this.userSitesLoadFailed = true;
+      this.showSnackbar('Could not load this user\'s assigned sites. Close and reopen the user to try again.');
+      this.cdr.detectChanges();
+    }
+  });
+}
+
+get filteredAssignedSites(): { masterSiteId: number; name: string }[] {
+  const value = this.siteSearchControl.value;
+  const query = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return this.assignedSites.filter(site => !query || site.name.toLowerCase().includes(query));
+}
+
+get selectedSiteNames(): string[] {
+  const selectedIds = this.form?.get('masterSiteIds')?.value as number[] | undefined;
+  return this.assignedSites
+    .filter(site => (selectedIds || []).includes(site.masterSiteId))
+    .map(site => site.name);
+}
+
+isSiteSelected(siteId: number): boolean {
+  const selectedIds = this.form?.get('masterSiteIds')?.value as number[] | undefined;
+  return (selectedIds || []).includes(siteId);
+}
+
+toggleSite(site: { masterSiteId: number; name: string }, input: HTMLInputElement): void {
+  const selectedIds = (this.form.get('masterSiteIds')?.value || []) as number[];
+  const nextSelectedIds = selectedIds.includes(site.masterSiteId)
+    ? selectedIds.filter(siteId => siteId !== site.masterSiteId)
+    : [...selectedIds, site.masterSiteId];
+
+  this.form.patchValue({
+    masterSiteIds: nextSelectedIds,
+    masterSiteId: nextSelectedIds[0] ?? null
+  });
+  input.value = '';
+  this.siteSearchControl.setValue('');
+}
+
+clearSelectedSites(): void {
+  this.form.patchValue({ masterSiteIds: [], masterSiteId: null });
 }
 
 private loadAndFilterRoles(): void {
@@ -128,15 +220,38 @@ private loadAndFilterRoles(): void {
 
 
   onSubmit(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid || this.userSitesLoadFailed || this.isLoadingUserSites) return;
 
     const payload = this.form.getRawValue();
+    if (this.isHospitalAdmin) {
+      payload.masterSiteIds = payload.masterSiteIds || [];
+      payload.masterSiteId = payload.masterSiteIds[0] ?? null;
+    }
+    if (!this.isHospitalAdmin) {
+      delete payload.masterSiteId;
+      delete payload.masterSiteIds;
+    }
     const request = this.isEdit 
       ? this.userService.updateUser(payload) 
       : this.userService.createUser(payload);
 
     request.subscribe({
-      next: () => {
+      next: (response: any) => {
+        if (this.isHospitalAdmin) {
+          const savedSiteIds = (response?.masterSiteIds ?? response?.MasterSiteIds ?? [])
+            .map((siteId: number | string) => Number(siteId))
+            .sort((a: number, b: number) => a - b);
+          const submittedSiteIds = [...payload.masterSiteIds]
+            .map((siteId: number | string) => Number(siteId))
+            .sort((a: number, b: number) => a - b);
+
+          if (JSON.stringify(savedSiteIds) !== JSON.stringify(submittedSiteIds)) {
+            this.showSnackbar('The server did not confirm all selected site assignments. Please verify the user before continuing.');
+            this.cdr.detectChanges();
+            return;
+          }
+        }
+
         this.showSnackbar(this.isEdit ? 'User updated successfully' : 'User created successfully');
         this.dialogRef.close(true);
         

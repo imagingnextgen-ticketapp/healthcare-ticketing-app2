@@ -37,7 +37,7 @@ export class TicketService {
   }
 
   // ✅ STATUS UPDATE: [HttpPut("status")]
-  updateStatus(dto: { ticketId: number, status: number, comment: string }): Observable<any> {
+  updateStatus(dto: { ticketId: number, status: number, comment?: string }): Observable<any> {
     return this.http.put(`${this.apiUrl}/status`, {
       ticketId: dto.ticketId,
       status: dto.status,
@@ -125,6 +125,26 @@ export class TicketService {
       ('0' + rDate.getDate()).slice(-2);
 
     params = params.set('resolveDate', rStr);
+  }
+
+  const dateRangeFields = [
+    'createdFromDate',
+    'createdToDate',
+    'resolveFromDate',
+    'resolveToDate'
+  ] as const;
+
+  for (const field of dateRangeFields) {
+    if (filter[field]) {
+      const date = new Date(filter[field]);
+      const dateString =
+        date.getFullYear() +
+        '-' +
+        ('0' + (date.getMonth() + 1)).slice(-2) +
+        '-' +
+        ('0' + date.getDate()).slice(-2);
+      params = params.set(field, dateString);
+    }
   }
 
   return this.http.get<PagedResponse<TicketResponseDto>>(

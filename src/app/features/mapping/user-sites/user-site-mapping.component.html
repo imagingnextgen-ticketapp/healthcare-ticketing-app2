@@ -5,6 +5,9 @@
     </mat-card-header>
 
     <mat-card-content>
+      <mat-tab-group animationDuration="0ms">
+        <mat-tab label="Users to Site">
+          <div class="mapping-tab-content">
       <!-- Aligned Selection Row -->
       <div class="controls-row">
         <mat-form-field appearance="outline">
@@ -146,6 +149,96 @@
           aria-label="Select page of mapped users">
         </mat-paginator>
       </div>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Sites to User">
+          <div class="mapping-tab-content">
+            <div class="info-banner">
+              <mat-icon>info</mat-icon>
+              <span>Select one hospital user, then add one or more active sites. Existing assignments are shown and preserved.</span>
+            </div>
+
+            <div class="controls-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Select User</mat-label>
+                <input
+                  matInput
+                  type="text"
+                  [formControl]="userForSitesSearchControl"
+                  [matAutocomplete]="userForSitesAutocomplete"
+                  placeholder="Search hospital users"
+                  autocomplete="off"
+                  (input)="onUserSearchInputForSites()" />
+                <mat-autocomplete
+                  #userForSitesAutocomplete="matAutocomplete"
+                  [displayWith]="displayUser"
+                  (optionSelected)="onUserSelectedForSites($event.option.value)">
+                  <mat-option
+                    *ngFor="let user of filteredUsersForSiteAssignment"
+                    [value]="user">
+                    {{ user.userName }}
+                  </mat-option>
+                  <mat-option
+                    *ngIf="userForSitesSearchControl.value && filteredUsersForSiteAssignment.length === 0"
+                    disabled>
+                    No matching users
+                  </mat-option>
+                </mat-autocomplete>
+              </mat-form-field>
+
+              <button
+                mat-raised-button
+                class="fuji-btn"
+                [disabled]="!selectedUserForSites || isLoadingUserSites || isSavingUserSites || selectedAdditionalSiteIds.size === 0"
+                (click)="assignSitesToSelectedUser()">
+                <mat-icon>add_location_alt</mat-icon>
+                {{ isSavingUserSites ? 'Saving...' : 'Assign Sites' }}
+              </button>
+            </div>
+
+            <div class="info-banner" *ngIf="!selectedUserForSites">
+              <mat-icon>person_search</mat-icon>
+              <span>Select a hospital user to view current site assignments and add sites.</span>
+            </div>
+
+            <div class="info-banner" *ngIf="isLoadingUserSites">
+              <mat-icon>hourglass_empty</mat-icon>
+              <span>Loading current site assignments...</span>
+            </div>
+
+            <div class="site-assignment-panel" *ngIf="selectedUserForSites && !isLoadingUserSites">
+              <div class="site-assignment-header">
+                <div>
+                  <h3>Sites for {{ selectedUserForSites.userName }}</h3>
+                  <p>Already assigned sites remain selected. Choose additional sites to grant access.</p>
+                </div>
+                <mat-form-field appearance="outline">
+                  <mat-label>Search sites</mat-label>
+                  <input matInput [formControl]="userSitesSearchControl" placeholder="Type a site name" />
+                  <mat-icon matSuffix>search</mat-icon>
+                </mat-form-field>
+              </div>
+
+              <div class="site-assignment-list">
+                <div class="site-assignment-option" *ngFor="let site of filteredSitesForUserAssignment">
+                  <mat-checkbox
+                    [checked]="isSiteAssignedToUser(site.masterSiteId) || isAdditionalSiteSelected(site.masterSiteId)"
+                    [disabled]="isSiteAssignedToUser(site.masterSiteId) || isSavingUserSites"
+                    (change)="toggleSiteForUser(site.masterSiteId, $event.checked)">
+                    {{ site.name || site.siteName }}
+                  </mat-checkbox>
+                  <span class="fuji-badge active" *ngIf="isSiteAssignedToUser(site.masterSiteId)">Already assigned</span>
+                </div>
+
+                <div class="empty-sites" *ngIf="filteredSitesForUserAssignment.length === 0">
+                  {{ sites.length ? 'No matching active sites.' : 'No active sites are available.' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
     </mat-card-content>
   </mat-card>
 </div>
